@@ -25,6 +25,32 @@ The API is available at `http://localhost:5056`.
 
 The API health endpoint is at `http://localhost:5056/api/health`.
 
+## Running tests
+
+### Unit tests
+
+Unit tests use an in-memory EF Core database and mocked dependencies. No external services required.
+
+```bash
+dotnet test MovieRaterApi.Tests --filter "FullyQualifiedName~Unit"
+```
+
+### Integration tests
+
+Integration tests use [Testcontainers](https://testcontainers.com/) to spin up a real PostgreSQL 17 container. Docker must be installed and running.
+
+```bash
+dotnet test MovieRaterApi.Tests --filter "FullyQualifiedName~Integration"
+```
+
+### All tests
+
+```bash
+dotnet test MovieRaterApi.Tests
+```
+
+> **Note:** Integration tests require Docker and may take ~30s to complete due to container startup. The test container is automatically cleaned up after execution.
+
 ## Running database migrations
 
 Migrations are **not** applied automatically on startup. You must apply them manually.
