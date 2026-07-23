@@ -1,5 +1,15 @@
+using System.Text;
+using Microsoft.AspNetCore.RateLimiting;
+using FluentValidation;
+using FluentValidation.AspNetCore;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using MovieRaterApi.Data;
+using MovieRaterApi.Features.Authentication.Infrastructure;
+using MovieRaterApi.Features.Authentication.Interfaces;
+using MovieRaterApi.Features.Authentication.Options;
+using MovieRaterApi.Features.Authentication.Services;
 using Scalar.AspNetCore;
 using Serilog;
 
@@ -19,12 +29,61 @@ try
                 .WriteTo.File("logs/movie-rater-.log", rollingInterval: RollingInterval.Day)
     );
 
-    builder.Services.AddControllers();
-    builder.Services.AddOpenApi();
+    builder.Services.Configure<JwtOptions>(builder.Configuration.GetSection(JwtOptions.SectionName));
 
     builder.Services.AddDbContext<ApplicationDbContext>(options =>
         options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"))
     );
+
+    builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+        .AddJwtBearer(options =>
+        {
+            var jwtOptions = builder.Configuration.GetSection(JwtOptions.SectionName).Get<JwtOptions>()
+                             ?? throw new InvalidOperationException("Jwt configuration is missing.");
+
+            options.TokenValidationParameters = new TokenValidationParameters
+            {
+                ValidateIssuer = true,
+                ValidateAudience = true,
+                ValidateLifetime = true,
+                ValidateIssuerSigningKey = true,
+                ValidIssuer = jwtOptions.Issuer,
+                ValidAudience = jwtOptions.Audience,
+                IssuerSigningKey = new SymmetricSecurityKey(
+                    Encoding.UTF8.GetBytes(jwtOptions.SigningKey)),
+                ClockSkew = TimeSpan.FromSeconds(60)
+            };
+        });
+
+    builder.Services.AddAuthorization();
+
+    builder.Services.AddRateLimiter(options =>
+    {
+        options.AddFixedWindowLimiter("auth", config =>
+        {
+            config.PermitLimit = 10;
+            config.Window = TimeSpan.FromMinutes(1);
+            config.QueueLimit = 0;
+        });
+    });
+
+    builder.Services.AddFluentValidationAutoValidation();
+    builder.Services.AddValidatorsFromAssemblyContaining<Program>();
+
+    builder.Services.AddScoped<IPasswordHasher, PasswordHasher>();
+    builder.Services.AddScoped<ITokenService, TokenService>();
+    builder.Services.AddScoped<IAuthService, AuthService>();
+    builder.Services.AddScoped<ICoupleInvitationService, CoupleInvitationService>();
+
+    builder.Services.AddScoped<ICurrentUser>(sp =>
+    {
+        var httpContext = sp.GetRequiredService<IHttpContextAccessor>().HttpContext;
+        return new CurrentUserContext(httpContext?.User);
+    });
+    builder.Services.AddHttpContextAccessor();
+
+    builder.Services.AddControllers();
+    builder.Services.AddOpenApi();
 
     var app = builder.Build();
 
@@ -36,7 +95,9 @@ try
 
     app.UseSerilogRequestLogging();
 
-    
+    app.UseRateLimiter();
+    app.UseAuthentication();
+    app.UseAuthorization();
 
     app.MapControllers();
 
@@ -50,3 +111,5 @@ finally
 {
     Log.CloseAndFlush();
 }
+
+public partial class Program { }
