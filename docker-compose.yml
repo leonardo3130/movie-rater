@@ -1,0 +1,38 @@
+services:
+  api:
+    build:
+      context: ./MovieRaterApi
+      dockerfile: Dockerfile
+    container_name: movie-rater-api
+    ports:
+      - "5056:8080"
+      - "7283:8081"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__DefaultConnection=Host=db;Port=5432;Database=movierater;Username=postgres;Password=postgres
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - api-logs:/app/logs
+
+  db:
+    image: postgres:17
+    container_name: movie-rater-db
+    environment:
+      POSTGRES_DB: movierater
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d movierater"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  pgdata:
+  api-logs:
