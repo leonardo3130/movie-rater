@@ -19,6 +19,8 @@ public class ApplicationDbContext : DbContext
     public DbSet<Achievement> Achievements => Set<Achievement>();
     public DbSet<UserAchievement> UserAchievements => Set<UserAchievement>();
     public DbSet<AiSummary> AiSummaries => Set<AiSummary>();
+    public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
+    public DbSet<CoupleInvitation> CoupleInvitations => Set<CoupleInvitation>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -168,6 +170,41 @@ public class ApplicationDbContext : DbContext
                 .WithOne(ws => ws.AiSummary)
                 .HasForeignKey<AiSummary>(e => e.WatchSessionId)
                 .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<RefreshToken>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.TokenHash).IsRequired().HasMaxLength(100);
+            entity.Property(e => e.DeviceInfo).HasMaxLength(200);
+            entity.HasIndex(e => e.TokenHash).IsUnique();
+            entity
+                .HasOne(e => e.User)
+                .WithMany()
+                .HasForeignKey(e => e.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<CoupleInvitation>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.InviteeEmail).IsRequired().HasMaxLength(255);
+            entity.Property(e => e.InviteTokenHash).IsRequired().HasMaxLength(100);
+            entity.Property(e => e.Status)
+                .HasConversion<string>()
+                .HasMaxLength(20);
+            entity.HasIndex(e => e.InviteTokenHash).IsUnique();
+            entity.HasIndex(e => e.InviteeEmail);
+            entity
+                .HasOne(e => e.InviterUser)
+                .WithMany()
+                .HasForeignKey(e => e.InviterUserId)
+                .OnDelete(DeleteBehavior.Restrict);
+            entity
+                .HasOne(e => e.AcceptedByUser)
+                .WithMany()
+                .HasForeignKey(e => e.AcceptedByUserId)
+                .OnDelete(DeleteBehavior.Restrict);
         });
     }
 }
