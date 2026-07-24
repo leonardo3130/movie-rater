@@ -16,10 +16,10 @@ docker compose up --build
 
 This starts two services:
 
-| Service   | Container name   | Ports                        |
-| --------- | ---------------- | ---------------------------- |
-| **API**   | `movie-rater-api`| `5056:8080` (HTTP)           |
-| **DB**    | `movie-rater-db` | `5432:5432`                  |
+| Service | Container name    | Ports              |
+| ------- | ----------------- | ------------------ |
+| **API** | `movie-rater-api` | `5056:8080` (HTTP) |
+| **DB**  | `movie-rater-db`  | `5432:5432`        |
 
 The API is available at `http://localhost:5056`.
 
@@ -121,11 +121,12 @@ docker compose run --rm api dotnet ef database update
 
 ## Tech stack
 
-| Layer       | Technology                          |
-| ----------- | ----------------------------------- |
-| Framework   | ASP.NET 9                           |
-| ORM         | Entity Framework Core               |
-| Database    | PostgreSQL 17                       |
-| Logging     | Serilog                             |
-| Validation  | FluentValidation                    |
-| API docs    | Scalar (OpenAPI)                    |
+| Layer      | Technology            |
+| ---------- | --------------------- |
+| Framework  | ASP.NET 10            |
+| ORM        | Entity Framework Core |
+| Database   | PostgreSQL 17         |
+| Logging    | Serilog               |
+| Validation | FluentValidation      |
+| API docs   | Scalar (OpenAPI)      |
+

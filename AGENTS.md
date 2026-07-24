@@ -27,6 +27,7 @@ professional engineering team rather than simply completing a portfolio project.
 - Zustand
 - React Router
 - Framer Motion
+- Zod
 
 ## Backend
 
@@ -706,6 +707,7 @@ Every new feature should include:
 
 - Use TanStack Query for server state.
 - Zustand only for client state.
+- Manage forms and validation using Zod
 - Components should remain small.
 - Pages should orchestrate components.
 - Avoid prop drilling.
