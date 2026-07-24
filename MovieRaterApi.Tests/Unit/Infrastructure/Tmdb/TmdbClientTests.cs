@@ -382,11 +382,13 @@ public class TmdbClientTests
         _handlerMock
             .Protected()
             .Setup<Task<HttpResponseMessage>>(
-                "SendAsync",
-                ItExpr.IsAny<HttpRequestMessage>(),
-                ItExpr.IsAny<CancellationToken>()
+                "SendAsync", // metodo
+                ItExpr.IsAny<HttpRequestMessage>(), // argomenti
+                ItExpr.IsAny<CancellationToken>() // ItExpr è una wildcard che accetta ogni
+            // argomento purché il tipo sia corretto
+            // ItExpr  va usato con protected per mock di calssi built.in solitamente
             )
-            .ReturnsAsync(
+            .ReturnsAsync( // define mocked method behaviour
                 (HttpRequestMessage request, CancellationToken _) =>
                 {
                     _capturedRequestUri = request.RequestUri;

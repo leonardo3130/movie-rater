@@ -181,10 +181,12 @@ public class TmdbRateLimitHandlerTests
             {
                 if (item is HttpStatusCode code)
                 {
+                    // simula retry senza retryAfter
                     _responses.Enqueue(() => new HttpResponseMessage(code));
                 }
                 else if (item is ValueTuple<HttpStatusCode, TimeSpan> tuple)
                 {
+                    // simula anche la presenza dell'header RetryAfter
                     var (statusCode, retryAfter) = tuple;
                     _responses.Enqueue(() =>
                         new HttpResponseMessage(statusCode)

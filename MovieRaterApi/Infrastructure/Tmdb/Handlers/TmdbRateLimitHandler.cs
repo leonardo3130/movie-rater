@@ -12,8 +12,8 @@ public interface ITmdbDelay
 
 public class TmdbSystemDelay : ITmdbDelay
 {
-    public Task DelayAsync(int millisecondsDelay, CancellationToken ct)
-        => Task.Delay(millisecondsDelay, ct);
+    public Task DelayAsync(int millisecondsDelay, CancellationToken ct) =>
+        Task.Delay(millisecondsDelay, ct);
 }
 
 public class TmdbRateLimitHandler : DelegatingHandler
@@ -26,15 +26,19 @@ public class TmdbRateLimitHandler : DelegatingHandler
     public TmdbRateLimitHandler(
         IOptions<TmdbOptions> options,
         ILogger<TmdbRateLimitHandler> logger,
-        ITmdbDelay? delay = null)
+        ITmdbDelay? delay = null
+    )
     {
         _options = options.Value;
         _logger = logger;
         _delay = delay ?? new TmdbSystemDelay();
     }
 
+    // this method needs mock in unit testing
     protected override async Task<HttpResponseMessage> SendAsync(
-        HttpRequestMessage request, CancellationToken cancellationToken)
+        HttpRequestMessage request,
+        CancellationToken cancellationToken
+    )
     {
         var attempts = 0;
 
@@ -51,18 +55,27 @@ public class TmdbRateLimitHandler : DelegatingHandler
             {
                 _logger.LogWarning(
                     "TMDB rate limit exhausted for {Method} {Uri} after {Attempts} attempts",
-                    request.Method, request.RequestUri, attempts);
+                    request.Method,
+                    request.RequestUri,
+                    attempts
+                );
 
                 throw new TmdbRateLimitExhaustedException(
                     attempts,
-                    $"TMDB rate limit exhausted after {attempts} attempts.");
+                    $"TMDB rate limit exhausted after {attempts} attempts."
+                );
             }
 
             var delayMs = CalculateDelay(response, attempts);
 
             _logger.LogWarning(
                 "TMDB rate limited on {Method} {Uri}, retrying in {DelayMs}ms (attempt {Attempt}/{MaxRetries})",
-                request.Method, request.RequestUri, delayMs, attempts, _options.MaxRetries);
+                request.Method,
+                request.RequestUri,
+                delayMs,
+                attempts,
+                _options.MaxRetries
+            );
 
             await _delay.DelayAsync(delayMs, cancellationToken);
 
