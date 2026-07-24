@@ -3,7 +3,6 @@ using System.Net.Http.Json;
 using FluentAssertions;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using MovieRaterApi.Data;
 using MovieRaterApi.Features.Authentication.DTOs;
@@ -19,8 +18,8 @@ public class AuthIntegrationTests : IAsyncLifetime
 
     public AuthIntegrationTests()
     {
-        _postgresContainer = new PostgreSqlBuilder()
-            .WithImage("postgres:17")
+        // crea un db postgres senza l.ausilio del docker compose
+        _postgresContainer = new PostgreSqlBuilder("postgres:17")
             .WithCleanUp(true)
             .WithDatabase("movierater_test")
             .WithUsername("postgres")
@@ -28,39 +27,49 @@ public class AuthIntegrationTests : IAsyncLifetime
             .Build();
     }
 
-public async Task InitializeAsync()
+    public async Task InitializeAsync()
     {
         await _postgresContainer.StartAsync();
 
         _factory = new WebApplicationFactory<Program>().WithWebHostBuilder(builder =>
         {
-            builder.UseSetting("ConnectionStrings:DefaultConnection", _postgresContainer.GetConnectionString());
+            builder.UseSetting(
+                "ConnectionStrings:DefaultConnection",
+                _postgresContainer.GetConnectionString()
+            );
             builder.UseSetting("Jwt:Issuer", "MovieRaterApi");
             builder.UseSetting("Jwt:Audience", "MovieRaterWeb");
             builder.UseSetting("Jwt:AccessTokenMinutes", "15");
             builder.UseSetting("Jwt:RefreshTokenDays", "30");
-            builder.UseSetting("Jwt:SigningKey", "test-signing-key-that-is-at-least-32-characters-long-for-testing");
+            builder.UseSetting(
+                "Jwt:SigningKey",
+                "test-signing-key-that-is-at-least-32-characters-long-for-testing"
+            );
 
             builder.ConfigureServices(services =>
             {
-                var descriptor = services.SingleOrDefault(
-                    d => d.ServiceType == typeof(DbContextOptions<ApplicationDbContext>));
+                var descriptor = services.SingleOrDefault(d =>
+                    d.ServiceType == typeof(DbContextOptions<ApplicationDbContext>)
+                );
                 if (descriptor is not null)
                     services.Remove(descriptor);
 
                 services.AddDbContext<ApplicationDbContext>(options =>
-                    options.UseNpgsql(_postgresContainer.GetConnectionString()));
+                    options.UseNpgsql(_postgresContainer.GetConnectionString())
+                );
             });
         });
 
-        _client = _factory.CreateClient(new WebApplicationFactoryClientOptions
-        {
-            HandleCookies = true,
-            BaseAddress = new Uri("https://localhost")
-        });
+        _client = _factory.CreateClient(
+            new WebApplicationFactoryClientOptions
+            {
+                HandleCookies = true,
+                BaseAddress = new Uri("https://localhost"),
+            }
+        );
 
         var optionsBuilder = new DbContextOptionsBuilder<ApplicationDbContext>();
-        optionsBuilder.UseNpgsql(_postgresContainer.GetConnectionString());
+        optionsBuilder.UseNpgsql(_postgresContainer.GetConnectionString()); // npgsql è un driver postgres per dtonet (C#, F#)
         using var db = new ApplicationDbContext(optionsBuilder.Options);
         db.Database.EnsureCreated();
     }
@@ -78,7 +87,7 @@ public async Task InitializeAsync()
         {
             Username = username,
             Email = email,
-            Password = password
+            Password = password,
         };
 
         var response = await _client.PostAsJsonAsync("/api/auth/register", request);
@@ -108,7 +117,7 @@ public async Task InitializeAsync()
         {
             Username = "user2",
             Email = "duplicate@example.com",
-            Password = "Password123!"
+            Password = "Password123!",
         };
 
         var response = await _client.PostAsJsonAsync("/api/auth/register", request);
@@ -123,7 +132,7 @@ public async Task InitializeAsync()
         {
             Username = "",
             Email = "invalid",
-            Password = "12"
+            Password = "12",
         };
 
         var response = await _client.PostAsJsonAsync("/api/auth/register", request);
@@ -139,7 +148,7 @@ public async Task InitializeAsync()
         var request = new LoginRequestDto
         {
             Email = "loginuser@example.com",
-            Password = "Password123!"
+            Password = "Password123!",
         };
 
         var response = await _client.PostAsJsonAsync("/api/auth/login", request);
@@ -160,7 +169,7 @@ public async Task InitializeAsync()
         var request = new LoginRequestDto
         {
             Email = "loginfail@example.com",
-            Password = "WrongPassword!"
+            Password = "WrongPassword!",
         };
 
         var response = await _client.PostAsJsonAsync("/api/auth/login", request);
@@ -174,7 +183,7 @@ public async Task InitializeAsync()
         var request = new LoginRequestDto
         {
             Email = "nonexistent@example.com",
-            Password = "Password123!"
+            Password = "Password123!",
         };
 
         var response = await _client.PostAsJsonAsync("/api/auth/login", request);
@@ -187,7 +196,10 @@ public async Task InitializeAsync()
     {
         var registerResult = await RegisterUser("meuser", "meuser@example.com", "Password123!");
         _client.DefaultRequestHeaders.Authorization =
-            new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", registerResult.AccessToken);
+            new System.Net.Http.Headers.AuthenticationHeaderValue(
+                "Bearer",
+                registerResult.AccessToken
+            );
 
         var response = await _client.GetAsync("/api/auth/me");
         response.EnsureSuccessStatusCode();
@@ -211,9 +223,16 @@ public async Task InitializeAsync()
     [Fact]
     public async Task Refresh_ShouldReturnNewTokens()
     {
-        var registerResult = await RegisterUser("refreshuser", "refreshuser@example.com", "Password123!");
+        var registerResult = await RegisterUser(
+            "refreshuser",
+            "refreshuser@example.com",
+            "Password123!"
+        );
         _client.DefaultRequestHeaders.Authorization =
-            new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", registerResult.AccessToken);
+            new System.Net.Http.Headers.AuthenticationHeaderValue(
+                "Bearer",
+                registerResult.AccessToken
+            );
 
         var refreshResponse = await _client.PostAsync("/api/auth/refresh", null);
         refreshResponse.EnsureSuccessStatusCode();
@@ -228,9 +247,16 @@ public async Task InitializeAsync()
     [Fact]
     public async Task Logout_ShouldRevokeRefreshToken()
     {
-        var registerResult = await RegisterUser("logoutuser", "logoutuser@example.com", "Password123!");
+        var registerResult = await RegisterUser(
+            "logoutuser",
+            "logoutuser@example.com",
+            "Password123!"
+        );
         _client.DefaultRequestHeaders.Authorization =
-            new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", registerResult.AccessToken);
+            new System.Net.Http.Headers.AuthenticationHeaderValue(
+                "Bearer",
+                registerResult.AccessToken
+            );
 
         var logoutResponse = await _client.PostAsync("/api/auth/logout", null);
         logoutResponse.StatusCode.Should().Be(HttpStatusCode.NoContent);
@@ -249,10 +275,17 @@ public async Task InitializeAsync()
     [Fact]
     public async Task FullLifecycle_Register_Login_GetMe_Logout()
     {
-        var registerResult = await RegisterUser("lifecycle", "lifecycle@example.com", "Password123!");
+        var registerResult = await RegisterUser(
+            "lifecycle",
+            "lifecycle@example.com",
+            "Password123!"
+        );
 
         _client.DefaultRequestHeaders.Authorization =
-            new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", registerResult.AccessToken);
+            new System.Net.Http.Headers.AuthenticationHeaderValue(
+                "Bearer",
+                registerResult.AccessToken
+            );
 
         var meResponse = await _client.GetAsync("/api/auth/me");
         meResponse.EnsureSuccessStatusCode();
@@ -302,6 +335,7 @@ public async Task InitializeAsync()
         var user1 = await RegisterUser("inviter3", "inviter3@example.com", "Password123!");
         var user2 = await RegisterUser("invitee3", "invitee3@example.com", "Password123!");
 
+        // fai la richiesta loggato come user 1
         _client.DefaultRequestHeaders.Authorization =
             new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", user1.AccessToken);
 
@@ -310,11 +344,18 @@ public async Task InitializeAsync()
         inviteResponse.EnsureSuccessStatusCode();
         var inviteResult = await inviteResponse.Content.ReadFromJsonAsync<InviteResponseDto>();
 
+        // fai la richiesta loggato come user 2
         _client.DefaultRequestHeaders.Authorization =
             new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", user2.AccessToken);
 
-        var acceptRequest = new AcceptInvitationRequestDto { InviteToken = inviteResult!.InviteToken };
-        var acceptResponse = await _client.PostAsJsonAsync("/api/auth/invite/accept", acceptRequest);
+        var acceptRequest = new AcceptInvitationRequestDto
+        {
+            InviteToken = inviteResult!.InviteToken,
+        };
+        var acceptResponse = await _client.PostAsJsonAsync(
+            "/api/auth/invite/accept",
+            acceptRequest
+        );
         acceptResponse.EnsureSuccessStatusCode();
 
         var meResponse = await _client.GetAsync("/api/auth/me");

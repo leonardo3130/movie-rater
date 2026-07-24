@@ -1,7 +1,6 @@
 using System.Reflection;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using System.Text.Json.Serialization.Metadata;
 using Microsoft.Extensions.Options;
 using MovieRaterApi.Infrastructure.Tmdb.Dtos.Requests;
 using MovieRaterApi.Infrastructure.Tmdb.Dtos.Responses;

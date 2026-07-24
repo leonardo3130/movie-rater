@@ -8,15 +8,44 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <!-- Code Coverage Reporting -->
+    <!-- Collects code coverage data during test execution to show which lines of code were tested -->
     <PackageReference Include="coverlet.collector" Version="6.0.4" />
+
+    <!-- Assertion Engine -->
+    <!-- Replaces standard xUnit Assert statements with highly readable, natural language assertions (e.g., result.Should().Be(expected)) -->
     <PackageReference Include="FluentAssertions" Version="8.10.0" />
+
+    <!-- Integration Testing Base Engine -->
+    <!-- Provides WebApplicationFactory to bootstrap your entire ASP.NET Core API in-memory for integration tests -->
     <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" Version="10.0.10" />
+
+    <!-- In-Memory Database provider for EF Core -->
+    <!-- Fast but limited in-memory provider used to substitute real databases. Best used with caution as it does not mimic relational DB behavior perfectly -->
     <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" Version="10.0.10" />
+
+    <!-- Core .NET Test Execution Infrastructure -->
+    <!-- The foundation SDK needed by MSBuild to discover and execute tests inside the project -->
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
+
+    <!-- Unit Test Isolation Engine (Mocking) -->
+    <!-- Allows you to fake and mock interfaces and virtual methods so you can isolate the unit under test from its dependencies -->
     <PackageReference Include="Moq" Version="4.20.72" />
+
+    <!-- PostgreSQL EF Core Database Provider -->
+    <!-- Maps your Entity Framework entities and queries to a PostgreSQL database schema -->
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.3" />
+
+    <!-- Ephemeral Database Infrastructure for Integration Tests -->
+    <!-- Programmatically spins up a clean, real PostgreSQL database instance inside a Docker container using IAsyncLifetime -->
     <PackageReference Include="Testcontainers.PostgreSql" Version="4.13.0" />
+
+    <!-- Unit / Integration Test Framework Core -->
+    <!-- The testing framework engine containing attributes like [Fact], [Theory], and lifecycle hooks like IAsyncLifetime -->
     <PackageReference Include="xunit" Version="2.9.3" />
+
+    <!-- Test Runner Integration -->
+    <!-- Plugs your xUnit tests directly into the Visual Studio Test Explorer and the dotnet test CLI engine -->
     <PackageReference Include="xunit.runner.visualstudio" Version="3.1.4" />
   </ItemGroup>
 
