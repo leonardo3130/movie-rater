@@ -24,6 +24,7 @@ professional engineering team rather than simply completing a portfolio project.
 - TailwindCSS
 - shadcn/ui
 - TanStack Query
+- Axios
 - Zustand
 - React Router
 - Framer Motion
