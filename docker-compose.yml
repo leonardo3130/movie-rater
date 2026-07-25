@@ -9,11 +9,15 @@ services:
       - "7283:8081"
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=https://+:8081;http://+:8080
+      - ASPNETCORE_Kestrel__Certificates__Default__Password=devcerts
+      - ASPNETCORE_Kestrel__Certificates__Default__Path=/https/aspnetapp.pfx
       - ConnectionStrings__DefaultConnection=Host=db;Port=5432;Database=movierater;Username=postgres;Password=postgres
     depends_on:
       db:
         condition: service_healthy
     volumes:
+      - ~/.aspnet/https:/https:ro
       - api-logs:/app/logs
 
   db:

@@ -16,7 +16,6 @@ EXPOSE 8080
 EXPOSE 8081
 
 ENV ASPNETCORE_URLS="http://+:8080"
-ENV ASPNETCORE_ENVIRONMENT=Production
 
 COPY --from=build /app/publish .
 
