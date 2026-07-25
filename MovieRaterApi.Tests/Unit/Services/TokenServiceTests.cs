@@ -13,7 +13,8 @@ namespace MovieRaterApi.Tests.Unit.Services;
 
 public class TokenServiceTests
 {
-    private const string TestSigningKey = "this-is-a-test-key-that-is-at-least-32-characters-long-for-testing";
+    private const string TestSigningKey =
+        "this-is-a-test-key-that-is-at-least-32-characters-long-for-testing";
     private readonly JwtOptions _jwtOptions;
     private readonly Mock<ILogger<TokenService>> _loggerMock;
     private readonly TokenService _sut;
@@ -27,7 +28,7 @@ public class TokenServiceTests
             Audience = "MovieRaterWeb",
             AccessTokenMinutes = 15,
             RefreshTokenDays = 30,
-            SigningKey = TestSigningKey
+            SigningKey = TestSigningKey,
         };
 
         _db = TestHelpers.CreateInMemoryDbContext();
@@ -39,19 +40,32 @@ public class TokenServiceTests
     [Fact]
     public void GenerateAccessToken_ShouldIncludeUserIdClaim()
     {
-        var user = new User { Id = Guid.NewGuid(), Username = "testuser", Email = "test@example.com" };
+        var user = new User
+        {
+            Id = Guid.NewGuid(),
+            Username = "testuser",
+            Email = "test@example.com",
+        };
 
         var token = _sut.GenerateAccessToken(user, null);
         var handler = new JwtSecurityTokenHandler();
         var jwtToken = handler.ReadJwtToken(token);
 
-        jwtToken.Claims.First(c => c.Type == ClaimTypes.NameIdentifier).Value.Should().Be(user.Id.ToString());
+        jwtToken
+            .Claims.First(c => c.Type == ClaimTypes.NameIdentifier)
+            .Value.Should()
+            .Be(user.Id.ToString());
     }
 
     [Fact]
     public void GenerateAccessToken_ShouldIncludeUsernameClaim()
     {
-        var user = new User { Id = Guid.NewGuid(), Username = "testuser", Email = "test@example.com" };
+        var user = new User
+        {
+            Id = Guid.NewGuid(),
+            Username = "testuser",
+            Email = "test@example.com",
+        };
 
         var token = _sut.GenerateAccessToken(user, null);
         var handler = new JwtSecurityTokenHandler();
@@ -63,19 +77,32 @@ public class TokenServiceTests
     [Fact]
     public void GenerateAccessToken_ShouldIncludeEmailClaim()
     {
-        var user = new User { Id = Guid.NewGuid(), Username = "testuser", Email = "test@example.com" };
+        var user = new User
+        {
+            Id = Guid.NewGuid(),
+            Username = "testuser",
+            Email = "test@example.com",
+        };
 
         var token = _sut.GenerateAccessToken(user, null);
         var handler = new JwtSecurityTokenHandler();
         var jwtToken = handler.ReadJwtToken(token);
 
-        jwtToken.Claims.First(c => c.Type == ClaimTypes.Email).Value.Should().Be("test@example.com");
+        jwtToken
+            .Claims.First(c => c.Type == ClaimTypes.Email)
+            .Value.Should()
+            .Be("test@example.com");
     }
 
     [Fact]
     public void GenerateAccessToken_ShouldIncludeCoupleIdClaim_WhenProvided()
     {
-        var user = new User { Id = Guid.NewGuid(), Username = "testuser", Email = "test@example.com" };
+        var user = new User
+        {
+            Id = Guid.NewGuid(),
+            Username = "testuser",
+            Email = "test@example.com",
+        };
         var coupleId = Guid.NewGuid();
 
         var token = _sut.GenerateAccessToken(user, coupleId);
@@ -88,7 +115,12 @@ public class TokenServiceTests
     [Fact]
     public void GenerateAccessToken_ShouldNotIncludeCoupleIdClaim_WhenNull()
     {
-        var user = new User { Id = Guid.NewGuid(), Username = "testuser", Email = "test@example.com" };
+        var user = new User
+        {
+            Id = Guid.NewGuid(),
+            Username = "testuser",
+            Email = "test@example.com",
+        };
 
         var token = _sut.GenerateAccessToken(user, null);
         var handler = new JwtSecurityTokenHandler();
@@ -100,19 +132,31 @@ public class TokenServiceTests
     [Fact]
     public void GenerateAccessToken_ShouldHaveExpirationInTheFuture()
     {
-        var user = new User { Id = Guid.NewGuid(), Username = "testuser", Email = "test@example.com" };
+        var user = new User
+        {
+            Id = Guid.NewGuid(),
+            Username = "testuser",
+            Email = "test@example.com",
+        };
 
         var token = _sut.GenerateAccessToken(user, null);
         var handler = new JwtSecurityTokenHandler();
         var jwtToken = handler.ReadJwtToken(token);
 
-        jwtToken.ValidTo.Should().BeCloseTo(DateTime.UtcNow.AddMinutes(15), TimeSpan.FromSeconds(10));
+        jwtToken
+            .ValidTo.Should()
+            .BeCloseTo(DateTime.UtcNow.AddMinutes(15), TimeSpan.FromSeconds(10));
     }
 
     [Fact]
     public void GenerateAccessToken_ShouldHaveCorrectIssuerAndAudience()
     {
-        var user = new User { Id = Guid.NewGuid(), Username = "testuser", Email = "test@example.com" };
+        var user = new User
+        {
+            Id = Guid.NewGuid(),
+            Username = "testuser",
+            Email = "test@example.com",
+        };
 
         var token = _sut.GenerateAccessToken(user, null);
         var handler = new JwtSecurityTokenHandler();
@@ -156,12 +200,15 @@ public class TokenServiceTests
     public async Task IsRefreshTokenValidAsync_ShouldReturnTrue_WhenTokenExistsAndNotRevokedAndNotExpired()
     {
         var tokenHash = "valid-hash";
-        _db.Set<RefreshToken>().Add(new RefreshToken
-        {
-            TokenHash = tokenHash,
-            ExpiresAt = DateTime.UtcNow.AddDays(1),
-            RevokedAt = null
-        });
+        _db.Set<RefreshToken>()
+            .Add(
+                new RefreshToken
+                {
+                    TokenHash = tokenHash,
+                    ExpiresAt = DateTime.UtcNow.AddDays(1),
+                    RevokedAt = null,
+                }
+            );
         await _db.SaveChangesAsync();
 
         var result = await _sut.IsRefreshTokenValidAsync(tokenHash);
@@ -173,12 +220,15 @@ public class TokenServiceTests
     public async Task IsRefreshTokenValidAsync_ShouldReturnFalse_WhenTokenIsRevoked()
     {
         var tokenHash = "revoked-hash";
-        _db.Set<RefreshToken>().Add(new RefreshToken
-        {
-            TokenHash = tokenHash,
-            ExpiresAt = DateTime.UtcNow.AddDays(1),
-            RevokedAt = DateTime.UtcNow
-        });
+        _db.Set<RefreshToken>()
+            .Add(
+                new RefreshToken
+                {
+                    TokenHash = tokenHash,
+                    ExpiresAt = DateTime.UtcNow.AddDays(1),
+                    RevokedAt = DateTime.UtcNow,
+                }
+            );
         await _db.SaveChangesAsync();
 
         var result = await _sut.IsRefreshTokenValidAsync(tokenHash);
@@ -190,12 +240,15 @@ public class TokenServiceTests
     public async Task IsRefreshTokenValidAsync_ShouldReturnFalse_WhenTokenIsExpired()
     {
         var tokenHash = "expired-hash";
-        _db.Set<RefreshToken>().Add(new RefreshToken
-        {
-            TokenHash = tokenHash,
-            ExpiresAt = DateTime.UtcNow.AddDays(-1),
-            RevokedAt = null
-        });
+        _db.Set<RefreshToken>()
+            .Add(
+                new RefreshToken
+                {
+                    TokenHash = tokenHash,
+                    ExpiresAt = DateTime.UtcNow.AddDays(-1),
+                    RevokedAt = null,
+                }
+            );
         await _db.SaveChangesAsync();
 
         var result = await _sut.IsRefreshTokenValidAsync(tokenHash);
@@ -219,7 +272,7 @@ public class TokenServiceTests
         {
             TokenHash = tokenHash,
             ExpiresAt = DateTime.UtcNow.AddDays(1),
-            RevokedAt = null
+            RevokedAt = null,
         };
         _db.Set<RefreshToken>().Add(token);
         await _db.SaveChangesAsync();
@@ -238,7 +291,7 @@ public class TokenServiceTests
         {
             TokenHash = tokenHash,
             ExpiresAt = DateTime.UtcNow.AddDays(1),
-            RevokedAt = null
+            RevokedAt = null,
         };
         _db.Set<RefreshToken>().Add(token);
         await _db.SaveChangesAsync();
