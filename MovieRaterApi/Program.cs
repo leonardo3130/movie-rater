@@ -11,6 +11,8 @@ using MovieRaterApi.Features.Authentication.Infrastructure;
 using MovieRaterApi.Features.Authentication.Interfaces;
 using MovieRaterApi.Features.Authentication.Options;
 using MovieRaterApi.Features.Authentication.Services;
+using MovieRaterApi.Features.Movies.Interfaces;
+using MovieRaterApi.Features.Movies.Services;
 using MovieRaterApi.Infrastructure.Tmdb;
 using MovieRaterApi.Infrastructure.Tmdb.Handlers;
 using MovieRaterApi.Infrastructure.Tmdb.Options;
@@ -86,6 +88,8 @@ try
     builder.Services.AddScoped<ITokenService, TokenService>();
     builder.Services.AddScoped<IAuthService, AuthService>();
     builder.Services.AddScoped<ICoupleInvitationService, CoupleInvitationService>();
+    builder.Services.AddScoped<IMovieService, MovieService>();
+    builder.Services.AddMemoryCache();
 
     builder.Services.AddScoped<ICurrentUser>(sp =>
     {
