@@ -35,8 +35,18 @@ public class CoupleInvitationServiceTests
         var inviterId = Guid.NewGuid();
         var inviteeId = Guid.NewGuid();
         _db.Users.AddRange(
-            new User { Id = inviterId, Username = "user1", Email = "user1@example.com" },
-            new User { Id = inviteeId, Username = "user2", Email = "user2@example.com" }
+            new User
+            {
+                Id = inviterId,
+                Username = "user1",
+                Email = "user1@example.com",
+            },
+            new User
+            {
+                Id = inviteeId,
+                Username = "user2",
+                Email = "user2@example.com",
+            }
         );
         await _db.SaveChangesAsync();
 
@@ -56,14 +66,20 @@ public class CoupleInvitationServiceTests
 
         await FluentActions
             .Awaiting(() => _sut.InviteAsync(Guid.NewGuid(), request))
-            .Should().ThrowAsync<InvalidOperationException>()
+            .Should()
+            .ThrowAsync<InvalidOperationException>()
             .WithMessage("Inviter user not found.");
     }
 
     [Fact]
     public async Task InviteAsync_ShouldThrow_WhenInviteeNotFound()
     {
-        var inviter = new User { Id = Guid.NewGuid(), Username = "user1", Email = "user1@example.com" };
+        var inviter = new User
+        {
+            Id = Guid.NewGuid(),
+            Username = "user1",
+            Email = "user1@example.com",
+        };
         _db.Users.Add(inviter);
         await _db.SaveChangesAsync();
 
@@ -71,7 +87,8 @@ public class CoupleInvitationServiceTests
 
         await FluentActions
             .Awaiting(() => _sut.InviteAsync(inviter.Id, request))
-            .Should().ThrowAsync<InvalidOperationException>()
+            .Should()
+            .ThrowAsync<InvalidOperationException>()
             .WithMessage("No user found with this email address.");
     }
 
@@ -79,14 +96,22 @@ public class CoupleInvitationServiceTests
     public async Task InviteAsync_ShouldThrow_WhenInvitingYourself()
     {
         var userId = Guid.NewGuid();
-        _db.Users.Add(new User { Id = userId, Username = "self", Email = "self@example.com" });
+        _db.Users.Add(
+            new User
+            {
+                Id = userId,
+                Username = "self",
+                Email = "self@example.com",
+            }
+        );
         await _db.SaveChangesAsync();
 
         var request = new InvitePartnerRequestDto { InviteeEmail = "self@example.com" };
 
         await FluentActions
             .Awaiting(() => _sut.InviteAsync(userId, request))
-            .Should().ThrowAsync<InvalidOperationException>()
+            .Should()
+            .ThrowAsync<InvalidOperationException>()
             .WithMessage("You cannot invite yourself.");
     }
 
@@ -96,17 +121,35 @@ public class CoupleInvitationServiceTests
         var inviterId = Guid.NewGuid();
         var inviteeId = Guid.NewGuid();
         _db.Users.AddRange(
-            new User { Id = inviterId, Username = "user1", Email = "user1@example.com" },
-            new User { Id = inviteeId, Username = "user2", Email = "user2@example.com" }
+            new User
+            {
+                Id = inviterId,
+                Username = "user1",
+                Email = "user1@example.com",
+            },
+            new User
+            {
+                Id = inviteeId,
+                Username = "user2",
+                Email = "user2@example.com",
+            }
         );
-        _db.Couples.Add(new Couple { Id = Guid.NewGuid(), User1Id = inviterId, User2Id = inviteeId });
+        _db.Couples.Add(
+            new Couple
+            {
+                Id = Guid.NewGuid(),
+                User1Id = inviterId,
+                User2Id = inviteeId,
+            }
+        );
         await _db.SaveChangesAsync();
 
         var request = new InvitePartnerRequestDto { InviteeEmail = "user2@example.com" };
 
         await FluentActions
             .Awaiting(() => _sut.InviteAsync(inviterId, request))
-            .Should().ThrowAsync<InvalidOperationException>()
+            .Should()
+            .ThrowAsync<InvalidOperationException>()
             .WithMessage("You are already connected with this user.");
     }
 
@@ -116,22 +159,36 @@ public class CoupleInvitationServiceTests
         var inviterId = Guid.NewGuid();
         var inviteeId = Guid.NewGuid();
         _db.Users.AddRange(
-            new User { Id = inviterId, Username = "user1", Email = "user1@example.com" },
-            new User { Id = inviteeId, Username = "user2", Email = "user2@example.com" }
+            new User
+            {
+                Id = inviterId,
+                Username = "user1",
+                Email = "user1@example.com",
+            },
+            new User
+            {
+                Id = inviteeId,
+                Username = "user2",
+                Email = "user2@example.com",
+            }
         );
-        _db.Set<CoupleInvitation>().Add(new CoupleInvitation
-        {
-            InviterUserId = inviterId,
-            InviteeEmail = "user2@example.com",
-            Status = InvitationStatus.Pending
-        });
+        _db.Set<CoupleInvitation>()
+            .Add(
+                new CoupleInvitation
+                {
+                    InviterUserId = inviterId,
+                    InviteeEmail = "user2@example.com",
+                    Status = InvitationStatus.Pending,
+                }
+            );
         await _db.SaveChangesAsync();
 
         var request = new InvitePartnerRequestDto { InviteeEmail = "user2@example.com" };
 
         await FluentActions
             .Awaiting(() => _sut.InviteAsync(inviterId, request))
-            .Should().ThrowAsync<InvalidOperationException>()
+            .Should()
+            .ThrowAsync<InvalidOperationException>()
             .WithMessage("A pending invitation already exists for this user.");
     }
 
@@ -141,8 +198,18 @@ public class CoupleInvitationServiceTests
         var inviterId = Guid.NewGuid();
         var acceptorId = Guid.NewGuid();
         _db.Users.AddRange(
-            new User { Id = inviterId, Username = "user1", Email = "user1@example.com" },
-            new User { Id = acceptorId, Username = "user2", Email = "user2@example.com" }
+            new User
+            {
+                Id = inviterId,
+                Username = "user1",
+                Email = "user1@example.com",
+            },
+            new User
+            {
+                Id = acceptorId,
+                Username = "user2",
+                Email = "user2@example.com",
+            }
         );
         var rawToken = "valid-raw-token";
         var invitation = new CoupleInvitation
@@ -152,7 +219,7 @@ public class CoupleInvitationServiceTests
             InviteeEmail = "user2@example.com",
             InviteTokenHash = HashToken(rawToken),
             Status = InvitationStatus.Pending,
-            ExpiresAt = DateTime.UtcNow.AddDays(1)
+            ExpiresAt = DateTime.UtcNow.AddDays(1),
         };
         _db.Set<CoupleInvitation>().Add(invitation);
         await _db.SaveChangesAsync();
@@ -173,7 +240,8 @@ public class CoupleInvitationServiceTests
 
         await FluentActions
             .Awaiting(() => _sut.AcceptInvitationAsync(Guid.NewGuid(), request))
-            .Should().ThrowAsync<InvalidOperationException>()
+            .Should()
+            .ThrowAsync<InvalidOperationException>()
             .WithMessage("User not found.");
     }
 
@@ -181,28 +249,41 @@ public class CoupleInvitationServiceTests
     public async Task AcceptInvitationAsync_ShouldThrow_WhenTokenInvalid()
     {
         var userId = Guid.NewGuid();
-        _db.Users.Add(new User { Id = userId, Username = "user", Email = "user@example.com" });
+        _db.Users.Add(
+            new User
+            {
+                Id = userId,
+                Username = "user",
+                Email = "user@example.com",
+            }
+        );
         await _db.SaveChangesAsync();
 
         var request = new AcceptInvitationRequestDto { InviteToken = "invalid-token" };
 
         await FluentActions
             .Awaiting(() => _sut.AcceptInvitationAsync(userId, request))
-            .Should().ThrowAsync<InvalidOperationException>()
+            .Should()
+            .ThrowAsync<InvalidOperationException>()
             .WithMessage("Invalid invitation token.");
     }
 
     [Fact]
     public async Task AcceptInvitationAsync_ShouldThrow_WhenNotPending()
     {
-        var acceptor = new User { Id = Guid.NewGuid(), Username = "user", Email = "user@example.com" };
+        var acceptor = new User
+        {
+            Id = Guid.NewGuid(),
+            Username = "user",
+            Email = "user@example.com",
+        };
         _db.Users.Add(acceptor);
         var rawToken = "raw-token";
         var invitation = new CoupleInvitation
         {
             InviteTokenHash = HashToken(rawToken),
             Status = InvitationStatus.Accepted,
-            ExpiresAt = DateTime.UtcNow.AddDays(1)
+            ExpiresAt = DateTime.UtcNow.AddDays(1),
         };
         _db.Set<CoupleInvitation>().Add(invitation);
         await _db.SaveChangesAsync();
@@ -211,21 +292,27 @@ public class CoupleInvitationServiceTests
 
         await FluentActions
             .Awaiting(() => _sut.AcceptInvitationAsync(acceptor.Id, request))
-            .Should().ThrowAsync<InvalidOperationException>()
+            .Should()
+            .ThrowAsync<InvalidOperationException>()
             .WithMessage("Invitation is accepted and cannot be accepted.");
     }
 
     [Fact]
     public async Task AcceptInvitationAsync_ShouldMarkExpired_WhenExpired()
     {
-        var acceptor = new User { Id = Guid.NewGuid(), Username = "user", Email = "user@example.com" };
+        var acceptor = new User
+        {
+            Id = Guid.NewGuid(),
+            Username = "user",
+            Email = "user@example.com",
+        };
         _db.Users.Add(acceptor);
         var rawToken = "raw-token";
         var invitation = new CoupleInvitation
         {
             InviteTokenHash = HashToken(rawToken),
             Status = InvitationStatus.Pending,
-            ExpiresAt = DateTime.UtcNow.AddDays(-1)
+            ExpiresAt = DateTime.UtcNow.AddDays(-1),
         };
         _db.Set<CoupleInvitation>().Add(invitation);
         await _db.SaveChangesAsync();
@@ -234,7 +321,8 @@ public class CoupleInvitationServiceTests
 
         await FluentActions
             .Awaiting(() => _sut.AcceptInvitationAsync(acceptor.Id, request))
-            .Should().ThrowAsync<InvalidOperationException>()
+            .Should()
+            .ThrowAsync<InvalidOperationException>()
             .WithMessage("Invitation has expired.");
 
         invitation.Status.Should().Be(InvitationStatus.Expired);
@@ -244,14 +332,21 @@ public class CoupleInvitationServiceTests
     public async Task AcceptInvitationAsync_ShouldThrow_WhenEmailDoesNotMatch()
     {
         var acceptorId = Guid.NewGuid();
-        _db.Users.Add(new User { Id = acceptorId, Username = "user", Email = "other@example.com" });
+        _db.Users.Add(
+            new User
+            {
+                Id = acceptorId,
+                Username = "user",
+                Email = "other@example.com",
+            }
+        );
         var rawToken = "raw-token";
         var invitation = new CoupleInvitation
         {
             InviteTokenHash = HashToken(rawToken),
             InviteeEmail = "invited@example.com",
             Status = InvitationStatus.Pending,
-            ExpiresAt = DateTime.UtcNow.AddDays(1)
+            ExpiresAt = DateTime.UtcNow.AddDays(1),
         };
         _db.Set<CoupleInvitation>().Add(invitation);
         await _db.SaveChangesAsync();
@@ -260,7 +355,8 @@ public class CoupleInvitationServiceTests
 
         await FluentActions
             .Awaiting(() => _sut.AcceptInvitationAsync(acceptorId, request))
-            .Should().ThrowAsync<UnauthorizedAccessException>()
+            .Should()
+            .ThrowAsync<UnauthorizedAccessException>()
             .WithMessage("This invitation was not sent to you.");
     }
 }

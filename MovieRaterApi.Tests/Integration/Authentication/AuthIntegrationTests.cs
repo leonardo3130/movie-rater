@@ -18,7 +18,7 @@ public class AuthIntegrationTests : IAsyncLifetime
 
     public AuthIntegrationTests()
     {
-        // crea un db postgres senza l.ausilio del docker compose
+        // crea un db postgres senza l'ausilio del docker compose
         _postgresContainer = new PostgreSqlBuilder("postgres:17")
             .WithCleanUp(true)
             .WithDatabase("movierater_test")
@@ -109,7 +109,7 @@ public class AuthIntegrationTests : IAsyncLifetime
     }
 
     [Fact]
-    public async Task Register_ShouldReturn409_WhenEmailAlreadyExists()
+    public async Task Register_ShouldReturn500_WhenEmailAlreadyExists()
     {
         await RegisterUser("user1", "duplicate@example.com", "Password123!");
 
@@ -162,7 +162,7 @@ public class AuthIntegrationTests : IAsyncLifetime
     }
 
     [Fact]
-    public async Task Login_ShouldReturn401_WhenCredentialsAreInvalid()
+    public async Task Login_ShouldReturn500_WhenCredentialsAreInvalid()
     {
         await RegisterUser("loginfail", "loginfail@example.com", "Password123!");
 
@@ -178,7 +178,7 @@ public class AuthIntegrationTests : IAsyncLifetime
     }
 
     [Fact]
-    public async Task Login_ShouldReturn401_WhenUserNotFound()
+    public async Task Login_ShouldReturn500_WhenUserNotFound()
     {
         var request = new LoginRequestDto
         {
@@ -316,7 +316,7 @@ public class AuthIntegrationTests : IAsyncLifetime
     }
 
     [Fact]
-    public async Task InvitePartner_ShouldReturn400_WhenInviteeNotFound()
+    public async Task InvitePartner_ShouldReturn500_WhenInviteeNotFound()
     {
         var user1 = await RegisterUser("inviter2", "inviter2@example.com", "Password123!");
 
@@ -368,7 +368,7 @@ public class AuthIntegrationTests : IAsyncLifetime
     }
 
     [Fact]
-    public async Task AcceptInvitation_ShouldReturn400_WhenTokenInvalid()
+    public async Task AcceptInvitation_ShouldReturn500_WhenTokenInvalid()
     {
         var user2 = await RegisterUser("invitee4", "invitee4@example.com", "Password123!");
 

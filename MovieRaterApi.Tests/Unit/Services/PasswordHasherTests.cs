@@ -25,8 +25,8 @@ public class PasswordHasherTests
     public void Verify_WithCorrectPassword_ShouldReturnTrue()
     {
         var password = "correct-horse-battery-staple";
-        var hash = _sut.Hash(password);
 
+        var hash = _sut.Hash(password);
         var result = _sut.Verify(password, hash);
 
         result.Should().BeTrue();

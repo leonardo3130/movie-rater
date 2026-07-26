@@ -108,8 +108,6 @@ public class MovieServiceTests
     {
         var userId = Guid.NewGuid();
         var coupleId = Guid.NewGuid();
-        _currentUserMock.Setup(u => u.UserId).Returns(userId);
-        _currentUserMock.Setup(u => u.CoupleId).Returns(coupleId);
 
         var db = TestHelpers.CreateInMemoryDbContext();
         var movieId = Guid.NewGuid();
@@ -149,6 +147,9 @@ public class MovieServiceTests
             _loggerMock.Object
         );
 
+        _currentUserMock.Setup(u => u.UserId).Returns(userId);
+        _currentUserMock.Setup(u => u.CoupleId).Returns(coupleId);
+
         var tmdbResponse = new TmdbPagedResponse<TmdbSearchMovieItem>
         {
             Page = 1,
@@ -172,8 +173,16 @@ public class MovieServiceTests
     }
 
     [Fact]
-    public async Task DiscoverMoviesAsync_ShouldMapGenreIdsAndSortBy()
+    public async Task DiscoverMoviesAsync_ShouldPassDiscoverQueryParametersToTmdb()
     {
+        var request = new DiscoverMoviesRequestDto
+        {
+            GenreIds = "28,12",
+            SortBy = "vote_average.desc",
+            VoteAverageGte = 7.0,
+            PrimaryReleaseYear = "2020",
+        };
+
         _tmdbMock
             .Setup(t =>
                 t.GetDiscoverMoviesAsync(
@@ -196,21 +205,18 @@ public class MovieServiceTests
                 }
             );
 
-        var request = new DiscoverMoviesRequestDto
-        {
-            GenreIds = "28,12",
-            SortBy = "vote_average.desc",
-            VoteAverageGte = 7.0,
-            PrimaryReleaseYear = "2020",
-        };
-
         var result = await _sut.DiscoverMoviesAsync(request);
 
         result.Should().NotBeNull();
         _tmdbMock.Verify(
             t =>
                 t.GetDiscoverMoviesAsync(
-                    It.IsAny<TmdbDiscoverMovieQuery>(),
+                    It.Is<TmdbDiscoverMovieQuery>(q =>
+                        q.WithGenres == "28,12"
+                        && q.SortBy == "vote_average.desc"
+                        && q.VoteAverageGte == 7.0
+                        && q.PrimaryReleaseYear == "2020"
+                    ),
                     It.IsAny<CancellationToken>()
                 ),
             Times.Once
@@ -438,7 +444,7 @@ public class MovieServiceTests
     }
 
     [Fact]
-    public async Task GetMovieDetailsAsync_ShouldUpsertMovieInDb()
+    public async Task GetMovieDetailsAsync_ShouldInsertMovieIntoDatabase()
     {
         var db = TestHelpers.CreateInMemoryDbContext();
         var svc = new MovieService(
@@ -802,8 +808,6 @@ public class MovieServiceTests
     {
         var userId = Guid.NewGuid();
         var coupleId = Guid.NewGuid();
-        _currentUserMock.Setup(u => u.UserId).Returns(userId);
-        _currentUserMock.Setup(u => u.CoupleId).Returns(coupleId);
 
         var db = TestHelpers.CreateInMemoryDbContext();
         var movieId = Guid.NewGuid();
@@ -842,6 +846,9 @@ public class MovieServiceTests
             _cache,
             _loggerMock.Object
         );
+
+        _currentUserMock.Setup(u => u.UserId).Returns(userId);
+        _currentUserMock.Setup(u => u.CoupleId).Returns(coupleId);
 
         var tmdbDetails = new TmdbMovieDetails
         {

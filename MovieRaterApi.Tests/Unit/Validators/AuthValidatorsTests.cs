@@ -19,6 +19,7 @@ public class RegisterRequestValidatorTests
                 Password = "ValidPass1!",
             }
         );
+
         result.ShouldHaveValidationErrorFor(x => x.Username);
     }
 
@@ -33,6 +34,7 @@ public class RegisterRequestValidatorTests
                 Password = "ValidPass1!",
             }
         );
+
         result.ShouldHaveValidationErrorFor(x => x.Email);
     }
 
@@ -47,6 +49,7 @@ public class RegisterRequestValidatorTests
                 Password = "ValidPass1!",
             }
         );
+
         result.ShouldHaveValidationErrorFor(x => x.Email);
     }
 
@@ -61,6 +64,7 @@ public class RegisterRequestValidatorTests
                 Password = "Ab1!",
             }
         );
+
         result.ShouldHaveValidationErrorFor(x => x.Password);
     }
 
@@ -75,6 +79,7 @@ public class RegisterRequestValidatorTests
                 Password = "",
             }
         );
+
         result.ShouldHaveValidationErrorFor(x => x.Password);
     }
 
@@ -89,6 +94,7 @@ public class RegisterRequestValidatorTests
                 Password = "ValidPass1!",
             }
         );
+
         result.ShouldNotHaveAnyValidationErrors();
     }
 }
@@ -101,6 +107,7 @@ public class LoginRequestValidatorTests
     public void ShouldHaveError_WhenEmailIsEmpty()
     {
         var result = _sut.TestValidate(new LoginRequestDto { Email = "", Password = "password" });
+
         result.ShouldHaveValidationErrorFor(x => x.Email);
     }
 
@@ -110,6 +117,7 @@ public class LoginRequestValidatorTests
         var result = _sut.TestValidate(
             new LoginRequestDto { Email = "invalid", Password = "password" }
         );
+
         result.ShouldHaveValidationErrorFor(x => x.Email);
     }
 
@@ -119,6 +127,7 @@ public class LoginRequestValidatorTests
         var result = _sut.TestValidate(
             new LoginRequestDto { Email = "test@example.com", Password = "" }
         );
+
         result.ShouldHaveValidationErrorFor(x => x.Password);
     }
 
@@ -128,6 +137,7 @@ public class LoginRequestValidatorTests
         var result = _sut.TestValidate(
             new LoginRequestDto { Email = "test@example.com", Password = "mypassword" }
         );
+
         result.ShouldNotHaveAnyValidationErrors();
     }
 }
@@ -140,6 +150,7 @@ public class InvitePartnerRequestValidatorTests
     public void ShouldHaveError_WhenEmailIsEmpty()
     {
         var result = _sut.TestValidate(new InvitePartnerRequestDto { InviteeEmail = "" });
+
         result.ShouldHaveValidationErrorFor(x => x.InviteeEmail);
     }
 
@@ -149,6 +160,7 @@ public class InvitePartnerRequestValidatorTests
         var result = _sut.TestValidate(
             new InvitePartnerRequestDto { InviteeEmail = "not-an-email" }
         );
+
         result.ShouldHaveValidationErrorFor(x => x.InviteeEmail);
     }
 
@@ -158,6 +170,7 @@ public class InvitePartnerRequestValidatorTests
         var result = _sut.TestValidate(
             new InvitePartnerRequestDto { InviteeEmail = "partner@example.com" }
         );
+
         result.ShouldNotHaveAnyValidationErrors();
     }
 }
@@ -170,6 +183,7 @@ public class AcceptInvitationRequestValidatorTests
     public void ShouldHaveError_WhenTokenIsEmpty()
     {
         var result = _sut.TestValidate(new AcceptInvitationRequestDto { InviteToken = "" });
+
         result.ShouldHaveValidationErrorFor(x => x.InviteToken);
     }
 
@@ -179,6 +193,7 @@ public class AcceptInvitationRequestValidatorTests
         var result = _sut.TestValidate(
             new AcceptInvitationRequestDto { InviteToken = "some-valid-token" }
         );
+
         result.ShouldNotHaveAnyValidationErrors();
     }
 }

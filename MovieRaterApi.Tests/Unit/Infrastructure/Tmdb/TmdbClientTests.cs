@@ -82,7 +82,6 @@ public class TmdbClientTests
         result.Results.Should().HaveCount(1);
         result.Results[0].Title.Should().Be("Fight Club");
         result.Results[0].Id.Should().Be(550);
-
         _capturedRequestUri!.AbsolutePath.Should().Be("/3/search/movie");
         _capturedRequestUri.Query.Should().Contain("query=fight%20club");
         _capturedRequestUri.Query.Should().Contain("include_adult=false");
@@ -382,13 +381,11 @@ public class TmdbClientTests
         _handlerMock
             .Protected()
             .Setup<Task<HttpResponseMessage>>(
-                "SendAsync", // metodo
-                ItExpr.IsAny<HttpRequestMessage>(), // argomenti
-                ItExpr.IsAny<CancellationToken>() // ItExpr è una wildcard che accetta ogni
-            // argomento purché il tipo sia corretto
-            // ItExpr  va usato con protected per mock di calssi built.in solitamente
+                "SendAsync", // nome stringato perché è protected e non accessibili dall'esterno
+                ItExpr.IsAny<HttpRequestMessage>(), // wildcard
+                ItExpr.IsAny<CancellationToken>()
             )
-            .ReturnsAsync( // define mocked method behaviour
+            .ReturnsAsync(
                 (HttpRequestMessage request, CancellationToken _) =>
                 {
                     _capturedRequestUri = request.RequestUri;
