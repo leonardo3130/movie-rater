@@ -97,6 +97,46 @@ public class TmdbClient : ITmdbClient
         return await SendAsync<TmdbConfiguration>("configuration", ct);
     }
 
+    public async Task<TmdbPagedResponse<TmdbSearchMovieItem>> GetDiscoverMoviesAsync(
+        TmdbDiscoverMovieQuery query,
+        CancellationToken ct = default
+    )
+    {
+        ApplyDefaultLanguage(query);
+        var url = $"discover/movie{BuildQueryString(query)}";
+        return await SendAsync<TmdbPagedResponse<TmdbSearchMovieItem>>(url, ct);
+    }
+
+    public async Task<TmdbPagedResponse<TmdbSearchMovieItem>> GetPopularMoviesAsync(
+        TmdbMovieListQuery query,
+        CancellationToken ct = default
+    )
+    {
+        ApplyDefaultLanguage(query);
+        var url = $"movie/popular{BuildQueryString(query)}";
+        return await SendAsync<TmdbPagedResponse<TmdbSearchMovieItem>>(url, ct);
+    }
+
+    public async Task<TmdbPagedResponse<TmdbSearchMovieItem>> GetNowPlayingMoviesAsync(
+        TmdbMovieListQuery query,
+        CancellationToken ct = default
+    )
+    {
+        ApplyDefaultLanguage(query);
+        var url = $"movie/now_playing{BuildQueryString(query)}";
+        return await SendAsync<TmdbPagedResponse<TmdbSearchMovieItem>>(url, ct);
+    }
+
+    public async Task<TmdbPagedResponse<TmdbSearchMovieItem>> GetTopRatedMoviesAsync(
+        TmdbMovieListQuery query,
+        CancellationToken ct = default
+    )
+    {
+        ApplyDefaultLanguage(query);
+        var url = $"movie/top_rated{BuildQueryString(query)}";
+        return await SendAsync<TmdbPagedResponse<TmdbSearchMovieItem>>(url, ct);
+    }
+
     private async Task<TResponse> SendAsync<TResponse>(string relativeUrl, CancellationToken ct)
     {
         _logger.LogDebug("Requesting TMDB endpoint: {Url}", relativeUrl);
@@ -186,6 +226,18 @@ public class TmdbClient : ITmdbClient
     }
 
     private void ApplyDefaultLanguage(TmdbGenreListQuery query)
+    {
+        if (string.IsNullOrWhiteSpace(query.Language))
+            query.Language = _options.DefaultLanguage;
+    }
+
+    private void ApplyDefaultLanguage(TmdbDiscoverMovieQuery query)
+    {
+        if (string.IsNullOrWhiteSpace(query.Language))
+            query.Language = _options.DefaultLanguage;
+    }
+
+    private void ApplyDefaultLanguage(TmdbMovieListQuery query)
     {
         if (string.IsNullOrWhiteSpace(query.Language))
             query.Language = _options.DefaultLanguage;

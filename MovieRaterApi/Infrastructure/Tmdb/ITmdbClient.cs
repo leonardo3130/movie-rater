@@ -36,4 +36,24 @@ public interface ITmdbClient
     );
 
     Task<TmdbConfiguration> GetConfigurationAsync(CancellationToken ct = default);
+
+    Task<TmdbPagedResponse<TmdbSearchMovieItem>> GetDiscoverMoviesAsync(
+        TmdbDiscoverMovieQuery query,
+        CancellationToken ct = default
+    );
+
+    Task<TmdbPagedResponse<TmdbSearchMovieItem>> GetPopularMoviesAsync(
+        TmdbMovieListQuery query,
+        CancellationToken ct = default
+    );
+
+    Task<TmdbPagedResponse<TmdbSearchMovieItem>> GetNowPlayingMoviesAsync(
+        TmdbMovieListQuery query,
+        CancellationToken ct = default
+    );
+
+    Task<TmdbPagedResponse<TmdbSearchMovieItem>> GetTopRatedMoviesAsync(
+        TmdbMovieListQuery query,
+        CancellationToken ct = default
+    );
 }
