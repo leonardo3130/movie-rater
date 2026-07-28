@@ -19,6 +19,8 @@ using MovieRaterApi.Features.WatchSessions.Interfaces;
 using MovieRaterApi.Features.WatchSessions.Services;
 using MovieRaterApi.Features.UserMovie.Interfaces;
 using MovieRaterApi.Features.UserMovie.Services;
+using MovieRaterApi.Features.Dashboard.Interfaces;
+using MovieRaterApi.Features.Dashboard.Services;
 using MovieRaterApi.Infrastructure.Tmdb;
 using MovieRaterApi.Infrastructure.Tmdb.Handlers;
 using MovieRaterApi.Infrastructure.Tmdb.Options;
@@ -94,6 +96,7 @@ builder.Services.AddScoped<IMovieService, MovieService>();
 builder.Services.AddScoped<IWatchSessionService, WatchSessionService>();
 builder.Services.AddScoped<IRatingService, RatingService>();
 builder.Services.AddScoped<IUserMovieService, UserMovieService>();
+builder.Services.AddScoped<IDashboardService, DashboardService>();
 builder.Services.AddMemoryCache();
 
 builder.Services.AddScoped<ICurrentUser>(sp =>
