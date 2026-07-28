@@ -11,23 +11,23 @@ using MovieRaterApi.Features.Authentication.Infrastructure;
 using MovieRaterApi.Features.Authentication.Interfaces;
 using MovieRaterApi.Features.Authentication.Options;
 using MovieRaterApi.Features.Authentication.Services;
+using MovieRaterApi.Features.Dashboard.Interfaces;
+using MovieRaterApi.Features.Dashboard.Services;
 using MovieRaterApi.Features.Movies.Interfaces;
 using MovieRaterApi.Features.Movies.Services;
 using MovieRaterApi.Features.Ratings.Interfaces;
 using MovieRaterApi.Features.Ratings.Services;
-using MovieRaterApi.Features.WatchSessions.Interfaces;
-using MovieRaterApi.Features.WatchSessions.Services;
 using MovieRaterApi.Features.UserMovie.Interfaces;
 using MovieRaterApi.Features.UserMovie.Services;
-using MovieRaterApi.Features.Dashboard.Interfaces;
-using MovieRaterApi.Features.Dashboard.Services;
+using MovieRaterApi.Features.WatchSessions.Interfaces;
+using MovieRaterApi.Features.WatchSessions.Services;
 using MovieRaterApi.Infrastructure.Tmdb;
 using MovieRaterApi.Infrastructure.Tmdb.Handlers;
 using MovieRaterApi.Infrastructure.Tmdb.Options;
 using Scalar.AspNetCore;
 using Serilog;
 
-Log.Logger = new LoggerConfiguration().WriteTo.Console().CreateBootstrapLogger();
+Log.Logger = new LoggerConfiguration().WriteTo.Console().CreateLogger();
 
 var builder = WebApplication.CreateBuilder(args);
 
