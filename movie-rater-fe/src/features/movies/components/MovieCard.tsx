@@ -3,6 +3,8 @@ import { motion } from 'framer-motion'
 import { Star } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { MoviePoster } from './MoviePoster'
+import { UserMovieToggle } from '../../user-movie/components/UserMovieToggle'
+import { useUserMovieStore } from '../../../stores/user-movie-store'
 import type { MovieSummaryDto } from '@src/types/movie'
 
 interface MovieCardProps {
@@ -12,6 +14,11 @@ interface MovieCardProps {
 
 export function MovieCard({ movie, index = 0 }: MovieCardProps) {
   const year = movie.releaseDate ? movie.releaseDate.slice(0, 4) : null
+  const movieId = String(movie.tmdbId)
+  const favoriteIds = useUserMovieStore((s) => s.favoriteIds)
+  const watchlistIds = useUserMovieStore((s) => s.watchlistIds)
+  const isFavorite = movie.isFavorite || favoriteIds.has(movieId)
+  const isInWatchlist = movie.isInWatchlist || watchlistIds.has(movieId)
 
   return (
     <motion.div
@@ -29,6 +36,14 @@ export function MovieCard({ movie, index = 0 }: MovieCardProps) {
               <Star className="size-3 fill-yellow-500 text-yellow-500" />
               {movie.voteAverage.toFixed(1)}
             </Badge>
+          </div>
+          <div className="absolute bottom-2 left-2 opacity-0 group-hover:opacity-100 transition-opacity">
+            <UserMovieToggle
+              movieId={movieId}
+              isFavorite={isFavorite}
+              isInWatchlist={isInWatchlist}
+              size="sm"
+            />
           </div>
         </div>
         <div className="space-y-0.5">

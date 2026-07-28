@@ -5,9 +5,10 @@ import { Button } from '@/components/ui/button'
 import { useFavorites } from '../hooks/use-favorites'
 import { MoviePoster } from '../../movies/components/MoviePoster'
 import { UserMovieToggle } from '../components/UserMovieToggle'
-import { Link } from 'react-router'
+import { Link, useNavigate } from 'react-router'
 
 export function FavoritesPage() {
+  const navigate = useNavigate()
   const [page, setPage] = useState(1)
   const { data, isLoading, isError, isFetching } = useFavorites(page, 20)
 
@@ -37,9 +38,7 @@ export function FavoritesPage() {
         <p className="text-muted-foreground">
           Start discovering movies and add your favorites!
         </p>
-        <Button asChild>
-          <Link to="/movies">Browse movies</Link>
-        </Button>
+        <Button onClick={() => navigate('/movies')}>Browse movies</Button>
       </div>
     )
   }

@@ -117,7 +117,7 @@ function AppSidebar() {
                 return (
                   <SidebarMenuItem key={item.path}>
                     <SidebarMenuButton
-                      asChild
+                      render={<Link to={item.path} />}
                       isActive={active}
                       tooltip={item.label}
                       size="lg"
@@ -128,7 +128,6 @@ function AppSidebar() {
                           : 'text-muted-foreground hover:text-sidebar-foreground hover:bg-sidebar-accent',
                       )}
                     >
-                      <Link to={item.path} className="gap-3">
                         <item.icon
                           className={cn(
                             'size-[1.15rem] transition-transform duration-200',
@@ -136,7 +135,6 @@ function AppSidebar() {
                           )}
                         />
                         <span className="text-sm font-medium">{item.label}</span>
-                      </Link>
                     </SidebarMenuButton>
                     {active && (
                       <motion.div

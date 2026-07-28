@@ -5,9 +5,10 @@ import { Button } from '@/components/ui/button'
 import { useWatchlist } from '../hooks/use-watchlist'
 import { MoviePoster } from '../../movies/components/MoviePoster'
 import { UserMovieToggle } from '../components/UserMovieToggle'
-import { Link } from 'react-router'
+import { Link, useNavigate } from 'react-router'
 
 export function WatchlistPage() {
+  const navigate = useNavigate()
   const [page, setPage] = useState(1)
   const { data, isLoading, isError, isFetching } = useWatchlist(page, 20)
 
@@ -37,9 +38,7 @@ export function WatchlistPage() {
         <p className="text-muted-foreground">
           Find something to watch and add it to your list!
         </p>
-        <Button asChild>
-          <Link to="/movies">Browse movies</Link>
-        </Button>
+        <Button onClick={() => navigate('/movies')}>Browse movies</Button>
       </div>
     )
   }

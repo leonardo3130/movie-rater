@@ -31,6 +31,34 @@ export function removeWatchlist(movieId: string) {
     .then((r) => r.data)
 }
 
+export function getUserMovieByTmdb(tmdbId: number) {
+  return client.get<UserMovieResponse>(`/api/user-movies/tmdb/${tmdbId}`).then((r) => r.data)
+}
+
+export function setFavoriteByTmdb(tmdbId: number) {
+  return client
+    .post<UserMovieResponse>(`/api/user-movies/tmdb/${tmdbId}/favorite`)
+    .then((r) => r.data)
+}
+
+export function removeFavoriteByTmdb(tmdbId: number) {
+  return client
+    .delete<UserMovieResponse>(`/api/user-movies/tmdb/${tmdbId}/favorite`)
+    .then((r) => r.data)
+}
+
+export function setWatchlistByTmdb(tmdbId: number) {
+  return client
+    .post<UserMovieResponse>(`/api/user-movies/tmdb/${tmdbId}/watchlist`)
+    .then((r) => r.data)
+}
+
+export function removeWatchlistByTmdb(tmdbId: number) {
+  return client
+    .delete<UserMovieResponse>(`/api/user-movies/tmdb/${tmdbId}/watchlist`)
+    .then((r) => r.data)
+}
+
 export function getUserMovies(params: UserMovieListRequest = {}) {
   const qp = new URLSearchParams()
   if (params.favoritesOnly) qp.set('favoritesOnly', 'true')

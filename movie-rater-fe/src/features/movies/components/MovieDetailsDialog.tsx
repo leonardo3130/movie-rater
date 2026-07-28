@@ -1,6 +1,6 @@
 import { useNavigate, useParams } from 'react-router'
 import { motion } from 'framer-motion'
-import { Star, Clock, Calendar, Film, Users, Play, ExternalLink } from 'lucide-react'
+import { Star, Clock, Calendar, Users, Play, ExternalLink, Heart, Bookmark } from 'lucide-react'
 import { Dialog, DialogContent } from '@/components/ui/dialog'
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -11,14 +11,29 @@ import { MoviePoster } from './MoviePoster'
 import { MovieCard } from './MovieCard'
 import { useMovieDetails } from '../hooks/use-movie-details'
 import { useMovieRecommendations } from '../hooks/use-movie-recommendations'
+import { useToggleFavorite } from '../../user-movie/hooks/use-toggle-favorite'
+import { useToggleWatchlist } from '../../user-movie/hooks/use-toggle-watchlist'
+import { useUserMovieStore } from '../../../stores/user-movie-store'
 
 export function MovieDetailsDialog() {
   const { tmdbId } = useParams<{ tmdbId: string }>()
   const navigate = useNavigate()
   const movieId = tmdbId ? Number(tmdbId) : null
+  const movieIdStr = String(movieId ?? '')
 
   const { data: movie, isLoading } = useMovieDetails(movieId)
   const { data: recs } = useMovieRecommendations(movieId)
+
+  const toggleFavorite = useToggleFavorite()
+  const toggleWatchlist = useToggleWatchlist()
+  const favoriteIds = useUserMovieStore((s) => s.favoriteIds)
+  const watchlistIds = useUserMovieStore((s) => s.watchlistIds)
+  const isFavorite = movie
+    ? movie.isFavorite || favoriteIds.has(movieIdStr)
+    : false
+  const isInWatchlist = movie
+    ? movie.isInWatchlist || watchlistIds.has(movieIdStr)
+    : false
 
   const open = movieId !== null && !isNaN(Number(tmdbId))
 
@@ -98,13 +113,27 @@ export function MovieDetailsDialog() {
                 )}
 
                 <div className="flex flex-wrap gap-2">
-                  <Button variant="outline" size="sm" disabled>
-                    <Star className="size-4" />
-                    Add to Favorites
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={(e) => {
+                      e.preventDefault()
+                      toggleFavorite.mutate({ movieId: movieIdStr, value: !isFavorite })
+                    }}
+                  >
+                    <Heart className="size-4" fill={isFavorite ? 'currentColor' : 'none'} />
+                    {isFavorite ? 'Remove from Favorites' : 'Add to Favorites'}
                   </Button>
-                  <Button variant="outline" size="sm" disabled>
-                    <Film className="size-4" />
-                    Add to Watchlist
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={(e) => {
+                      e.preventDefault()
+                      toggleWatchlist.mutate({ movieId: movieIdStr, value: !isInWatchlist })
+                    }}
+                  >
+                    <Bookmark className="size-4" fill={isInWatchlist ? 'currentColor' : 'none'} />
+                    {isInWatchlist ? 'Remove from Watchlist' : 'Add to Watchlist'}
                   </Button>
                   {trailer && (
                     <Button variant="outline" size="sm">
