@@ -3,6 +3,11 @@ import { LoginPage } from '../features/authentication/pages/LoginPage'
 import { RegisterPage } from '../features/authentication/pages/RegisterPage'
 import { ProtectedRoute } from './ProtectedRoute'
 import { MoviesPage } from '../features/movies/pages/MoviesPage'
+import { AppLayout } from '../features/layout/components/AppLayout'
+import { FavoritesPage } from '../features/user-movie/pages/FavoritesPage'
+import { WatchlistPage } from '../features/user-movie/pages/WatchlistPage'
+import { InvitePage } from '../features/authentication/pages/InvitePage'
+import { AcceptInvitePage } from '../features/authentication/pages/AcceptInvitePage'
 
 export const router = createBrowserRouter([
   {
@@ -17,16 +22,41 @@ export const router = createBrowserRouter([
     element: <ProtectedRoute />,
     children: [
       {
-        path: '/dashboard',
-        element: <div className="flex min-h-dvh items-center justify-center text-muted-foreground">Dashboard coming soon</div>,
-      },
-      {
-        path: '/movies',
-        element: <MoviesPage />,
-      },
-      {
-        path: '/movies/:tmdbId',
-        element: <MoviesPage />,
+        element: <AppLayout />,
+        children: [
+          {
+            path: '/dashboard',
+            element: (
+              <div className="flex min-h-dvh items-center justify-center text-muted-foreground">
+                Dashboard coming soon
+              </div>
+            ),
+          },
+          {
+            path: '/movies',
+            element: <MoviesPage />,
+          },
+          {
+            path: '/movies/:tmdbId',
+            element: <MoviesPage />,
+          },
+          {
+            path: '/favorites',
+            element: <FavoritesPage />,
+          },
+          {
+            path: '/watchlist',
+            element: <WatchlistPage />,
+          },
+          {
+            path: '/invite',
+            element: <InvitePage />,
+          },
+          {
+            path: '/invite/accept',
+            element: <AcceptInvitePage />,
+          },
+        ],
       },
     ],
   },
