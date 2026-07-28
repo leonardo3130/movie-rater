@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using MovieRaterApi.Features.Authentication.Infrastructure;
+using MovieRaterApi.Features.UserMovie.DTOs;
 using MovieRaterApi.Features.UserMovie.Interfaces;
 
 namespace MovieRaterApi.Features.UserMovie.Controllers;
@@ -51,6 +52,13 @@ public class UserMovieController : ControllerBase
     public async Task<IActionResult> Get(Guid movieId)
     {
         var result = await _userMovieService.GetAsync(movieId, _currentUser.UserId);
+        return Ok(result);
+    }
+
+    [HttpGet("~/api/user-movies")]
+    public async Task<IActionResult> GetAll([FromQuery] UserMovieListRequestDto request)
+    {
+        var result = await _userMovieService.GetUserMoviesAsync(_currentUser.UserId, request);
         return Ok(result);
     }
 }

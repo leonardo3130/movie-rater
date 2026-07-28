@@ -186,6 +186,64 @@ public class UserMovieService : IUserMovieService
         return ToDto(existing);
     }
 
+    public async Task<PagedUserMoviesResponseDto> GetUserMoviesAsync(
+        Guid userId,
+        UserMovieListRequestDto request
+    )
+    {
+        var query = _db.UserMovies
+            .Include(um => um.Movie)
+            .Where(um => um.UserId == userId);
+
+        if (request.FavoritesOnly == true)
+            query = query.Where(um => um.IsFavorite);
+
+        if (request.WatchlistOnly == true)
+            query = query.Where(um => um.IsInWatchlist);
+
+        var totalResults = await query.CountAsync();
+
+        var totalPages = (int)Math.Ceiling(totalResults / (double)request.PageSize);
+
+        var items = await query
+            .OrderByDescending(um => um.UpdatedAt)
+            .Skip((request.Page - 1) * request.PageSize)
+            .Take(request.PageSize)
+            .Select(um => new UserMovieWithMovieDto
+            {
+                Id = um.Movie.Id,
+                TmdbId = um.Movie.TmdbId,
+                Title = um.Movie.Title,
+                PosterUrl = um.Movie.PosterUrl,
+                BackdropUrl = um.Movie.BackdropUrl,
+                ReleaseDate = um.Movie.ReleaseDate.HasValue
+                    ? um.Movie.ReleaseDate.Value.ToString("yyyy-MM-dd")
+                    : null,
+                VoteAverage = um.Movie.AverageTmdbRating,
+                IsFavorite = um.IsFavorite,
+                IsInWatchlist = um.IsInWatchlist,
+                CreatedAt = um.CreatedAt,
+                UpdatedAt = um.UpdatedAt,
+            })
+            .ToListAsync();
+
+        _logger.LogInformation(
+            "Retrieved {Count} user-movies for user {UserId} (favoritesOnly={FavoritesOnly}, watchlistOnly={WatchlistOnly})",
+            items.Count,
+            userId,
+            request.FavoritesOnly,
+            request.WatchlistOnly
+        );
+
+        return new PagedUserMoviesResponseDto
+        {
+            Page = request.Page,
+            TotalPages = totalPages,
+            TotalResults = totalResults,
+            Results = items,
+        };
+    }
+
     private static UserMovieResponseDto ToDto(Data.Entities.UserMovie um)
     {
         return new UserMovieResponseDto
