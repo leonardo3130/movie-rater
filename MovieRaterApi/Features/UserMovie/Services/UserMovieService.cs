@@ -1,19 +1,48 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 using MovieRaterApi.Data;
+using MovieRaterApi.Features.Movies.Mapping;
 using MovieRaterApi.Features.UserMovie.DTOs;
 using MovieRaterApi.Features.UserMovie.Interfaces;
+using MovieRaterApi.Infrastructure.Tmdb;
+using MovieRaterApi.Infrastructure.Tmdb.Dtos.Responses;
 
 namespace MovieRaterApi.Features.UserMovie.Services;
 
 public class UserMovieService : IUserMovieService
 {
+    private static readonly string ImageConfigCacheKey = "TmdbImageConfig";
+
     private readonly ApplicationDbContext _db;
+    private readonly ITmdbClient _tmdb;
+    private readonly IMemoryCache _cache;
     private readonly ILogger<UserMovieService> _logger;
 
-    public UserMovieService(ApplicationDbContext db, ILogger<UserMovieService> logger)
+    public UserMovieService(
+        ApplicationDbContext db,
+        ITmdbClient tmdb,
+        IMemoryCache cache,
+        ILogger<UserMovieService> logger
+    )
     {
         _db = db;
+        _tmdb = tmdb;
+        _cache = cache;
         _logger = logger;
+    }
+
+    private async Task<TmdbImageConfig> GetImageConfigAsync(CancellationToken ct = default)
+    {
+        return await _cache.GetOrCreateAsync(
+                ImageConfigCacheKey,
+                async entry =>
+                {
+                    entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(24);
+                    _logger.LogDebug("Fetching TMDB image configuration");
+                    var config = await _tmdb.GetConfigurationAsync(ct);
+                    return config.Images;
+                }
+            ) ?? new TmdbImageConfig { SecureBaseUrl = "https://image.tmdb.org/t/p/" };
     }
 
     public async Task<UserMovieResponseDto> SetFavoriteAsync(
@@ -205,20 +234,18 @@ public class UserMovieService : IUserMovieService
 
         var totalPages = (int)Math.Ceiling(totalResults / (double)request.PageSize);
 
-        var items = await query
+        var raw = await query
             .OrderByDescending(um => um.UpdatedAt)
             .Skip((request.Page - 1) * request.PageSize)
             .Take(request.PageSize)
-            .Select(um => new UserMovieWithMovieDto
+            .Select(um => new
             {
-                Id = um.Movie.Id,
+                MovieId = um.Movie.Id,
                 TmdbId = um.Movie.TmdbId,
                 Title = um.Movie.Title,
-                PosterUrl = um.Movie.PosterUrl,
-                BackdropUrl = um.Movie.BackdropUrl,
-                ReleaseDate = um.Movie.ReleaseDate.HasValue
-                    ? um.Movie.ReleaseDate.Value.ToString("yyyy-MM-dd")
-                    : null,
+                PosterPath = um.Movie.PosterUrl,
+                BackdropPath = um.Movie.BackdropUrl,
+                ReleaseDate = um.Movie.ReleaseDate,
                 VoteAverage = um.Movie.AverageTmdbRating,
                 IsFavorite = um.IsFavorite,
                 IsInWatchlist = um.IsInWatchlist,
@@ -226,6 +253,25 @@ public class UserMovieService : IUserMovieService
                 UpdatedAt = um.UpdatedAt,
             })
             .ToListAsync();
+
+        var imageConfig = await GetImageConfigAsync();
+
+        var items = raw
+            .Select(r => new UserMovieWithMovieDto
+            {
+                Id = r.MovieId,
+                TmdbId = r.TmdbId,
+                Title = r.Title,
+                PosterUrl = MovieMapper.BuildPosterUrl(r.PosterPath, imageConfig.SecureBaseUrl),
+                BackdropUrl = MovieMapper.BuildBackdropUrl(r.BackdropPath, imageConfig.SecureBaseUrl),
+                ReleaseDate = r.ReleaseDate?.ToString("yyyy-MM-dd"),
+                VoteAverage = r.VoteAverage,
+                IsFavorite = r.IsFavorite,
+                IsInWatchlist = r.IsInWatchlist,
+                CreatedAt = r.CreatedAt,
+                UpdatedAt = r.UpdatedAt,
+            })
+            .ToList();
 
         _logger.LogInformation(
             "Retrieved {Count} user-movies for user {UserId} (favoritesOnly={FavoritesOnly}, watchlistOnly={WatchlistOnly})",

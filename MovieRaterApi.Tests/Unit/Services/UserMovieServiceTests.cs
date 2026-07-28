@@ -1,9 +1,12 @@
 using FluentAssertions;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 using Moq;
 using MovieRaterApi.Data;
 using MovieRaterApi.Data.Entities;
 using MovieRaterApi.Features.UserMovie.Services;
+using MovieRaterApi.Infrastructure.Tmdb;
+using MovieRaterApi.Infrastructure.Tmdb.Dtos.Responses;
 
 namespace MovieRaterApi.Tests.Unit.Services;
 
@@ -11,13 +14,25 @@ public class UserMovieServiceTests
 {
     private readonly ApplicationDbContext _db;
     private readonly Mock<ILogger<UserMovieService>> _loggerMock;
+    private readonly Mock<ITmdbClient> _tmdbMock;
+    private readonly IMemoryCache _cache;
     private readonly UserMovieService _sut;
 
     public UserMovieServiceTests()
     {
         _db = TestHelpers.CreateInMemoryDbContext();
         _loggerMock = new Mock<ILogger<UserMovieService>>();
-        _sut = new UserMovieService(_db, _loggerMock.Object);
+        _tmdbMock = new Mock<ITmdbClient>();
+        _cache = new MemoryCache(new MemoryCacheOptions());
+
+        _tmdbMock
+            .Setup(x => x.GetConfigurationAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new TmdbConfiguration
+            {
+                Images = new TmdbImageConfig { SecureBaseUrl = "https://image.tmdb.org/t/p/" },
+            });
+
+        _sut = new UserMovieService(_db, _tmdbMock.Object, _cache, _loggerMock.Object);
     }
 
     [Fact]
