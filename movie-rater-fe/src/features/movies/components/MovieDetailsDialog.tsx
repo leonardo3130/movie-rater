@@ -6,7 +6,6 @@ import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
-import { ScrollArea } from '@/components/ui/scroll-area'
 import { MoviePoster } from './MoviePoster'
 import { MovieCard } from './MovieCard'
 import { useMovieDetails } from '../hooks/use-movie-details'
@@ -48,8 +47,8 @@ export function MovieDetailsDialog() {
 
   return (
     <Dialog open={open} onOpenChange={(o) => { if (!o) handleClose() }}>
-      <DialogContent className="max-w-5xl w-[calc(100%-3rem)] max-h-[85vh] p-0 gap-0 overflow-hidden sm:max-w-none" showCloseButton={false}>
-        <ScrollArea className="max-h-[80vh] min-h-0">
+      <DialogContent className="max-w-5xl w-[calc(100%-2rem)] max-h-[85vh] p-0 gap-0 overflow-hidden sm:max-w-none sm:w-full" showCloseButton={false}>
+        <div className="max-h-[80vh] min-h-0 overflow-y-auto">
           {isLoading || !movie ? (
             <div className="p-6 space-y-4">
               <Skeleton className="h-48 w-full rounded-lg" />
@@ -63,6 +62,7 @@ export function MovieDetailsDialog() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ duration: 0.3 }}
+              className="w-full"
             >
               <div className="relative h-64 md:h-80 overflow-hidden">
                 {movie.backdropUrl ? (
@@ -79,10 +79,10 @@ export function MovieDetailsDialog() {
                   <div className="hidden sm:block w-24 shrink-0">
                     <MoviePoster src={movie.posterUrl} alt={movie.title} />
                   </div>
-                  <div className="space-y-2">
-                    <h2 className="font-heading text-2xl font-bold">{movie.title}</h2>
+                  <div className="space-y-2 min-w-0">
+                    <h2 className="font-heading text-2xl font-bold break-words">{movie.title}</h2>
                     {movie.tagline && (
-                      <p className="text-sm text-muted-foreground italic">{movie.tagline}</p>
+                      <p className="text-sm text-muted-foreground italic break-words">{movie.tagline}</p>
                     )}
                     <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
                       {year && <span className="flex items-center gap-1"><Calendar className="size-3" />{year}</span>}
@@ -93,7 +93,7 @@ export function MovieDetailsDialog() {
                 </div>
               </div>
 
-              <div className="p-6 space-y-6">
+              <div className="p-6 space-y-6 min-w-0">
                 <div className="flex flex-wrap items-center gap-4">
                   <div className="flex items-center gap-2">
                     <Star className="size-5 fill-yellow-500 text-yellow-500" />
@@ -108,7 +108,7 @@ export function MovieDetailsDialog() {
                 {movie.overview && (
                   <div>
                     <h3 className="font-heading text-sm font-medium text-muted-foreground mb-1">Overview</h3>
-                    <p className="text-sm leading-relaxed">{movie.overview}</p>
+                    <p className="text-sm leading-relaxed break-words">{movie.overview}</p>
                   </div>
                 )}
 
@@ -188,7 +188,7 @@ export function MovieDetailsDialog() {
                         <Users className="size-4" />
                         Cast
                       </h3>
-                      <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-none">
+                      <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-none max-w-full">
                         {movie.cast.slice(0, 10).map((person) => (
                           <div key={person.id} className="w-20 shrink-0 text-center space-y-1">
                             <div className="size-20 rounded-full overflow-hidden bg-muted mx-auto">
@@ -216,7 +216,7 @@ export function MovieDetailsDialog() {
                     <Separator />
                     <div>
                       <h3 className="font-heading text-sm font-medium text-muted-foreground mb-3">Recommendations</h3>
-                      <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-none">
+                      <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-none max-w-full">
                         {recs.results.slice(0, 10).map((recMovie, i) => (
                           <div key={recMovie.tmdbId} className="w-[120px] shrink-0" onClick={handleClose}>
                             <MovieCard movie={recMovie} index={i} />
@@ -229,7 +229,7 @@ export function MovieDetailsDialog() {
               </div>
             </motion.div>
           )}
-        </ScrollArea>
+        </div>
       </DialogContent>
     </Dialog>
   )
