@@ -87,10 +87,12 @@ public class CoupleInvitationService : ICoupleInvitationService
             request.InviteeEmail
         );
 
+        var encoded = Uri.EscapeDataString(rawToken);
+
         return new InviteResponseDto
         {
             InvitationId = invitation.Id,
-            InviteToken = rawToken,
+            InviteToken = encoded,
             ExpiresAt = invitation.ExpiresAt,
         };
     }
@@ -106,7 +108,8 @@ public class CoupleInvitationService : ICoupleInvitationService
             throw new InvalidOperationException("User not found.");
         }
 
-        var tokenHash = HashToken(request.InviteToken);
+        var rawToken = Uri.UnescapeDataString(request.InviteToken);
+        var tokenHash = HashToken(rawToken);
 
         var invitation = await _db.Set<CoupleInvitation>()
             .FirstOrDefaultAsync(ci => ci.InviteTokenHash == tokenHash);

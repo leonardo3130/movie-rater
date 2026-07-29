@@ -46,7 +46,7 @@ export function AcceptInvitePage() {
     }
 
     mutation.mutate({ inviteToken: token })
-  }, [token])
+  }, [token, mutation])
 
   return (
     <div className="mx-auto max-w-md pt-16">
