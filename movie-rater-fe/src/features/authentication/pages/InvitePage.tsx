@@ -62,6 +62,13 @@ export function InvitePage() {
     }
   }
 
+  const copyLink = () => {
+    if (result) {
+      navigator.clipboard.writeText(`${window.location.origin}/invite/accept?token=${result.inviteToken}`)
+      toast.success('Link copied to clipboard')
+    }
+  }
+
   return (
     <div className="mx-auto max-w-lg space-y-6 pt-8">
       <div className="space-y-2">
@@ -141,9 +148,14 @@ export function InvitePage() {
                 <ExternalLink className="size-3.5" />
                 Your partner can accept by visiting:
               </p>
-              <code className="block mt-1 text-xs bg-background rounded px-2 py-1 break-all">
-                /invite/accept?token={result.inviteToken}
-              </code>
+              <div className="flex gap-2 mt-1">
+                <code className="flex-1 text-xs bg-background rounded px-2 py-1 break-all">
+                  {window.location.origin}/invite/accept?token={result.inviteToken}
+                </code>
+                <Button variant="outline" size="icon" onClick={copyLink} title="Copy link" className="shrink-0">
+                  <Copy className="size-4" />
+                </Button>
+              </div>
             </div>
           </CardContent>
         </Card>

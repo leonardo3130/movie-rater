@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useSearchParams, useNavigate } from 'react-router'
 import { useMutation } from '@tanstack/react-query'
 import { Loader2, CheckCircle2, XCircle } from 'lucide-react'
@@ -38,12 +38,17 @@ export function AcceptInvitePage() {
     },
   })
 
+  const hasMutated = useRef(false)
+
   useEffect(() => {
     if (!token) {
       setState('error')
       setErrorMessage('No invitation token provided.')
       return
     }
+
+    if (hasMutated.current) return
+    hasMutated.current = true
 
     mutation.mutate({ inviteToken: token })
   }, [token, mutation])
