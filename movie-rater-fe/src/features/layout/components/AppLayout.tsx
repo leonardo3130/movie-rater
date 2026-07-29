@@ -89,10 +89,10 @@ function AppSidebar() {
   return (
     <Sidebar collapsible="icon" variant="sidebar" className="border-r-0">
       {/* Brand header */}
-      <SidebarHeader className="px-3 py-4">
+      <SidebarHeader className="px-3 py-4 group-data-[collapsible=icon]:p-1">
         <Link
           to="/dashboard"
-          className="group/brand flex items-center gap-2.5 rounded-lg px-2 py-1 transition-colors hover:bg-sidebar-accent"
+          className="group/brand flex items-center gap-2.5 rounded-lg px-2 py-1 transition-colors hover:bg-sidebar-accent group-data-[collapsible=icon]:justify-center"
         >
           <div className="relative flex size-9 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-primary to-primary/60 shadow-lg shadow-primary/20">
             <Clapperboard className="size-5 text-primary-foreground" />
@@ -108,14 +108,14 @@ function AppSidebar() {
         </Link>
       </SidebarHeader>
 
-      <SidebarContent className="px-2">
+      <SidebarContent>
         <SidebarGroup>
           <SidebarGroupContent>
-            <SidebarMenu className="gap-1">
-              {NAV_ITEMS.map((item, index) => {
+            <SidebarMenu>
+              {NAV_ITEMS.map((item) => {
                 const active = isActive(item.path)
                 return (
-                  <SidebarMenuItem key={item.path}>
+                  <SidebarMenuItem key={item.path} className='my-1'>
                     <SidebarMenuButton
                       render={<Link to={item.path} />}
                       isActive={active}
@@ -128,18 +128,18 @@ function AppSidebar() {
                           : 'text-muted-foreground hover:text-sidebar-foreground hover:bg-sidebar-accent',
                       )}
                     >
-                        <item.icon
-                          className={cn(
-                            'size-[1.15rem] transition-transform duration-200',
-                            active ? 'scale-110' : 'group-hover/menu-button:scale-105',
-                          )}
-                        />
-                        <span className="text-sm font-medium">{item.label}</span>
+                      <item.icon
+                        className={cn(
+                          'size-[1.15rem] transition-transform duration-200',
+                          active ? 'ms-1.5 scale-110' : 'group-hover/menu-button:scale-105',
+                        )}
+                      />
+                      <span className="text-sm font-medium group-data-[collapsible=icon]:hidden">{item.label}</span>
                     </SidebarMenuButton>
                     {active && (
                       <motion.div
                         layoutId="sidebar-active-indicator"
-                        className="absolute left-0 top-1/2 h-5 w-1 -translate-y-1/2 rounded-r-full bg-primary"
+                        className="absolute left-0 top-1/2 h-5 w-1 -translate-y-1/2 rounded-r-full bg-primary "
                         transition={{ type: 'spring', stiffness: 400, damping: 30 }}
                       />
                     )}
