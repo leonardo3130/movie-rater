@@ -70,7 +70,7 @@ export function InvitePage() {
   }
 
   return (
-    <div className="mx-auto max-w-lg space-y-6 pt-8">
+    <div className="mx-auto max-w-lg space-y-6 px-4 pt-6 sm:pt-8">
       <div className="space-y-2">
         <h1 className="text-2xl font-bold flex items-center gap-3">
           <UserPlus className="size-6 text-primary" />

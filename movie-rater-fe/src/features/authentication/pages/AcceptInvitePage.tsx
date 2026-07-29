@@ -54,7 +54,7 @@ export function AcceptInvitePage() {
   }, [token, mutation])
 
   return (
-    <div className="mx-auto max-w-md pt-16">
+    <div className="mx-auto max-w-md px-4 pt-8 sm:pt-16">
       <Card>
         <CardHeader className="text-center">
           {state === 'loading' && (
