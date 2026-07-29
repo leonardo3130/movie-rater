@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using MovieRaterApi.Data;
 using MovieRaterApi.Features.Authentication.Infrastructure;
 using MovieRaterApi.Features.UserMovie.Interfaces;
+using MovieRaterApi.Infrastructure.Exceptions;
 
 namespace MovieRaterApi.Features.UserMovie.Controllers;
 
@@ -31,7 +32,7 @@ public class UserMovieByTmdbController : ControllerBase
     {
         var movie = await _db.Movies.FirstOrDefaultAsync(m => m.TmdbId == tmdbId);
         if (movie is null)
-            throw new InvalidOperationException("Movie not found.");
+            throw new NotFoundException("Movie not found.");
         return movie.Id;
     }
 

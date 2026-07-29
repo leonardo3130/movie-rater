@@ -6,6 +6,7 @@ using MovieRaterApi.Data.Entities;
 using MovieRaterApi.Features.Authentication.DTOs;
 using MovieRaterApi.Features.Authentication.Interfaces;
 using MovieRaterApi.Features.Authentication.Services;
+using MovieRaterApi.Infrastructure.Exceptions;
 
 namespace MovieRaterApi.Tests.Unit.Services;
 
@@ -84,7 +85,7 @@ public class AuthServiceTests
         await FluentActions
             .Awaiting(() => _sut.RegisterAsync(request))
             .Should()
-            .ThrowAsync<InvalidOperationException>()
+            .ThrowAsync<ConflictException>()
             .WithMessage("A user with this username or email already exists.");
     }
 
@@ -112,7 +113,7 @@ public class AuthServiceTests
         await FluentActions
             .Awaiting(() => _sut.RegisterAsync(request))
             .Should()
-            .ThrowAsync<InvalidOperationException>()
+            .ThrowAsync<ConflictException>()
             .WithMessage("A user with this username or email already exists.");
     }
 
@@ -429,7 +430,7 @@ public class AuthServiceTests
         await FluentActions
             .Awaiting(() => _sut.GetCurrentUserAsync(Guid.NewGuid()))
             .Should()
-            .ThrowAsync<InvalidOperationException>()
+            .ThrowAsync<NotFoundException>()
             .WithMessage("User not found.");
     }
 }

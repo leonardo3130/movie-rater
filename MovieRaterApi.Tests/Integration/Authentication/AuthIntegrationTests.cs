@@ -109,7 +109,7 @@ public class AuthIntegrationTests : IAsyncLifetime
     }
 
     [Fact]
-    public async Task Register_ShouldReturn500_WhenEmailAlreadyExists()
+    public async Task Register_ShouldReturn409_WhenEmailAlreadyExists()
     {
         await RegisterUser("user1", "duplicate@example.com", "Password123!");
 
@@ -122,7 +122,7 @@ public class AuthIntegrationTests : IAsyncLifetime
 
         var response = await _client.PostAsJsonAsync("/api/auth/register", request);
 
-        response.StatusCode.Should().Be(HttpStatusCode.InternalServerError);
+        response.StatusCode.Should().Be(HttpStatusCode.Conflict);
     }
 
     [Fact]
@@ -162,7 +162,7 @@ public class AuthIntegrationTests : IAsyncLifetime
     }
 
     [Fact]
-    public async Task Login_ShouldReturn500_WhenCredentialsAreInvalid()
+    public async Task Login_ShouldReturn401_WhenCredentialsAreInvalid()
     {
         await RegisterUser("loginfail", "loginfail@example.com", "Password123!");
 
@@ -174,11 +174,11 @@ public class AuthIntegrationTests : IAsyncLifetime
 
         var response = await _client.PostAsJsonAsync("/api/auth/login", request);
 
-        response.StatusCode.Should().Be(HttpStatusCode.InternalServerError);
+        response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
     }
 
     [Fact]
-    public async Task Login_ShouldReturn500_WhenUserNotFound()
+    public async Task Login_ShouldReturn401_WhenUserNotFound()
     {
         var request = new LoginRequestDto
         {
@@ -188,7 +188,7 @@ public class AuthIntegrationTests : IAsyncLifetime
 
         var response = await _client.PostAsJsonAsync("/api/auth/login", request);
 
-        response.StatusCode.Should().Be(HttpStatusCode.InternalServerError);
+        response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
     }
 
     [Fact]
@@ -316,7 +316,7 @@ public class AuthIntegrationTests : IAsyncLifetime
     }
 
     [Fact]
-    public async Task InvitePartner_ShouldReturn500_WhenInviteeNotFound()
+    public async Task InvitePartner_ShouldReturn404_WhenInviteeNotFound()
     {
         var user1 = await RegisterUser("inviter2", "inviter2@example.com", "Password123!");
 
@@ -326,7 +326,7 @@ public class AuthIntegrationTests : IAsyncLifetime
         var request = new InvitePartnerRequestDto { InviteeEmail = "nonexistent@example.com" };
         var response = await _client.PostAsJsonAsync("/api/auth/invite", request);
 
-        response.StatusCode.Should().Be(HttpStatusCode.InternalServerError);
+        response.StatusCode.Should().Be(HttpStatusCode.NotFound);
     }
 
     [Fact]
@@ -368,7 +368,7 @@ public class AuthIntegrationTests : IAsyncLifetime
     }
 
     [Fact]
-    public async Task AcceptInvitation_ShouldReturn500_WhenTokenInvalid()
+    public async Task AcceptInvitation_ShouldReturn404_WhenTokenInvalid()
     {
         var user2 = await RegisterUser("invitee4", "invitee4@example.com", "Password123!");
 
@@ -378,6 +378,6 @@ public class AuthIntegrationTests : IAsyncLifetime
         var request = new AcceptInvitationRequestDto { InviteToken = "invalid-token" };
         var response = await _client.PostAsJsonAsync("/api/auth/invite/accept", request);
 
-        response.StatusCode.Should().Be(HttpStatusCode.InternalServerError);
+        response.StatusCode.Should().Be(HttpStatusCode.NotFound);
     }
 }

@@ -3,6 +3,7 @@ using MovieRaterApi.Data;
 using MovieRaterApi.Data.Entities;
 using MovieRaterApi.Features.Authentication.DTOs;
 using MovieRaterApi.Features.Authentication.Interfaces;
+using MovieRaterApi.Infrastructure.Exceptions;
 
 namespace MovieRaterApi.Features.Authentication.Services;
 
@@ -32,7 +33,7 @@ public class AuthService : IAuthService
 
         if (existingUser is not null)
         {
-            throw new InvalidOperationException("A user with this username or email already exists.");
+            throw new ConflictException("A user with this username or email already exists.");
         }
 
         var user = new User
@@ -215,7 +216,7 @@ public class AuthService : IAuthService
 
         if (user is null)
         {
-            throw new InvalidOperationException("User not found.");
+            throw new NotFoundException("User not found.");
         }
 
         var couple = await _db.Couples

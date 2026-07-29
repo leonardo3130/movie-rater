@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using MovieRaterApi.Features.Authentication.Infrastructure;
 using MovieRaterApi.Features.Dashboard.Interfaces;
+using MovieRaterApi.Infrastructure.Exceptions;
 
 namespace MovieRaterApi.Features.Dashboard.Controllers;
 
@@ -23,7 +24,7 @@ public class DashboardController : ControllerBase
     public async Task<IActionResult> Get()
     {
         if (!_currentUser.CoupleId.HasValue)
-            return BadRequest(new { error = "You must be in a couple to view dashboard." });
+            throw new BadRequestException("You must be in a couple to view dashboard.");
 
         var result = await _dashboardService.GetDashboardAsync(_currentUser.CoupleId.Value);
         return Ok(result);

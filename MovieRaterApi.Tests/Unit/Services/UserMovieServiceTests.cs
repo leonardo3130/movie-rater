@@ -5,6 +5,7 @@ using Moq;
 using MovieRaterApi.Data;
 using MovieRaterApi.Data.Entities;
 using MovieRaterApi.Features.UserMovie.Services;
+using MovieRaterApi.Infrastructure.Exceptions;
 using MovieRaterApi.Infrastructure.Tmdb;
 using MovieRaterApi.Infrastructure.Tmdb.Dtos.Responses;
 
@@ -59,7 +60,7 @@ public class UserMovieServiceTests
         await FluentActions
             .Awaiting(() => _sut.SetFavoriteAsync(Guid.NewGuid(), Guid.NewGuid(), true))
             .Should()
-            .ThrowAsync<InvalidOperationException>()
+            .ThrowAsync<NotFoundException>()
             .WithMessage("Movie not found.");
     }
 
@@ -87,7 +88,7 @@ public class UserMovieServiceTests
         await FluentActions
             .Awaiting(() => _sut.SetWatchlistAsync(Guid.NewGuid(), Guid.NewGuid(), true))
             .Should()
-            .ThrowAsync<InvalidOperationException>()
+            .ThrowAsync<NotFoundException>()
             .WithMessage("Movie not found.");
     }
 

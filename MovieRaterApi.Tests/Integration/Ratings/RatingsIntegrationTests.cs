@@ -166,7 +166,7 @@ public class RatingsIntegrationTests : IAsyncLifetime
     }
 
     [Fact]
-    public async Task DuplicateRating_ShouldReturn500()
+    public async Task DuplicateRating_ShouldReturn409()
     {
         var (token, userId, coupleId, sessionId) = await SeedSessionAsync(
             "rtdup",
@@ -185,7 +185,7 @@ public class RatingsIntegrationTests : IAsyncLifetime
             new CreateRatingRequestDto { RatingValue = 9 }
         );
 
-        response.StatusCode.Should().Be(HttpStatusCode.InternalServerError);
+        response.StatusCode.Should().Be(HttpStatusCode.Conflict);
     }
 
     [Fact]

@@ -178,7 +178,7 @@ public class UserMovieIntegrationTests : IAsyncLifetime
     }
 
     [Fact]
-    public async Task SetFavorite_MovieNotFound_ShouldReturn500()
+    public async Task SetFavorite_MovieNotFound_ShouldReturn404()
     {
         var (token, _) = await SeedMovieAsync("nf1");
         _client.DefaultRequestHeaders.Authorization =
@@ -187,7 +187,7 @@ public class UserMovieIntegrationTests : IAsyncLifetime
         var response = await _client.PostAsync(
             $"/api/user-movies/{Guid.NewGuid()}/favorite", null);
 
-        response.StatusCode.Should().Be(HttpStatusCode.InternalServerError);
+        response.StatusCode.Should().Be(HttpStatusCode.NotFound);
     }
 
     [Fact]

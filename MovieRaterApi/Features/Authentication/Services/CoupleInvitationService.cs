@@ -5,6 +5,7 @@ using MovieRaterApi.Data;
 using MovieRaterApi.Data.Entities;
 using MovieRaterApi.Features.Authentication.DTOs;
 using MovieRaterApi.Features.Authentication.Interfaces;
+using MovieRaterApi.Infrastructure.Exceptions;
 
 namespace MovieRaterApi.Features.Authentication.Services;
 
@@ -27,18 +28,18 @@ public class CoupleInvitationService : ICoupleInvitationService
         var inviter = await _db.Users.FirstOrDefaultAsync(u => u.Id == inviterUserId);
         if (inviter is null)
         {
-            throw new InvalidOperationException("Inviter user not found.");
+            throw new NotFoundException("Inviter user not found.");
         }
 
         var invitee = await _db.Users.FirstOrDefaultAsync(u => u.Email == request.InviteeEmail);
         if (invitee is null)
         {
-            throw new InvalidOperationException("No user found with this email address.");
+            throw new NotFoundException("No user found with this email address.");
         }
 
         if (invitee.Id == inviterUserId)
         {
-            throw new InvalidOperationException("You cannot invite yourself.");
+            throw new BadRequestException("You cannot invite yourself.");
         }
 
         var existingCouple = await _db.Couples.FirstOrDefaultAsync(c =>
@@ -47,7 +48,7 @@ public class CoupleInvitationService : ICoupleInvitationService
         );
         if (existingCouple is not null)
         {
-            throw new InvalidOperationException("You are already connected with this user.");
+            throw new ConflictException("You are already connected with this user.");
         }
 
         var existingInvitation = await _db.Set<CoupleInvitation>()
@@ -58,7 +59,7 @@ public class CoupleInvitationService : ICoupleInvitationService
             );
         if (existingInvitation is not null)
         {
-            throw new InvalidOperationException(
+            throw new ConflictException(
                 "A pending invitation already exists for this user."
             );
         }
@@ -105,7 +106,7 @@ public class CoupleInvitationService : ICoupleInvitationService
         var acceptedByUser = await _db.Users.FirstOrDefaultAsync(u => u.Id == acceptedByUserId);
         if (acceptedByUser is null)
         {
-            throw new InvalidOperationException("User not found.");
+            throw new NotFoundException("User not found.");
         }
 
         var rawToken = Uri.UnescapeDataString(request.InviteToken);
@@ -116,12 +117,12 @@ public class CoupleInvitationService : ICoupleInvitationService
 
         if (invitation is null)
         {
-            throw new InvalidOperationException("Invalid invitation token.");
+            throw new NotFoundException("Invalid invitation token.");
         }
 
         if (invitation.Status != InvitationStatus.Pending)
         {
-            throw new InvalidOperationException(
+            throw new BadRequestException(
                 $"Invitation is {invitation.Status.ToString().ToLower()} and cannot be accepted."
             );
         }
@@ -130,12 +131,12 @@ public class CoupleInvitationService : ICoupleInvitationService
         {
             invitation.Status = InvitationStatus.Expired;
             await _db.SaveChangesAsync();
-            throw new InvalidOperationException("Invitation has expired.");
+            throw new BadRequestException("Invitation has expired.");
         }
 
         if (invitation.InviteeEmail != acceptedByUser.Email)
         {
-            throw new UnauthorizedAccessException("This invitation was not sent to you.");
+            throw new ForbiddenException("This invitation was not sent to you.");
         }
 
         var couple = new Couple

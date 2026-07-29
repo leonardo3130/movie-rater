@@ -3,6 +3,7 @@ using MovieRaterApi.Data;
 using MovieRaterApi.Data.Entities;
 using MovieRaterApi.Features.Ratings.DTOs;
 using MovieRaterApi.Features.Ratings.Interfaces;
+using MovieRaterApi.Infrastructure.Exceptions;
 
 namespace MovieRaterApi.Features.Ratings.Services;
 
@@ -29,10 +30,10 @@ public class RatingService : IRatingService
             .FirstOrDefaultAsync(ws => ws.Id == watchSessionId);
 
         if (session is null)
-            throw new InvalidOperationException("Watch session not found.");
+            throw new NotFoundException("Watch session not found.");
 
         if (session.Couple.User1Id != userId && session.Couple.User2Id != userId)
-            throw new InvalidOperationException(
+            throw new ForbiddenException(
                 "You are not part of the couple for this watch session."
             );
 
@@ -41,7 +42,7 @@ public class RatingService : IRatingService
         );
 
         if (existingRating is not null)
-            throw new InvalidOperationException("You have already rated this watch session.");
+            throw new ConflictException("You have already rated this watch session.");
 
         var rating = new Rating
         {
@@ -90,10 +91,10 @@ public class RatingService : IRatingService
             .FirstOrDefaultAsync(r => r.WatchSessionId == watchSessionId && r.UserId == userId);
 
         if (rating is null)
-            throw new InvalidOperationException("Rating not found.");
+            throw new NotFoundException("Rating not found.");
 
         if (rating.UserId != userId)
-            throw new InvalidOperationException("You can only update your own ratings.");
+            throw new ForbiddenException("You can only update your own ratings.");
 
         rating.RatingValue = request.RatingValue;
         rating.Review = request.Review;
@@ -130,7 +131,7 @@ public class RatingService : IRatingService
         );
 
         if (session is null)
-            throw new InvalidOperationException("Watch session not found.");
+            throw new NotFoundException("Watch session not found.");
 
         var ratings = await _db
             .Ratings.Include(r => r.User)

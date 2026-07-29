@@ -3,6 +3,7 @@ using MovieRaterApi.Data;
 using MovieRaterApi.Data.Entities;
 using MovieRaterApi.Features.WatchSessions.DTOs;
 using MovieRaterApi.Features.WatchSessions.Interfaces;
+using MovieRaterApi.Infrastructure.Exceptions;
 
 namespace MovieRaterApi.Features.WatchSessions.Services;
 
@@ -25,7 +26,7 @@ public class WatchSessionService : IWatchSessionService
     {
         var movie = await _db.Movies.FirstOrDefaultAsync(m => m.Id == request.MovieId);
         if (movie is null)
-            throw new InvalidOperationException("Movie not found.");
+            throw new NotFoundException("Movie not found.");
 
         var session = new WatchSession
         {
@@ -128,7 +129,7 @@ public class WatchSessionService : IWatchSessionService
             .FirstOrDefaultAsync(ws => ws.Id == id && ws.CoupleId == coupleId);
 
         if (session is null)
-            throw new InvalidOperationException("Watch session not found.");
+            throw new NotFoundException("Watch session not found.");
 
         return new WatchSessionResponseDto
         {
@@ -160,10 +161,10 @@ public class WatchSessionService : IWatchSessionService
         var session = await _db.WatchSessions.FirstOrDefaultAsync(ws => ws.Id == id);
 
         if (session is null)
-            throw new InvalidOperationException("Watch session not found.");
+            throw new NotFoundException("Watch session not found.");
 
         if (session.CreatedByUserId != userId)
-            throw new InvalidOperationException("You can only delete your own watch sessions.");
+            throw new ForbiddenException("You can only delete your own watch sessions.");
 
         _db.WatchSessions.Remove(session);
         await _db.SaveChangesAsync();

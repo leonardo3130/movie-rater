@@ -5,6 +5,7 @@ using MovieRaterApi.Data;
 using MovieRaterApi.Data.Entities;
 using MovieRaterApi.Features.Ratings.DTOs;
 using MovieRaterApi.Features.Ratings.Services;
+using MovieRaterApi.Infrastructure.Exceptions;
 
 namespace MovieRaterApi.Tests.Unit.Services;
 
@@ -54,7 +55,7 @@ public class RatingServiceTests
         await FluentActions
             .Awaiting(() => _sut.CreateAsync(Guid.NewGuid(), request, Guid.NewGuid()))
             .Should()
-            .ThrowAsync<InvalidOperationException>()
+            .ThrowAsync<NotFoundException>()
             .WithMessage("Watch session not found.");
     }
 
@@ -79,7 +80,7 @@ public class RatingServiceTests
         await FluentActions
             .Awaiting(() => _sut.CreateAsync(sessionId, request, strangerId))
             .Should()
-            .ThrowAsync<InvalidOperationException>()
+            .ThrowAsync<ForbiddenException>()
             .WithMessage("You are not part of the couple for this watch session.");
     }
 
@@ -103,7 +104,7 @@ public class RatingServiceTests
         await FluentActions
             .Awaiting(() => _sut.CreateAsync(sessionId, request, userId))
             .Should()
-            .ThrowAsync<InvalidOperationException>()
+            .ThrowAsync<ConflictException>()
             .WithMessage("You have already rated this watch session.");
     }
 

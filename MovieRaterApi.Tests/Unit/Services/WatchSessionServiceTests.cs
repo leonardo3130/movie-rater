@@ -5,6 +5,7 @@ using MovieRaterApi.Data;
 using MovieRaterApi.Data.Entities;
 using MovieRaterApi.Features.WatchSessions.DTOs;
 using MovieRaterApi.Features.WatchSessions.Services;
+using MovieRaterApi.Infrastructure.Exceptions;
 
 namespace MovieRaterApi.Tests.Unit.Services;
 
@@ -60,7 +61,7 @@ public class WatchSessionServiceTests
         await FluentActions
             .Awaiting(() => _sut.CreateAsync(request, Guid.NewGuid(), Guid.NewGuid()))
             .Should()
-            .ThrowAsync<InvalidOperationException>()
+            .ThrowAsync<NotFoundException>()
             .WithMessage("Movie not found.");
     }
 
@@ -128,7 +129,7 @@ public class WatchSessionServiceTests
         await FluentActions
             .Awaiting(() => _sut.GetByIdAsync(sessionId, Guid.NewGuid()))
             .Should()
-            .ThrowAsync<InvalidOperationException>()
+            .ThrowAsync<NotFoundException>()
             .WithMessage("Watch session not found.");
     }
 
@@ -159,7 +160,7 @@ public class WatchSessionServiceTests
         await FluentActions
             .Awaiting(() => _sut.DeleteAsync(sessionId, Guid.NewGuid()))
             .Should()
-            .ThrowAsync<InvalidOperationException>()
+            .ThrowAsync<ForbiddenException>()
             .WithMessage("You can only delete your own watch sessions.");
     }
 

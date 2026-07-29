@@ -4,6 +4,7 @@ using MovieRaterApi.Data;
 using MovieRaterApi.Features.Movies.Mapping;
 using MovieRaterApi.Features.UserMovie.DTOs;
 using MovieRaterApi.Features.UserMovie.Interfaces;
+using MovieRaterApi.Infrastructure.Exceptions;
 using MovieRaterApi.Infrastructure.Tmdb;
 using MovieRaterApi.Infrastructure.Tmdb.Dtos.Responses;
 
@@ -53,7 +54,7 @@ public class UserMovieService : IUserMovieService
     {
         var movieExists = await _db.Movies.AnyAsync(m => m.Id == movieId);
         if (!movieExists)
-            throw new InvalidOperationException("Movie not found.");
+            throw new NotFoundException("Movie not found.");
 
         var existing = await _db.UserMovies.FirstOrDefaultAsync(um =>
             um.UserId == userId && um.MovieId == movieId
@@ -132,7 +133,7 @@ public class UserMovieService : IUserMovieService
     {
         var movieExists = await _db.Movies.AnyAsync(m => m.Id == movieId);
         if (!movieExists)
-            throw new InvalidOperationException("Movie not found.");
+            throw new NotFoundException("Movie not found.");
 
         var existing = await _db.UserMovies.FirstOrDefaultAsync(um =>
             um.UserId == userId && um.MovieId == movieId

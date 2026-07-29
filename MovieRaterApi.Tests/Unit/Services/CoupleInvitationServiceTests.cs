@@ -7,6 +7,7 @@ using MovieRaterApi.Data;
 using MovieRaterApi.Data.Entities;
 using MovieRaterApi.Features.Authentication.DTOs;
 using MovieRaterApi.Features.Authentication.Services;
+using MovieRaterApi.Infrastructure.Exceptions;
 
 namespace MovieRaterApi.Tests.Unit.Services;
 
@@ -67,7 +68,7 @@ public class CoupleInvitationServiceTests
         await FluentActions
             .Awaiting(() => _sut.InviteAsync(Guid.NewGuid(), request))
             .Should()
-            .ThrowAsync<InvalidOperationException>()
+            .ThrowAsync<NotFoundException>()
             .WithMessage("Inviter user not found.");
     }
 
@@ -88,7 +89,7 @@ public class CoupleInvitationServiceTests
         await FluentActions
             .Awaiting(() => _sut.InviteAsync(inviter.Id, request))
             .Should()
-            .ThrowAsync<InvalidOperationException>()
+            .ThrowAsync<NotFoundException>()
             .WithMessage("No user found with this email address.");
     }
 
@@ -111,7 +112,7 @@ public class CoupleInvitationServiceTests
         await FluentActions
             .Awaiting(() => _sut.InviteAsync(userId, request))
             .Should()
-            .ThrowAsync<InvalidOperationException>()
+            .ThrowAsync<BadRequestException>()
             .WithMessage("You cannot invite yourself.");
     }
 
@@ -149,7 +150,7 @@ public class CoupleInvitationServiceTests
         await FluentActions
             .Awaiting(() => _sut.InviteAsync(inviterId, request))
             .Should()
-            .ThrowAsync<InvalidOperationException>()
+            .ThrowAsync<ConflictException>()
             .WithMessage("You are already connected with this user.");
     }
 
@@ -188,7 +189,7 @@ public class CoupleInvitationServiceTests
         await FluentActions
             .Awaiting(() => _sut.InviteAsync(inviterId, request))
             .Should()
-            .ThrowAsync<InvalidOperationException>()
+            .ThrowAsync<ConflictException>()
             .WithMessage("A pending invitation already exists for this user.");
     }
 
@@ -241,7 +242,7 @@ public class CoupleInvitationServiceTests
         await FluentActions
             .Awaiting(() => _sut.AcceptInvitationAsync(Guid.NewGuid(), request))
             .Should()
-            .ThrowAsync<InvalidOperationException>()
+            .ThrowAsync<NotFoundException>()
             .WithMessage("User not found.");
     }
 
@@ -264,7 +265,7 @@ public class CoupleInvitationServiceTests
         await FluentActions
             .Awaiting(() => _sut.AcceptInvitationAsync(userId, request))
             .Should()
-            .ThrowAsync<InvalidOperationException>()
+            .ThrowAsync<NotFoundException>()
             .WithMessage("Invalid invitation token.");
     }
 
@@ -293,7 +294,7 @@ public class CoupleInvitationServiceTests
         await FluentActions
             .Awaiting(() => _sut.AcceptInvitationAsync(acceptor.Id, request))
             .Should()
-            .ThrowAsync<InvalidOperationException>()
+            .ThrowAsync<BadRequestException>()
             .WithMessage("Invitation is accepted and cannot be accepted.");
     }
 
@@ -322,7 +323,7 @@ public class CoupleInvitationServiceTests
         await FluentActions
             .Awaiting(() => _sut.AcceptInvitationAsync(acceptor.Id, request))
             .Should()
-            .ThrowAsync<InvalidOperationException>()
+            .ThrowAsync<BadRequestException>()
             .WithMessage("Invitation has expired.");
 
         invitation.Status.Should().Be(InvitationStatus.Expired);
@@ -356,7 +357,7 @@ public class CoupleInvitationServiceTests
         await FluentActions
             .Awaiting(() => _sut.AcceptInvitationAsync(acceptorId, request))
             .Should()
-            .ThrowAsync<UnauthorizedAccessException>()
+            .ThrowAsync<ForbiddenException>()
             .WithMessage("This invitation was not sent to you.");
     }
 }

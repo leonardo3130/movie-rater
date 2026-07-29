@@ -21,6 +21,7 @@ using MovieRaterApi.Features.UserMovie.Interfaces;
 using MovieRaterApi.Features.UserMovie.Services;
 using MovieRaterApi.Features.WatchSessions.Interfaces;
 using MovieRaterApi.Features.WatchSessions.Services;
+using MovieRaterApi.Infrastructure.Middleware;
 using MovieRaterApi.Infrastructure.Tmdb;
 using MovieRaterApi.Infrastructure.Tmdb.Handlers;
 using MovieRaterApi.Infrastructure.Tmdb.Options;
@@ -135,6 +136,8 @@ if (app.Environment.IsDevelopment())
     app.MapOpenApi();
     app.MapScalarApiReference();
 }
+
+app.UseMiddleware<ExceptionHandlingMiddleware>();
 
 app.UseSerilogRequestLogging();
 
