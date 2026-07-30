@@ -23,6 +23,7 @@ import {
   UserPlus,
   LogOut,
   Clapperboard,
+  Clock,
 } from 'lucide-react'
 import { useAuthStore } from '../../../stores/auth-store'
 import { useMutation } from '@tanstack/react-query'
@@ -32,6 +33,7 @@ import { cn } from '@/lib/utils'
 const NAV_ITEMS = [
   { icon: LayoutDashboard, label: 'Dashboard', path: '/dashboard' },
   { icon: Film, label: 'Movies', path: '/movies' },
+  { icon: Clock, label: 'Watch History', path: '/watch-history' },
   { icon: Heart, label: 'Favorites', path: '/favorites' },
   { icon: Bookmark, label: 'Watchlist', path: '/watchlist' },
   { icon: UserPlus, label: 'Invite Partner', path: '/invite' },
@@ -84,7 +86,8 @@ function AppSidebar() {
 
   const isActive = (path: string) =>
     location.pathname === path ||
-    (path === '/movies' && location.pathname.startsWith('/movies/'))
+    (path === '/movies' && location.pathname.startsWith('/movies/')) ||
+    (path === '/watch-history' && location.pathname.startsWith('/watch-history/'))
 
   return (
     <Sidebar collapsible="icon" variant="sidebar" className="border-r-0">

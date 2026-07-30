@@ -8,6 +8,8 @@ import { FavoritesPage } from '../features/user-movie/pages/FavoritesPage'
 import { WatchlistPage } from '../features/user-movie/pages/WatchlistPage'
 import { InvitePage } from '../features/authentication/pages/InvitePage'
 import { AcceptInvitePage } from '../features/authentication/pages/AcceptInvitePage'
+import { WatchHistoryPage } from '../features/movies/pages/WatchHistoryPage'
+import { WatchSessionDetailPage } from '../features/movies/pages/WatchSessionDetailPage'
 
 export const router = createBrowserRouter([
   {
@@ -55,6 +57,14 @@ export const router = createBrowserRouter([
           {
             path: '/invite/accept',
             element: <AcceptInvitePage />,
+          },
+          {
+            path: '/watch-history',
+            element: <WatchHistoryPage />,
+          },
+          {
+            path: '/watch-history/:id',
+            element: <WatchSessionDetailPage />,
           },
         ],
       },
