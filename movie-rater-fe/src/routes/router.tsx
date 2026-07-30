@@ -10,6 +10,7 @@ import { InvitePage } from '../features/authentication/pages/InvitePage'
 import { AcceptInvitePage } from '../features/authentication/pages/AcceptInvitePage'
 import { WatchHistoryPage } from '../features/movies/pages/WatchHistoryPage'
 import { WatchSessionDetailPage } from '../features/movies/pages/WatchSessionDetailPage'
+import { DashboardPage } from '../features/dashboard/pages/DashboardPage'
 
 export const router = createBrowserRouter([
   {
@@ -28,11 +29,7 @@ export const router = createBrowserRouter([
         children: [
           {
             path: '/dashboard',
-            element: (
-              <div className="flex min-h-dvh items-center justify-center text-muted-foreground">
-                Dashboard coming soon
-              </div>
-            ),
+            element: <DashboardPage />,
           },
           {
             path: '/movies',
