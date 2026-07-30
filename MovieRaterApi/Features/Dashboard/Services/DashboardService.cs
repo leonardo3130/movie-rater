@@ -131,7 +131,7 @@ public class DashboardService : IDashboardService
             {
                 GenreName = g.Key,
                 Count = g.Count(),
-                AverageRating = Math.Round(g.Average(x => x.RatingValue), 2),
+                AverageRating = g.Average(x => x.RatingValue),
             })
             .OrderByDescending(g => g.AverageRating)
             .Take(5)
