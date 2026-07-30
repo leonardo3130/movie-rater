@@ -1,6 +1,7 @@
+import { useState } from 'react'
 import { useNavigate, useParams } from 'react-router'
 import { motion } from 'framer-motion'
-import { Star, Clock, Calendar, Users, Play, ExternalLink, Heart, Bookmark } from 'lucide-react'
+import { Star, Clock, Calendar, Users, Play, ExternalLink, Heart, Bookmark, Eye } from 'lucide-react'
 import { Dialog, DialogContent } from '@/components/ui/dialog'
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -8,6 +9,8 @@ import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
 import { MoviePoster } from './MoviePoster'
 import { MovieCard } from './MovieCard'
+import { CreateWatchSessionDialog } from './CreateWatchSessionDialog'
+import { RateMovieDialog } from './RateMovieDialog'
 import { useMovieDetails } from '../hooks/use-movie-details'
 import { useMovieRecommendations } from '../hooks/use-movie-recommendations'
 import { useToggleFavorite } from '../../user-movie/hooks/use-toggle-favorite'
@@ -33,6 +36,9 @@ export function MovieDetailsDialog() {
   const isInWatchlist = movie
     ? movie.isInWatchlist || watchlistIds.has(movieIdStr)
     : false
+  const [wsDialogOpen, setWsDialogOpen] = useState(false)
+  const [rateDialogOpen, setRateDialogOpen] = useState(false)
+  const [rateSessionId, setRateSessionId] = useState<string | null>(null)
 
   const open = movieId !== null && !isNaN(Number(tmdbId))
 
@@ -135,6 +141,17 @@ export function MovieDetailsDialog() {
                     <Bookmark className="size-4" fill={isInWatchlist ? 'currentColor' : 'none'} />
                     {isInWatchlist ? 'Remove from Watchlist' : 'Add to Watchlist'}
                   </Button>
+                  <Button
+                    variant="default"
+                    size="sm"
+                    onClick={(e) => {
+                      e.preventDefault()
+                      setWsDialogOpen(true)
+                    }}
+                  >
+                    <Eye className="size-4" />
+                    Mark as Watched
+                  </Button>
                   {trailer && (
                     <Button variant="outline" size="sm">
                       <a
@@ -230,6 +247,28 @@ export function MovieDetailsDialog() {
             </motion.div>
           )}
         </div>
+
+        <CreateWatchSessionDialog
+          open={wsDialogOpen}
+          onOpenChange={setWsDialogOpen}
+          movieId={movie?.id ?? ''}
+          movieTitle={movie?.title ?? ''}
+          moviePosterUrl={movie?.posterUrl ?? null}
+          onSuccess={(sessionId) => {
+            setRateSessionId(sessionId)
+            setRateDialogOpen(true)
+          }}
+        />
+        {rateSessionId && (
+          <RateMovieDialog
+            open={rateDialogOpen}
+            onOpenChange={setRateDialogOpen}
+            watchSessionId={rateSessionId}
+            movieTitle={movie?.title ?? ''}
+            moviePosterUrl={movie?.posterUrl ?? null}
+            existingRating={null}
+          />
+        )}
       </DialogContent>
     </Dialog>
   )

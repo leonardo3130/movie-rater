@@ -8,6 +8,7 @@ export interface GenresResponse {
 }
 
 export interface MovieSummaryDto {
+  id: string
   tmdbId: number
   title: string
   posterUrl: string | null
@@ -54,6 +55,7 @@ export interface VideoDto {
 }
 
 export interface MovieDetailsResponse {
+  id: string
   tmdbId: number
   title: string
   posterUrl: string | null

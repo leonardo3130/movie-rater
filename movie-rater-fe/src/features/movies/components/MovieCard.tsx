@@ -1,9 +1,12 @@
+import { useState } from 'react'
 import { Link } from 'react-router'
 import { motion } from 'framer-motion'
-import { Star } from 'lucide-react'
+import { Star, Eye } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { MoviePoster } from './MoviePoster'
 import { UserMovieToggle } from '../../user-movie/components/UserMovieToggle'
+import { CreateWatchSessionDialog } from './CreateWatchSessionDialog'
+import { RateMovieDialog } from './RateMovieDialog'
 import { useUserMovieStore } from '../../../stores/user-movie-store'
 import type { MovieSummaryDto } from '@src/types/movie'
 
@@ -19,6 +22,9 @@ export function MovieCard({ movie, index = 0 }: MovieCardProps) {
   const watchlistIds = useUserMovieStore((s) => s.watchlistIds)
   const isFavorite = movie.isFavorite || favoriteIds.has(movieId)
   const isInWatchlist = movie.isInWatchlist || watchlistIds.has(movieId)
+  const [wsDialogOpen, setWsDialogOpen] = useState(false)
+  const [rateDialogOpen, setRateDialogOpen] = useState(false)
+  const [rateSessionId, setRateSessionId] = useState<string | null>(null)
 
   return (
     <motion.div
@@ -37,13 +43,26 @@ export function MovieCard({ movie, index = 0 }: MovieCardProps) {
               {movie.voteAverage.toFixed(1)}
             </Badge>
           </div>
-          <div className="absolute bottom-2 left-2 opacity-0 group-hover:opacity-100 transition-opacity">
+          <div className="absolute bottom-2 left-2 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1">
             <UserMovieToggle
               movieId={movieId}
               isFavorite={isFavorite}
               isInWatchlist={isInWatchlist}
               size="sm"
             />
+            <motion.button
+              type="button"
+              whileTap={{ scale: 0.8 }}
+              onClick={(e) => {
+                e.preventDefault()
+                e.stopPropagation()
+                setWsDialogOpen(true)
+              }}
+              className="rounded-full p-1 transition-colors hover:bg-white/10 text-white/60 hover:text-white/90"
+              aria-label="Mark as watched"
+            >
+              <Eye className="size-3.5" />
+            </motion.button>
           </div>
         </div>
         <div className="space-y-0.5">
@@ -53,6 +72,28 @@ export function MovieCard({ movie, index = 0 }: MovieCardProps) {
           {year && <p className="text-xs text-muted-foreground">{year}</p>}
         </div>
       </Link>
+
+      <CreateWatchSessionDialog
+        open={wsDialogOpen}
+        onOpenChange={setWsDialogOpen}
+        movieId={movie.id}
+        movieTitle={movie.title}
+        moviePosterUrl={movie.posterUrl}
+        onSuccess={(sessionId) => {
+          setRateSessionId(sessionId)
+          setRateDialogOpen(true)
+        }}
+      />
+      {rateSessionId && (
+        <RateMovieDialog
+          open={rateDialogOpen}
+          onOpenChange={setRateDialogOpen}
+          watchSessionId={rateSessionId}
+          movieTitle={movie.title}
+          moviePosterUrl={movie.posterUrl}
+          existingRating={null}
+        />
+      )}
     </motion.div>
   )
 }
