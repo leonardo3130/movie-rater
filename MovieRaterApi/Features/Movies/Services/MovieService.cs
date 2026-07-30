@@ -168,7 +168,7 @@ public class MovieService : IMovieService
         var videos = await _tmdb.GetMovieVideosAsync(videosQuery, ct);
         MovieMapper.PopulateVideos(dto, videos);
 
-        await UpsertMovieAsync(details, ct);
+        await UpsertMovieAsync(details, posterUrl, backdropUrl, ct);
 
         await EnrichWithUserDataAsync(dto, ct);
 
@@ -274,7 +274,7 @@ public class MovieService : IMovieService
             ) ?? new TmdbImageConfig { SecureBaseUrl = "https://image.tmdb.org/t/p/" };
     }
 
-    private async Task UpsertMovieAsync(TmdbMovieDetails details, CancellationToken ct)
+    private async Task UpsertMovieAsync(TmdbMovieDetails details, string? posterUrl, string? backdropUrl, CancellationToken ct)
     {
         DateOnly? releaseDate = null;
         if (DateOnly.TryParse(details.ReleaseDate, out var parsed))
@@ -293,8 +293,8 @@ public class MovieService : IMovieService
                 Id = Guid.NewGuid(),
                 TmdbId = details.Id,
                 Title = details.Title ?? details.OriginalTitle ?? "",
-                PosterUrl = details.PosterPath,
-                BackdropUrl = details.BackdropPath,
+                PosterUrl = posterUrl,
+                BackdropUrl = backdropUrl,
                 Overview = details.Overview,
                 ReleaseDate = releaseDate,
                 Runtime = details.Runtime,
@@ -313,8 +313,8 @@ public class MovieService : IMovieService
         else
         {
             existingMovie.Title = details.Title ?? details.OriginalTitle ?? existingMovie.Title;
-            existingMovie.PosterUrl = details.PosterPath ?? existingMovie.PosterUrl;
-            existingMovie.BackdropUrl = details.BackdropPath ?? existingMovie.BackdropUrl;
+            existingMovie.PosterUrl = posterUrl ?? existingMovie.PosterUrl;
+            existingMovie.BackdropUrl = backdropUrl ?? existingMovie.BackdropUrl;
             existingMovie.Overview = details.Overview ?? existingMovie.Overview;
             existingMovie.ReleaseDate = releaseDate ?? existingMovie.ReleaseDate;
             existingMovie.Runtime = details.Runtime ?? existingMovie.Runtime;
@@ -402,6 +402,7 @@ public class MovieService : IMovieService
             {
                 if (tmdbToGuid.TryGetValue(result.TmdbId, out var guidId))
                 {
+                    result.Id = guidId;
                     result.IsFavorite = favLookup.Contains(guidId);
                     result.IsInWatchlist = watchlistLookup.Contains(guidId);
                     result.WatchedCount = watchedLookup.GetValueOrDefault(guidId, 0);
@@ -416,6 +417,8 @@ public class MovieService : IMovieService
 
         if (movie is null || !_currentUser.IsAuthenticated)
             return;
+
+        dto.Id = movie.Id;
 
         if (_currentUser.IsAuthenticated)
         {

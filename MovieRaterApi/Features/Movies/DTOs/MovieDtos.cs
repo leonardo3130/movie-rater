@@ -58,6 +58,7 @@ public class PagedMoviesResponseDto
 
 public class MovieSummaryDto
 {
+    public Guid Id { get; set; }
     public int TmdbId { get; set; }
     public string Title { get; set; } = string.Empty;
     public string? PosterUrl { get; set; }
@@ -74,6 +75,7 @@ public class MovieSummaryDto
 
 public class MovieDetailsResponseDto
 {
+    public Guid Id { get; set; }
     public int TmdbId { get; set; }
     public string Title { get; set; } = string.Empty;
     public string? PosterUrl { get; set; }
