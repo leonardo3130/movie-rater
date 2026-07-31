@@ -42,13 +42,13 @@ public class CoupleInvitationService : ICoupleInvitationService
             throw new BadRequestException("You cannot invite yourself.");
         }
 
-        var existingCouple = await _db.Couples.FirstOrDefaultAsync(c =>
-            (c.User1Id == inviterUserId && c.User2Id == invitee.Id)
-            || (c.User2Id == inviterUserId && c.User1Id == invitee.Id)
+        var existingCouple = await _db.Couples.AnyAsync(c =>
+            (c.User1Id == inviterUserId || c.User2Id == invitee.Id)
+            || (c.User2Id == inviterUserId || c.User1Id == invitee.Id)
         );
-        if (existingCouple is not null)
+        if (existingCouple)
         {
-            throw new ConflictException("You are already connected with this user.");
+            throw new ConflictException("You or the other user is already in a couple");
         }
 
         var existingInvitation = await _db.Set<CoupleInvitation>()
@@ -59,9 +59,7 @@ public class CoupleInvitationService : ICoupleInvitationService
             );
         if (existingInvitation is not null)
         {
-            throw new ConflictException(
-                "A pending invitation already exists for this user."
-            );
+            throw new ConflictException("A pending invitation already exists for this user.");
         }
 
         var rawToken = Convert.ToBase64String(RandomNumberGenerator.GetBytes(32));
