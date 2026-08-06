@@ -18,7 +18,11 @@ public class TokenService : ITokenService
     private readonly JwtOptions _jwtOptions;
     private readonly ILogger<TokenService> _logger;
 
-    public TokenService(ApplicationDbContext db, IOptions<JwtOptions> jwtOptions, ILogger<TokenService> logger)
+    public TokenService(
+        ApplicationDbContext db,
+        IOptions<JwtOptions> jwtOptions,
+        ILogger<TokenService> logger
+    )
     {
         _db = db;
         _jwtOptions = jwtOptions.Value;
@@ -35,7 +39,7 @@ public class TokenService : ITokenService
             new(ClaimTypes.NameIdentifier, user.Id.ToString()),
             new(ClaimTypes.Name, user.Username),
             new(ClaimTypes.Email, user.Email),
-            new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
+            new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
         };
 
         if (coupleId.HasValue)
@@ -69,16 +73,18 @@ public class TokenService : ITokenService
 
     public async Task<bool> IsRefreshTokenValidAsync(string tokenHash)
     {
-        return await _db.Set<RefreshToken>().AnyAsync(rt =>
-            rt.TokenHash == tokenHash &&
-            !rt.RevokedAt.HasValue &&
-            rt.ExpiresAt > DateTime.UtcNow
-        );
+        return await _db.Set<RefreshToken>()
+            .AnyAsync(rt =>
+                rt.TokenHash == tokenHash
+                && !rt.RevokedAt.HasValue
+                && rt.ExpiresAt > DateTime.UtcNow
+            );
     }
 
     public async Task RevokeRefreshTokenAsync(string tokenHash, string? replacedByTokenHash = null)
     {
-        var token = await _db.Set<RefreshToken>().FirstOrDefaultAsync(rt => rt.TokenHash == tokenHash);
+        var token = await _db.Set<RefreshToken>()
+            .FirstOrDefaultAsync(rt => rt.TokenHash == tokenHash);
         if (token is not null)
         {
             token.RevokedAt = DateTime.UtcNow;
@@ -101,5 +107,19 @@ public class TokenService : ITokenService
         await _db.SaveChangesAsync();
 
         _logger.LogWarning("Revoked refresh token family for hash {TokenHash}", tokenHash);
+    }
+
+    public async Task RevokeTokensFromUser(Guid userId)
+    {
+        List<RefreshToken> userTokens = await _db
+            .RefreshTokens.Where(rt => rt.UserId == userId && rt.RevokedAt != null)
+            .ToListAsync();
+
+        foreach (var token in userTokens)
+        {
+            token.RevokedAt = DateTime.UtcNow;
+        }
+
+        await _db.SaveChangesAsync();
     }
 }

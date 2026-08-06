@@ -13,11 +13,17 @@ public class CoupleInvitationService : ICoupleInvitationService
 {
     private readonly ApplicationDbContext _db;
     private readonly ILogger<CoupleInvitationService> _logger;
+    private readonly ITokenService _tokenService;
 
-    public CoupleInvitationService(ApplicationDbContext db, ILogger<CoupleInvitationService> logger)
+    public CoupleInvitationService(
+        ApplicationDbContext db,
+        ILogger<CoupleInvitationService> logger,
+        ITokenService tokenService
+    )
     {
         _db = db;
         _logger = logger;
+        _tokenService = tokenService;
     }
 
     public async Task<InviteResponseDto> InviteAsync(
@@ -96,7 +102,7 @@ public class CoupleInvitationService : ICoupleInvitationService
         };
     }
 
-    public async Task AcceptInvitationAsync(
+    public async Task<string> AcceptInvitationAsync(
         Guid acceptedByUserId,
         AcceptInvitationRequestDto request
     )
@@ -157,6 +163,14 @@ public class CoupleInvitationService : ICoupleInvitationService
             acceptedByUserId,
             couple.Id
         );
+
+        // ricalcola access token con nuovo couple id
+        var newAccessToken = _tokenService.GenerateAccessToken(acceptedByUser, couple.Id);
+
+        // revoca refresh token all'altro utente, così dovrà riloggarsi e riceverà access token corretto
+        await _tokenService.RevokeTokensFromUser(invitation.InviterUserId);
+
+        return newAccessToken;
     }
 
     private static string HashToken(string rawToken)
