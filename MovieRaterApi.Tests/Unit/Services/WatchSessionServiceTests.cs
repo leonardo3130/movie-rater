@@ -170,15 +170,10 @@ public class WatchSessionServiceTests
         var coupleId = Guid.NewGuid();
         var userId = Guid.NewGuid();
         var movieId = Guid.NewGuid();
+        var firstDate = new DateTime(2026, 7, 1, 20, 0, 0, DateTimeKind.Utc);
         SeedCouple(coupleId, userId, Guid.NewGuid());
         SeedMovie(movieId, 1, "Inception");
-        SeedWatchSession(
-            Guid.NewGuid(),
-            coupleId,
-            movieId,
-            userId,
-            new DateTime(2026, 7, 1, 20, 0, 0, DateTimeKind.Utc)
-        );
+        SeedWatchSession(Guid.NewGuid(), coupleId, movieId, userId, firstDate);
         SeedWatchSession(
             Guid.NewGuid(),
             coupleId,
@@ -194,11 +189,11 @@ public class WatchSessionServiceTests
             new DateTime(2026, 7, 2, 20, 0, 0, DateTimeKind.Utc)
         );
 
-        var result = await _sut.GetHeatmapAsync(30, coupleId);
+        var result = await _sut.GetHeatmapAsync((DateTime.UtcNow - firstDate).Days, coupleId);
 
+        result.DailyCounts.Count.Should().Be(2);
         result.DailyCounts["2026-07-01"].Should().Be(2);
         result.DailyCounts["2026-07-02"].Should().Be(1);
-        result.DailyCounts.Count.Should().Be(2);
     }
 
     private void SeedCouple(Guid coupleId, Guid user1Id, Guid user2Id)

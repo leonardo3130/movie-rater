@@ -6,6 +6,7 @@ using Moq;
 using MovieRaterApi.Data;
 using MovieRaterApi.Data.Entities;
 using MovieRaterApi.Features.Authentication.DTOs;
+using MovieRaterApi.Features.Authentication.Interfaces;
 using MovieRaterApi.Features.Authentication.Services;
 using MovieRaterApi.Infrastructure.Exceptions;
 
@@ -15,13 +16,15 @@ public class CoupleInvitationServiceTests
 {
     private readonly ApplicationDbContext _db;
     private readonly Mock<ILogger<CoupleInvitationService>> _loggerMock;
+    private readonly Mock<ITokenService> _tokenServiceMock;
     private readonly CoupleInvitationService _sut;
 
     public CoupleInvitationServiceTests()
     {
         _db = TestHelpers.CreateInMemoryDbContext();
+        _tokenServiceMock = new Mock<ITokenService>();
         _loggerMock = new Mock<ILogger<CoupleInvitationService>>();
-        _sut = new CoupleInvitationService(_db, _loggerMock.Object);
+        _sut = new CoupleInvitationService(_db, _loggerMock.Object, _tokenServiceMock.Object);
     }
 
     private static string HashToken(string rawToken)
@@ -151,7 +154,7 @@ public class CoupleInvitationServiceTests
             .Awaiting(() => _sut.InviteAsync(inviterId, request))
             .Should()
             .ThrowAsync<ConflictException>()
-            .WithMessage("You are already connected with this user.");
+            .WithMessage("You or the other user is already in a couple");
     }
 
     [Fact]
