@@ -29,6 +29,7 @@ import { useAuthStore } from '../../../stores/auth-store'
 import { useMutation } from '@tanstack/react-query'
 import { logout as logoutApi } from '../../../api/endpoints/auth'
 import { cn } from '@/lib/utils'
+import type { CurrentUserResponse } from '@/src/types/auth'
 
 const NAV_ITEMS = [
   { icon: LayoutDashboard, label: 'Dashboard', path: '/dashboard' },
@@ -115,7 +116,9 @@ function AppSidebar() {
         <SidebarGroup>
           <SidebarGroupContent>
             <SidebarMenu>
-              {NAV_ITEMS.map((item) => {
+              {NAV_ITEMS.filter(item =>
+                item.path !== "/invite" || !(user as CurrentUserResponse).coupleId
+              ).map((item) => {
                 const active = isActive(item.path)
                 return (
                   <SidebarMenuItem key={item.path} className='my-1'>

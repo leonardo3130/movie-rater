@@ -22,7 +22,7 @@ export const router = createBrowserRouter([
     element: <RegisterPage />,
   },
   {
-    element: <ProtectedRoute />,
+    element: <ProtectedRoute coupleCheck={false} />,
     children: [
       {
         element: <AppLayout />,
@@ -48,14 +48,6 @@ export const router = createBrowserRouter([
             element: <WatchlistPage />,
           },
           {
-            path: '/invite',
-            element: <InvitePage />,
-          },
-          {
-            path: '/invite/accept',
-            element: <AcceptInvitePage />,
-          },
-          {
             path: '/watch-history',
             element: <WatchHistoryPage />,
           },
@@ -65,6 +57,24 @@ export const router = createBrowserRouter([
           },
         ],
       },
+    ],
+  },
+  {
+    element: <ProtectedRoute coupleCheck={true} />,
+    children: [{
+      element: <AppLayout />,
+      children: [
+        {
+          path: '/invite',
+          element: <InvitePage />,
+        },
+        {
+          path: '/invite/accept',
+          element: <AcceptInvitePage />,
+        },
+      ]
+    }
+
     ],
   },
   {

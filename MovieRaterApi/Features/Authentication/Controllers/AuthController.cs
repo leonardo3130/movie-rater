@@ -77,10 +77,15 @@ public class AuthController : ControllerBase
     }
 
     [HttpPost("invite/accept")]
-    public async Task<IActionResult> AcceptInvitation([FromBody] AcceptInvitationRequestDto request)
+    public async Task<ActionResult<string>> AcceptInvitation(
+        [FromBody] AcceptInvitationRequestDto request
+    )
     {
-        await _coupleInvitationService.AcceptInvitationAsync(_currentUser.UserId, request);
-        return Ok();
+        var accessToken = await _coupleInvitationService.AcceptInvitationAsync(
+            _currentUser.UserId,
+            request
+        );
+        return Ok(accessToken);
     }
 
     private void SetRefreshTokenCookie(string refreshToken)
