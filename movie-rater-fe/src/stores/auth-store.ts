@@ -1,15 +1,16 @@
 import { create } from 'zustand'
 import { setAccessToken } from '../api/token'
-import type { UserResponse } from '@src/types/auth'
+import type { CurrentUserResponse } from '@src/types/auth'
 
 const ACCESS_TOKEN_KEY = 'mr_access_token'
 
 interface AuthState {
-  user: UserResponse | null
+  user: CurrentUserResponse | null
   accessToken: string | null
   status: 'idle' | 'authenticated' | 'unauthenticated'
-  setAuth: (user: UserResponse, accessToken: string) => void
-  setUser: (user: UserResponse | null) => void
+  setAuth: (user: CurrentUserResponse, accessToken: string) => void
+  setUser: (user: CurrentUserResponse | null) => void
+  setCoupleId: (coupleId: string) => void
   setAccessToken: (token: string) => void
   clear: () => void
 }
@@ -23,7 +24,7 @@ if (storedToken) {
   setAccessToken(storedToken)
 }
 
-export const useAuthStore = create<AuthState>((set) => ({
+export const useAuthStore = create<AuthState>((set, get) => ({
   user: null,
   accessToken: storedToken,
   status: storedToken ? 'idle' : 'unauthenticated',
@@ -36,6 +37,15 @@ export const useAuthStore = create<AuthState>((set) => ({
 
   setUser: (user) => {
     set({ user, status: user ? 'authenticated' : 'unauthenticated' })
+  },
+
+  setCoupleId: (coupleId) => {
+    const user = get().user;
+    if (!user)
+      return
+
+    const updatedUser: CurrentUserResponse = { ...user, coupleId }
+    set({ user: updatedUser });
   },
 
   setAccessToken: (token) => {

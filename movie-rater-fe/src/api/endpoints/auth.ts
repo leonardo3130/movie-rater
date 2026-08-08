@@ -7,6 +7,7 @@ import type {
   InvitePartnerRequest,
   InviteResponse,
   AcceptInvitationRequest,
+  AcceptInvitationResponse,
 } from '@src/types/auth'
 
 export function register(body: RegisterRequest) {
@@ -34,5 +35,5 @@ export function invitePartner(body: InvitePartnerRequest) {
 }
 
 export function acceptInvitation(body: AcceptInvitationRequest) {
-  return client.post('/api/auth/invite/accept', body).then((r) => r.data)
+  return client.post<AcceptInvitationResponse>('/api/auth/invite/accept', body).then((r) => r.data)
 }

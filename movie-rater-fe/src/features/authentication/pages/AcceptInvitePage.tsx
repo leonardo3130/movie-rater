@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button'
 import { acceptInvitation } from '../../../api/endpoints/auth'
 import type { ApiError } from '@src/types/auth'
+import { useAuthStore } from '@/src/stores/auth-store'
 
 type AcceptState = 'loading' | 'success' | 'error'
 
@@ -16,13 +17,17 @@ export function AcceptInvitePage() {
   const navigate = useNavigate()
   const [state, setState] = useState<AcceptState>('loading')
   const [errorMessage, setErrorMessage] = useState('')
+  const setAccessToken = useAuthStore(s => s.setAccessToken);
+  const setCoupleId = useAuthStore(s => s.setCoupleId);
 
   const token = searchParams.get('token')
 
   const mutation = useMutation({
     mutationFn: acceptInvitation,
-    onSuccess: () => {
+    onSuccess: (response) => {
       setState('success')
+      setAccessToken(response.newAccessToken)
+      setCoupleId(response.coupleId)
       toast.success('You are now connected!')
       setTimeout(() => navigate('/dashboard', { replace: true }), 2000)
     },

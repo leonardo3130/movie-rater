@@ -5,5 +5,8 @@ namespace MovieRaterApi.Features.Authentication.Interfaces;
 public interface ICoupleInvitationService
 {
     Task<InviteResponseDto> InviteAsync(Guid inviterUserId, InvitePartnerRequestDto request);
-    Task<string> AcceptInvitationAsync(Guid acceptedByUserId, AcceptInvitationRequestDto request);
+    Task<AcceptInvitationResponseDto> AcceptInvitationAsync(
+        Guid acceptedByUserId,
+        AcceptInvitationRequestDto request
+    );
 }

@@ -189,7 +189,7 @@ public class WatchSessionServiceTests
             new DateTime(2026, 7, 2, 20, 0, 0, DateTimeKind.Utc)
         );
 
-        var result = await _sut.GetHeatmapAsync((DateTime.UtcNow - firstDate).Days, coupleId);
+        var result = await _sut.GetHeatmapAsync((DateTime.UtcNow - firstDate).Days + 1, coupleId);
 
         result.DailyCounts.Count.Should().Be(2);
         result.DailyCounts["2026-07-01"].Should().Be(2);

@@ -102,7 +102,7 @@ public class CoupleInvitationService : ICoupleInvitationService
         };
     }
 
-    public async Task<string> AcceptInvitationAsync(
+    public async Task<AcceptInvitationResponseDto> AcceptInvitationAsync(
         Guid acceptedByUserId,
         AcceptInvitationRequestDto request
     )
@@ -170,7 +170,11 @@ public class CoupleInvitationService : ICoupleInvitationService
         // revoca refresh token all'altro utente, così dovrà riloggarsi e riceverà access token corretto
         await _tokenService.RevokeTokensFromUser(invitation.InviterUserId);
 
-        return newAccessToken;
+        return new AcceptInvitationResponseDto
+        {
+            NewAccessToken = newAccessToken,
+            CoupleId = couple.Id,
+        };
     }
 
     private static string HashToken(string rawToken)

@@ -41,15 +41,11 @@ public class UserResponseDto
     public string Username { get; set; } = string.Empty;
     public string Email { get; set; } = string.Empty;
     public string? ProfilePictureUrl { get; set; }
+    public Guid? CoupleId { get; set; }
 }
 
-public class CurrentUserResponseDto
+public class CurrentUserResponseDto : UserResponseDto
 {
-    public Guid Id { get; set; }
-    public string Username { get; set; } = string.Empty;
-    public string Email { get; set; } = string.Empty;
-    public string? ProfilePictureUrl { get; set; }
-    public Guid? CoupleId { get; set; }
     public UserResponseDto? Partner { get; set; }
 }
 
@@ -58,4 +54,10 @@ public class InviteResponseDto
     public Guid InvitationId { get; set; }
     public string InviteToken { get; set; } = string.Empty;
     public DateTime ExpiresAt { get; set; }
+}
+
+public class AcceptInvitationResponseDto
+{
+    public required string NewAccessToken { get; set; }
+    public Guid CoupleId { get; set; }
 }

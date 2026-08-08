@@ -41,6 +41,11 @@ export interface AcceptInvitationRequest {
   inviteToken: string
 }
 
+export interface AcceptInvitationResponse {
+  newAccessToken: string
+  coupleId: string
+}
+
 export interface ApiError {
   type?: string
   title?: string

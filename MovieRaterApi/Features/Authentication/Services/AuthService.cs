@@ -18,7 +18,8 @@ public class AuthService : IAuthService
         ApplicationDbContext db,
         IPasswordHasher passwordHasher,
         ITokenService tokenService,
-        ILogger<AuthService> logger)
+        ILogger<AuthService> logger
+    )
     {
         _db = db;
         _passwordHasher = passwordHasher;
@@ -28,8 +29,9 @@ public class AuthService : IAuthService
 
     public async Task<AuthResponseDto> RegisterAsync(RegisterRequestDto request)
     {
-        var existingUser = await _db.Users
-            .FirstOrDefaultAsync(u => u.Username == request.Username || u.Email == request.Email);
+        var existingUser = await _db.Users.FirstOrDefaultAsync(u =>
+            u.Username == request.Username || u.Email == request.Email
+        );
 
         if (existingUser is not null)
         {
@@ -43,7 +45,7 @@ public class AuthService : IAuthService
             Email = request.Email,
             PasswordHash = _passwordHasher.Hash(request.Password),
             CreatedAt = DateTime.UtcNow,
-            UpdatedAt = DateTime.UtcNow
+            UpdatedAt = DateTime.UtcNow,
         };
 
         _db.Users.Add(user);
@@ -58,7 +60,7 @@ public class AuthService : IAuthService
             UserId = user.Id,
             TokenHash = refreshTokenHash,
             ExpiresAt = DateTime.UtcNow.AddDays(30),
-            CreatedAt = DateTime.UtcNow
+            CreatedAt = DateTime.UtcNow,
         };
 
         _db.Set<RefreshToken>().Add(refreshTokenEntity);
@@ -75,15 +77,14 @@ public class AuthService : IAuthService
                 Id = user.Id,
                 Username = user.Username,
                 Email = user.Email,
-                ProfilePictureUrl = user.ProfilePictureUrl
-            }
+                ProfilePictureUrl = user.ProfilePictureUrl,
+            },
         };
     }
 
     public async Task<AuthResponseDto> LoginAsync(LoginRequestDto request)
     {
-        var user = await _db.Users
-            .FirstOrDefaultAsync(u => u.Email == request.Email);
+        var user = await _db.Users.FirstOrDefaultAsync(u => u.Email == request.Email);
 
         if (user is null || !_passwordHasher.Verify(request.Password, user.PasswordHash))
         {
@@ -91,8 +92,9 @@ public class AuthService : IAuthService
             throw new UnauthorizedAccessException("Invalid credentials.");
         }
 
-        var couple = await _db.Couples
-            .FirstOrDefaultAsync(c => c.User1Id == user.Id || c.User2Id == user.Id);
+        var couple = await _db.Couples.FirstOrDefaultAsync(c =>
+            c.User1Id == user.Id || c.User2Id == user.Id
+        );
 
         var accessToken = _tokenService.GenerateAccessToken(user, couple?.Id);
         var (rawRefreshToken, refreshTokenHash) = _tokenService.GenerateRefreshToken();
@@ -103,7 +105,7 @@ public class AuthService : IAuthService
             UserId = user.Id,
             TokenHash = refreshTokenHash,
             ExpiresAt = DateTime.UtcNow.AddDays(30),
-            CreatedAt = DateTime.UtcNow
+            CreatedAt = DateTime.UtcNow,
         };
 
         _db.Set<RefreshToken>().Add(refreshTokenEntity);
@@ -120,8 +122,9 @@ public class AuthService : IAuthService
                 Id = user.Id,
                 Username = user.Username,
                 Email = user.Email,
-                ProfilePictureUrl = user.ProfilePictureUrl
-            }
+                ProfilePictureUrl = user.ProfilePictureUrl,
+                CoupleId = couple?.Id,
+            },
         };
     }
 
@@ -144,7 +147,10 @@ public class AuthService : IAuthService
 
         if (storedToken.RevokedAt.HasValue)
         {
-            _logger.LogWarning("Refresh token reuse detected for user {UserId}", storedToken.UserId);
+            _logger.LogWarning(
+                "Refresh token reuse detected for user {UserId}",
+                storedToken.UserId
+            );
             await _tokenService.RevokeTokenFamilyAsync(tokenHash);
             throw new UnauthorizedAccessException("Refresh token has been revoked.");
         }
@@ -156,8 +162,9 @@ public class AuthService : IAuthService
             throw new UnauthorizedAccessException("Refresh token has expired.");
         }
 
-        var couple = await _db.Couples
-            .FirstOrDefaultAsync(c => c.User1Id == storedToken.UserId || c.User2Id == storedToken.UserId);
+        var couple = await _db.Couples.FirstOrDefaultAsync(c =>
+            c.User1Id == storedToken.UserId || c.User2Id == storedToken.UserId
+        );
 
         var newAccessToken = _tokenService.GenerateAccessToken(storedToken.User, couple?.Id);
         var (newRawRefreshToken, newRefreshTokenHash) = _tokenService.GenerateRefreshToken();
@@ -171,7 +178,7 @@ public class AuthService : IAuthService
             UserId = storedToken.UserId,
             TokenHash = newRefreshTokenHash,
             ExpiresAt = DateTime.UtcNow.AddDays(30),
-            CreatedAt = DateTime.UtcNow
+            CreatedAt = DateTime.UtcNow,
         };
 
         _db.Set<RefreshToken>().Add(newRefreshTokenEntity);
@@ -188,8 +195,9 @@ public class AuthService : IAuthService
                 Id = storedToken.User.Id,
                 Username = storedToken.User.Username,
                 Email = storedToken.User.Email,
-                ProfilePictureUrl = storedToken.User.ProfilePictureUrl
-            }
+                ProfilePictureUrl = storedToken.User.ProfilePictureUrl,
+                CoupleId = couple?.Id,
+            },
         };
     }
 
@@ -219,8 +227,9 @@ public class AuthService : IAuthService
             throw new NotFoundException("User not found.");
         }
 
-        var couple = await _db.Couples
-            .FirstOrDefaultAsync(c => c.User1Id == userId || c.User2Id == userId);
+        var couple = await _db.Couples.FirstOrDefaultAsync(c =>
+            c.User1Id == userId || c.User2Id == userId
+        );
 
         UserResponseDto? partner = null;
         if (couple is not null)
@@ -234,7 +243,7 @@ public class AuthService : IAuthService
                     Id = partnerUser.Id,
                     Username = partnerUser.Username,
                     Email = partnerUser.Email,
-                    ProfilePictureUrl = partnerUser.ProfilePictureUrl
+                    ProfilePictureUrl = partnerUser.ProfilePictureUrl,
                 };
             }
         }
@@ -246,7 +255,7 @@ public class AuthService : IAuthService
             Email = user.Email,
             ProfilePictureUrl = user.ProfilePictureUrl,
             CoupleId = couple?.Id,
-            Partner = partner
+            Partner = partner,
         };
     }
 }
