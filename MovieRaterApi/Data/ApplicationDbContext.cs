@@ -9,7 +9,8 @@ public class ApplicationDbContext : DbContext
         : base(options) { }
 
     public DbSet<User> Users => Set<User>();
-    public DbSet<Couple> Couples => Set<Couple>();
+    public DbSet<Group> Groups => Set<Group>();
+    public DbSet<UserGroup> UserGroups => Set<UserGroup>();
     public DbSet<Movie> Movies => Set<Movie>();
     public DbSet<Genre> Genres => Set<Genre>();
     public DbSet<MovieGenre> MovieGenres => Set<MovieGenre>();
@@ -20,7 +21,7 @@ public class ApplicationDbContext : DbContext
     public DbSet<UserAchievement> UserAchievements => Set<UserAchievement>();
     public DbSet<AiSummary> AiSummaries => Set<AiSummary>();
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
-    public DbSet<CoupleInvitation> CoupleInvitations => Set<CoupleInvitation>();
+    public DbSet<Invitation> Invitations => Set<Invitation>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -37,19 +38,24 @@ public class ApplicationDbContext : DbContext
             entity.HasIndex(e => e.Email).IsUnique();
         });
 
-        modelBuilder.Entity<Couple>(entity =>
+        modelBuilder.Entity<Group>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+        });
+
+        modelBuilder.Entity<UserGroup>(entity =>
         {
             entity.HasKey(e => e.Id);
             entity
-                .HasOne(e => e.User1)
-                .WithMany(u => u.CouplesAsUser1)
-                .HasForeignKey(e => e.User1Id)
-                .OnDelete(DeleteBehavior.Restrict);
+                .HasOne(e => e.Group)
+                .WithMany(g => g.UserGroups)
+                .HasForeignKey(ug => ug.GroupId)
+                .OnDelete(DeleteBehavior.Cascade);
             entity
-                .HasOne(e => e.User2)
-                .WithMany(u => u.CouplesAsUser2)
-                .HasForeignKey(e => e.User2Id)
-                .OnDelete(DeleteBehavior.Restrict);
+                .HasOne(e => e.User)
+                .WithMany(g => g.UserGroups)
+                .HasForeignKey(ug => ug.User)
+                .OnDelete(DeleteBehavior.Cascade);
         });
 
         modelBuilder.Entity<Movie>(entity =>
@@ -89,9 +95,9 @@ public class ApplicationDbContext : DbContext
             entity.Property(e => e.Location).HasMaxLength(200);
             entity.Property(e => e.Notes).HasMaxLength(2000);
             entity
-                .HasOne(e => e.Couple)
+                .HasOne(e => e.Group)
                 .WithMany(c => c.WatchSessions)
-                .HasForeignKey(e => e.CoupleId)
+                .HasForeignKey(e => e.GroupId)
                 .OnDelete(DeleteBehavior.Restrict);
             entity
                 .HasOne(e => e.Movie)
@@ -185,26 +191,24 @@ public class ApplicationDbContext : DbContext
                 .OnDelete(DeleteBehavior.Cascade);
         });
 
-        modelBuilder.Entity<CoupleInvitation>(entity =>
+        modelBuilder.Entity<Invitation>(entity =>
         {
             entity.HasKey(e => e.Id);
             entity.Property(e => e.InviteeEmail).IsRequired().HasMaxLength(255);
             entity.Property(e => e.InviteTokenHash).IsRequired().HasMaxLength(100);
-            entity.Property(e => e.Status)
-                .HasConversion<string>()
-                .HasMaxLength(20);
+            entity.Property(e => e.Status).HasConversion<string>().HasMaxLength(20);
             entity.HasIndex(e => e.InviteTokenHash).IsUnique();
             entity.HasIndex(e => e.InviteeEmail);
             entity
                 .HasOne(e => e.InviterUser)
                 .WithMany()
                 .HasForeignKey(e => e.InviterUserId)
-                .OnDelete(DeleteBehavior.Restrict);
+                .OnDelete(DeleteBehavior.Cascade);
             entity
                 .HasOne(e => e.AcceptedByUser)
                 .WithMany()
                 .HasForeignKey(e => e.AcceptedByUserId)
-                .OnDelete(DeleteBehavior.Restrict);
+                .OnDelete(DeleteBehavior.Cascade);
         });
     }
 }

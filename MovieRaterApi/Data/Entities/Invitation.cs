@@ -5,12 +5,13 @@ public enum InvitationStatus
     Pending,
     Accepted,
     Expired,
-    Revoked
+    Revoked,
 }
 
-public class CoupleInvitation
+public class Invitation
 {
     public Guid Id { get; set; }
+    public Guid GroupId { get; set; }
     public Guid InviterUserId { get; set; }
     public string InviteeEmail { get; set; } = string.Empty;
     public string InviteTokenHash { get; set; } = string.Empty;
