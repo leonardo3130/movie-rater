@@ -7,7 +7,6 @@ public interface ICurrentUser
     Guid UserId { get; }
     string? Username { get; }
     string? Email { get; }
-    Guid? CoupleId { get; }
     bool IsAuthenticated { get; }
 }
 
@@ -16,7 +15,6 @@ public class CurrentUserContext : ICurrentUser
     public Guid UserId { get; }
     public string? Username { get; }
     public string? Email { get; }
-    public Guid? CoupleId { get; }
     public bool IsAuthenticated { get; }
 
     public CurrentUserContext(ClaimsPrincipal? principal)
@@ -34,8 +32,5 @@ public class CurrentUserContext : ICurrentUser
 
         Username = principal.FindFirst(ClaimTypes.Name)?.Value;
         Email = principal.FindFirst(ClaimTypes.Email)?.Value;
-
-        var coupleIdClaim = principal.FindFirst("coupleId")?.Value;
-        CoupleId = coupleIdClaim is not null ? Guid.Parse(coupleIdClaim) : null;
     }
 }

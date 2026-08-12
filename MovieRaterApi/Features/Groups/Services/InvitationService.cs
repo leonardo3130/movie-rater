@@ -3,32 +3,26 @@ using System.Text;
 using Microsoft.EntityFrameworkCore;
 using MovieRaterApi.Data;
 using MovieRaterApi.Data.Entities;
-using MovieRaterApi.Features.Authentication.DTOs;
-using MovieRaterApi.Features.Authentication.Interfaces;
+using MovieRaterApi.Features.Groups.DTOs;
+using MovieRaterApi.Features.Groups.Interfaces;
 using MovieRaterApi.Infrastructure.Exceptions;
 
-namespace MovieRaterApi.Features.Authentication.Services;
+namespace MovieRaterApi.Features.Groups.Services;
 
-public class CoupleInvitationService : ICoupleInvitationService
+public class InvitationService : IInvitationService
 {
     private readonly ApplicationDbContext _db;
-    private readonly ILogger<CoupleInvitationService> _logger;
-    private readonly ITokenService _tokenService;
+    private readonly ILogger<InvitationService> _logger;
 
-    public CoupleInvitationService(
-        ApplicationDbContext db,
-        ILogger<CoupleInvitationService> logger,
-        ITokenService tokenService
-    )
+    public InvitationService(ApplicationDbContext db, ILogger<InvitationService> logger)
     {
         _db = db;
         _logger = logger;
-        _tokenService = tokenService;
     }
 
-    public async Task<InviteResponseDto> InviteAsync(
+    public async Task<InvitationResponseDto> InviteAsync(
         Guid inviterUserId,
-        InvitePartnerRequestDto request
+        InvitationRequestDto request
     )
     {
         var inviter = await _db.Users.FirstOrDefaultAsync(u => u.Id == inviterUserId);
@@ -48,16 +42,13 @@ public class CoupleInvitationService : ICoupleInvitationService
             throw new BadRequestException("You cannot invite yourself.");
         }
 
-        var existingCouple = await _db.Couples.AnyAsync(c =>
-            (c.User1Id == inviterUserId || c.User2Id == invitee.Id)
-            || (c.User2Id == inviterUserId || c.User1Id == invitee.Id)
-        );
-        if (existingCouple)
+        var existingGroups = await _db.Groups.AnyAsync(g => g.Id == request.GroupId);
+        if (existingGroups)
         {
             throw new ConflictException("You or the other user is already in a couple");
         }
 
-        var existingInvitation = await _db.Set<CoupleInvitation>()
+        var existingInvitation = await _db.Set<Invitation>()
             .FirstOrDefaultAsync(ci =>
                 ci.InviterUserId == inviterUserId
                 && ci.InviteeEmail == request.InviteeEmail
@@ -71,9 +62,10 @@ public class CoupleInvitationService : ICoupleInvitationService
         var rawToken = Convert.ToBase64String(RandomNumberGenerator.GetBytes(32));
         var tokenHash = HashToken(rawToken);
 
-        var invitation = new CoupleInvitation
+        var invitation = new Invitation
         {
             Id = Guid.NewGuid(),
+            GroupId = request.GroupId,
             InviterUserId = inviterUserId,
             InviteeEmail = request.InviteeEmail,
             InviteTokenHash = tokenHash,
@@ -82,19 +74,20 @@ public class CoupleInvitationService : ICoupleInvitationService
             CreatedAt = DateTime.UtcNow,
         };
 
-        _db.Set<CoupleInvitation>().Add(invitation);
+        _db.Set<Invitation>().Add(invitation);
         await _db.SaveChangesAsync();
 
         _logger.LogInformation(
-            "Invitation {InvitationId} created by {InviterUserId} for {InviteeEmail}",
+            "Invitation {InvitationId} created by {InviterUserId} for {InviteeEmail} to join {GroupId}",
             invitation.Id,
             inviterUserId,
-            request.InviteeEmail
+            request.InviteeEmail,
+            request.GroupId
         );
 
         var encoded = Uri.EscapeDataString(rawToken);
 
-        return new InviteResponseDto
+        return new InvitationResponseDto
         {
             InvitationId = invitation.Id,
             InviteToken = encoded,
@@ -116,7 +109,7 @@ public class CoupleInvitationService : ICoupleInvitationService
         var rawToken = Uri.UnescapeDataString(request.InviteToken);
         var tokenHash = HashToken(rawToken);
 
-        var invitation = await _db.Set<CoupleInvitation>()
+        var invitation = await _db.Set<Invitation>()
             .FirstOrDefaultAsync(ci => ci.InviteTokenHash == tokenHash);
 
         if (invitation is null)
@@ -143,38 +136,27 @@ public class CoupleInvitationService : ICoupleInvitationService
             throw new ForbiddenException("This invitation was not sent to you.");
         }
 
-        var couple = new Couple
+        var userGroup = new UserGroup
         {
             Id = Guid.NewGuid(),
-            User1Id = invitation.InviterUserId,
-            User2Id = acceptedByUserId,
-            CreatedAt = DateTime.UtcNow,
+            GroupId = invitation.GroupId,
+            UserId = acceptedByUserId,
         };
 
         invitation.Status = InvitationStatus.Accepted;
         invitation.AcceptedByUserId = acceptedByUserId;
 
-        _db.Couples.Add(couple);
+        _db.UserGroups.Add(userGroup);
         await _db.SaveChangesAsync();
 
         _logger.LogInformation(
-            "Invitation {InvitationId} accepted by {UserId}, couple {CoupleId} created",
+            "Invitation {InvitationId} accepted by {UserId}, added into group {GroupId}",
             invitation.Id,
             acceptedByUserId,
-            couple.Id
+            userGroup.GroupId
         );
 
-        // ricalcola access token con nuovo couple id
-        var newAccessToken = _tokenService.GenerateAccessToken(acceptedByUser, couple.Id);
-
-        // revoca refresh token all'altro utente, così dovrà riloggarsi e riceverà access token corretto
-        await _tokenService.RevokeTokensFromUser(invitation.InviterUserId);
-
-        return new AcceptInvitationResponseDto
-        {
-            NewAccessToken = newAccessToken,
-            CoupleId = couple.Id,
-        };
+        return new AcceptInvitationResponseDto { GroupId = userGroup.GroupId };
     }
 
     private static string HashToken(string rawToken)

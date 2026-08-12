@@ -29,7 +29,7 @@ public class TokenService : ITokenService
         _logger = logger;
     }
 
-    public string GenerateAccessToken(User user, Guid? coupleId)
+    public string GenerateAccessToken(User user)
     {
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtOptions.SigningKey));
         var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
@@ -41,11 +41,6 @@ public class TokenService : ITokenService
             new(ClaimTypes.Email, user.Email),
             new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
         };
-
-        if (coupleId.HasValue)
-        {
-            claims.Add(new Claim("coupleId", coupleId.Value.ToString()));
-        }
 
         var token = new JwtSecurityToken(
             issuer: _jwtOptions.Issuer,

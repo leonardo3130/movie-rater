@@ -18,16 +18,6 @@ public class RefreshRequestDto
     public string RefreshToken { get; set; } = string.Empty;
 }
 
-public class InvitePartnerRequestDto
-{
-    public string InviteeEmail { get; set; } = string.Empty;
-}
-
-public class AcceptInvitationRequestDto
-{
-    public string InviteToken { get; set; } = string.Empty;
-}
-
 public class AuthResponseDto
 {
     public string AccessToken { get; set; } = string.Empty;
@@ -47,17 +37,4 @@ public class UserResponseDto
 public class CurrentUserResponseDto : UserResponseDto
 {
     public UserResponseDto? Partner { get; set; }
-}
-
-public class InviteResponseDto
-{
-    public Guid InvitationId { get; set; }
-    public string InviteToken { get; set; } = string.Empty;
-    public DateTime ExpiresAt { get; set; }
-}
-
-public class AcceptInvitationResponseDto
-{
-    public required string NewAccessToken { get; set; }
-    public Guid CoupleId { get; set; }
 }

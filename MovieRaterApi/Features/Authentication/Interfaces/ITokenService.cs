@@ -4,7 +4,7 @@ namespace MovieRaterApi.Features.Authentication.Interfaces;
 
 public interface ITokenService
 {
-    string GenerateAccessToken(User user, Guid? coupleId);
+    string GenerateAccessToken(User user);
     (string rawToken, string tokenHash) GenerateRefreshToken();
     string HashToken(string rawToken);
     Task<bool> IsRefreshTokenValidAsync(string tokenHash);

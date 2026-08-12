@@ -12,17 +12,11 @@ namespace MovieRaterApi.Features.Authentication.Controllers;
 public class AuthController : ControllerBase
 {
     private readonly IAuthService _authService;
-    private readonly ICoupleInvitationService _coupleInvitationService;
     private readonly ICurrentUser _currentUser;
 
-    public AuthController(
-        IAuthService authService,
-        ICoupleInvitationService coupleInvitationService,
-        ICurrentUser currentUser
-    )
+    public AuthController(IAuthService authService, ICurrentUser currentUser)
     {
         _authService = authService;
-        _coupleInvitationService = coupleInvitationService;
         _currentUser = currentUser;
     }
 
@@ -67,25 +61,6 @@ public class AuthController : ControllerBase
     {
         var result = await _authService.GetCurrentUserAsync(_currentUser.UserId);
         return Ok(result);
-    }
-
-    [HttpPost("invite")]
-    public async Task<IActionResult> InvitePartner([FromBody] InvitePartnerRequestDto request)
-    {
-        var result = await _coupleInvitationService.InviteAsync(_currentUser.UserId, request);
-        return Ok(result);
-    }
-
-    [HttpPost("invite/accept")]
-    public async Task<ActionResult<string>> AcceptInvitation(
-        [FromBody] AcceptInvitationRequestDto request
-    )
-    {
-        var accessToken = await _coupleInvitationService.AcceptInvitationAsync(
-            _currentUser.UserId,
-            request
-        );
-        return Ok(accessToken);
     }
 
     private void SetRefreshTokenCookie(string refreshToken)

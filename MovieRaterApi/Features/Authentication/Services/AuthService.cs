@@ -51,7 +51,7 @@ public class AuthService : IAuthService
         _db.Users.Add(user);
         await _db.SaveChangesAsync();
 
-        var accessToken = _tokenService.GenerateAccessToken(user, coupleId: null);
+        var accessToken = _tokenService.GenerateAccessToken(user);
         var (rawRefreshToken, refreshTokenHash) = _tokenService.GenerateRefreshToken();
 
         var refreshTokenEntity = new RefreshToken
@@ -92,11 +92,7 @@ public class AuthService : IAuthService
             throw new UnauthorizedAccessException("Invalid credentials.");
         }
 
-        var couple = await _db.Couples.FirstOrDefaultAsync(c =>
-            c.User1Id == user.Id || c.User2Id == user.Id
-        );
-
-        var accessToken = _tokenService.GenerateAccessToken(user, couple?.Id);
+        var accessToken = _tokenService.GenerateAccessToken(user);
         var (rawRefreshToken, refreshTokenHash) = _tokenService.GenerateRefreshToken();
 
         var refreshTokenEntity = new RefreshToken
@@ -123,7 +119,6 @@ public class AuthService : IAuthService
                 Username = user.Username,
                 Email = user.Email,
                 ProfilePictureUrl = user.ProfilePictureUrl,
-                CoupleId = couple?.Id,
             },
         };
     }
@@ -162,11 +157,7 @@ public class AuthService : IAuthService
             throw new UnauthorizedAccessException("Refresh token has expired.");
         }
 
-        var couple = await _db.Couples.FirstOrDefaultAsync(c =>
-            c.User1Id == storedToken.UserId || c.User2Id == storedToken.UserId
-        );
-
-        var newAccessToken = _tokenService.GenerateAccessToken(storedToken.User, couple?.Id);
+        var newAccessToken = _tokenService.GenerateAccessToken(storedToken.User);
         var (newRawRefreshToken, newRefreshTokenHash) = _tokenService.GenerateRefreshToken();
 
         storedToken.RevokedAt = DateTime.UtcNow;
@@ -196,7 +187,6 @@ public class AuthService : IAuthService
                 Username = storedToken.User.Username,
                 Email = storedToken.User.Email,
                 ProfilePictureUrl = storedToken.User.ProfilePictureUrl,
-                CoupleId = couple?.Id,
             },
         };
     }
@@ -227,35 +217,12 @@ public class AuthService : IAuthService
             throw new NotFoundException("User not found.");
         }
 
-        var couple = await _db.Couples.FirstOrDefaultAsync(c =>
-            c.User1Id == userId || c.User2Id == userId
-        );
-
-        UserResponseDto? partner = null;
-        if (couple is not null)
-        {
-            var partnerId = couple.User1Id == userId ? couple.User2Id : couple.User1Id;
-            var partnerUser = await _db.Users.FirstOrDefaultAsync(u => u.Id == partnerId);
-            if (partnerUser is not null)
-            {
-                partner = new UserResponseDto
-                {
-                    Id = partnerUser.Id,
-                    Username = partnerUser.Username,
-                    Email = partnerUser.Email,
-                    ProfilePictureUrl = partnerUser.ProfilePictureUrl,
-                };
-            }
-        }
-
         return new CurrentUserResponseDto
         {
             Id = user.Id,
             Username = user.Username,
             Email = user.Email,
             ProfilePictureUrl = user.ProfilePictureUrl,
-            CoupleId = couple?.Id,
-            Partner = partner,
         };
     }
 }
