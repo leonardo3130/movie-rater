@@ -18,3 +18,11 @@ public class AcceptInvitationRequestValidator : AbstractValidator<AcceptInvitati
         RuleFor(x => x.InviteToken).NotEmpty();
     }
 }
+
+public class CreateGroupRequestValidator : AbstractValidator<CreateGroupRequest>
+{
+    public CreateGroupRequestValidator()
+    {
+        RuleFor(x => x.GroupName).NotEmpty().MinimumLength(4).MaximumLength(100);
+    }
+}
