@@ -15,6 +15,7 @@ public class DashboardResponseDto
     public int RewatchCount { get; set; }
     public int CurrentStreak { get; set; }
     public int LongestStreak { get; set; }
+    public Guid? GroupId { get; set; }
 }
 
 public class GenreStatDto

@@ -4,5 +4,5 @@ namespace MovieRaterApi.Features.Dashboard.Interfaces;
 
 public interface IDashboardService
 {
-    Task<DashboardResponseDto> GetDashboardAsync(Guid coupleId);
+    Task<DashboardResponseDto> GetDashboardAsync(Guid userId, Guid? groupdId);
 }

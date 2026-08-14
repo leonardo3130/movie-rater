@@ -16,17 +16,23 @@ public class DashboardService : IDashboardService
         _logger = logger;
     }
 
-    public async Task<DashboardResponseDto> GetDashboardAsync(Guid coupleId)
+    public async Task<DashboardResponseDto> GetDashboardAsync(Guid userId, Guid? groupId)
     {
         var now = DateTime.UtcNow;
         var startOfMonth = new DateTime(now.Year, now.Month, 1, 0, 0, 0, DateTimeKind.Utc);
         var startOfYear = new DateTime(now.Year, 1, 1, 0, 0, 0, DateTimeKind.Utc);
 
-        var sessions = await _db
+        var sessionsQuery = _db
             .WatchSessions.Include(ws => ws.Movie)
             .Include(ws => ws.Ratings)
-            .Where(ws => ws.CoupleId == coupleId)
-            .ToListAsync();
+            .AsQueryable();
+
+        if (groupId is null)
+            sessionsQuery = sessionsQuery.Where(ws => ws.GroupId == groupId);
+        else
+            sessionsQuery = sessionsQuery.Where(ws => ws.CreatedByUserId == userId);
+
+        var sessions = await sessionsQuery.ToListAsync();
 
         var moviesWatched = sessions.Count;
         var moviesThisMonth = sessions.Count(s => s.WatchedAt >= startOfMonth);
@@ -36,8 +42,8 @@ public class DashboardService : IDashboardService
         var averageRating =
             allRatings.Count > 0 ? Math.Round(allRatings.Average(r => r.RatingValue), 2) : 0;
 
-        var favoriteGenres = await GetFavoriteGenresAsync(coupleId);
-        var mostWatchedGenres = await GetMostWatchedGenresAsync(coupleId);
+        var favoriteGenres = await GetFavoriteGenresAsync(userId, groupId);
+        var mostWatchedGenres = await GetMostWatchedGenresAsync(userId, groupId);
 
         var movieRatings = sessions
             .Where(s => s.Ratings.Count > 0)
@@ -76,7 +82,7 @@ public class DashboardService : IDashboardService
             };
         }
 
-        var disagreementInfo = await GetDisagreementInfoAsync(coupleId);
+        var disagreementInfo = await GetDisagreementInfoAsync(userId, groupId);
 
         var rewatchCount = sessions
             .GroupBy(s => s.MovieId)
@@ -86,8 +92,9 @@ public class DashboardService : IDashboardService
         var streaks = ComputeStreaks(sessions.Select(s => s.WatchedAt).ToList());
 
         _logger.LogInformation(
-            "Dashboard computed for couple {CoupleId}: {MoviesWatched} movies, avg rating {AvgRating}",
-            coupleId,
+            "Dashboard computed for user={UserId} group={GroupId}: {MoviesWatched} movies, avg rating {AvgRating}",
+            userId,
+            groupId,
             moviesWatched,
             averageRating
         );
@@ -110,10 +117,12 @@ public class DashboardService : IDashboardService
         };
     }
 
-    private async Task<List<GenreStatDto>> GetFavoriteGenresAsync(Guid coupleId)
+    private async Task<List<GenreStatDto>> GetFavoriteGenresAsync(Guid userId, Guid? groupId)
     {
         var genreStats = await _db
-            .Ratings.Where(r => r.WatchSession.CoupleId == coupleId)
+            .Ratings.Where(r =>
+                groupId != null ? r.WatchSession.GroupId == groupId : r.UserId == userId
+            )
             .Join(
                 _db.MovieGenres,
                 r => r.WatchSession.MovieId,
@@ -140,10 +149,12 @@ public class DashboardService : IDashboardService
         return genreStats;
     }
 
-    private async Task<List<GenreStatDto>> GetMostWatchedGenresAsync(Guid coupleId)
+    private async Task<List<GenreStatDto>> GetMostWatchedGenresAsync(Guid userId, Guid? groupId)
     {
         var genreStats = await _db
-            .WatchSessions.Where(ws => ws.CoupleId == coupleId)
+            .WatchSessions.Where(ws =>
+                groupId != null ? ws.GroupId == groupId : ws.CreatedByUserId == userId
+            )
             .SelectMany(ws => ws.Movie.MovieGenres)
             .GroupBy(mg => mg.Genre.Name)
             .Select(g => new GenreStatDto
@@ -162,18 +173,21 @@ public class DashboardService : IDashboardService
     private async Task<(
         MovieStatDto? BiggestDisagreement,
         double AverageDisagreement
-    )> GetDisagreementInfoAsync(Guid coupleId)
+    )> GetDisagreementInfoAsync(Guid userId, Guid? groupId)
     {
-        var sessionsWithTwoRatings = await _db
+        var sessionsWithAtLeastTwoRatings = await _db
             .WatchSessions.Include(ws => ws.Movie)
             .Include(ws => ws.Ratings)
-            .Where(ws => ws.CoupleId == coupleId && ws.Ratings.Count == 2)
+            .Where(ws =>
+                (groupId != null ? ws.GroupId == groupId : ws.CreatedByUserId == userId)
+                && ws.Ratings.Count >= 2
+            )
             .ToListAsync();
 
-        if (sessionsWithTwoRatings.Count == 0)
+        if (sessionsWithAtLeastTwoRatings.Count == 0)
             return (null, 0);
 
-        var disagreements = sessionsWithTwoRatings
+        var disagreements = sessionsWithAtLeastTwoRatings
             .Select(s =>
             {
                 var ratings = s.Ratings.ToList();
