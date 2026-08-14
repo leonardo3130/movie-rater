@@ -21,7 +21,7 @@ public class WatchSessionService : IWatchSessionService
     public async Task<WatchSessionResponseDto> CreateAsync(
         CreateWatchSessionRequestDto request,
         Guid userId,
-        Guid coupleId
+        Guid? groupId
     )
     {
         var movie = await _db.Movies.FirstOrDefaultAsync(m => m.Id == request.MovieId);
@@ -31,7 +31,7 @@ public class WatchSessionService : IWatchSessionService
         var session = new WatchSession
         {
             Id = Guid.NewGuid(),
-            CoupleId = coupleId,
+            GroupId = groupId,
             MovieId = request.MovieId,
             WatchedAt = request.WatchedAt,
             Location = request.Location,
@@ -45,11 +45,11 @@ public class WatchSessionService : IWatchSessionService
         await _db.SaveChangesAsync();
 
         _logger.LogInformation(
-            "Watch session {SessionId} created by user {UserId} for movie {MovieId} in couple {CoupleId}",
+            "Watch session {SessionId} created by user {UserId} for movie {MovieId} in group {GroupId}",
             session.Id,
             userId,
             request.MovieId,
-            coupleId
+            groupId
         );
 
         var creator = await _db.Users.FirstAsync(u => u.Id == userId);
@@ -72,15 +72,17 @@ public class WatchSessionService : IWatchSessionService
 
     public async Task<WatchSessionListResponseDto> GetAllAsync(
         WatchSessionQueryDto query,
-        Guid coupleId
+        Guid? groupdId
     )
     {
         var sessionsQuery = _db
             .WatchSessions.Include(ws => ws.Movie)
             .Include(ws => ws.CreatedByUser)
             .Include(ws => ws.Ratings)
-            .Where(ws => ws.CoupleId == coupleId)
             .AsQueryable();
+
+        if (groupdId is not null)
+            sessionsQuery = sessionsQuery.Where(ws => ws.GroupId == groupdId).AsQueryable();
 
         if (query.MovieId.HasValue)
             sessionsQuery = sessionsQuery.Where(ws => ws.MovieId == query.MovieId.Value);
@@ -119,14 +121,14 @@ public class WatchSessionService : IWatchSessionService
         };
     }
 
-    public async Task<WatchSessionResponseDto> GetByIdAsync(Guid id, Guid coupleId)
+    public async Task<WatchSessionResponseDto> GetByIdAsync(Guid id)
     {
         var session = await _db
             .WatchSessions.Include(ws => ws.Movie)
             .Include(ws => ws.CreatedByUser)
             .Include(ws => ws.Ratings)
                 .ThenInclude(r => r.User)
-            .FirstOrDefaultAsync(ws => ws.Id == id && ws.CoupleId == coupleId);
+            .FirstOrDefaultAsync(ws => ws.Id == id);
 
         if (session is null)
             throw new NotFoundException("Watch session not found.");
@@ -172,12 +174,18 @@ public class WatchSessionService : IWatchSessionService
         _logger.LogInformation("Watch session {SessionId} deleted by user {UserId}", id, userId);
     }
 
-    public async Task<HeatmapResponseDto> GetHeatmapAsync(int days, Guid coupleId)
+    public async Task<HeatmapResponseDto> GetHeatmapAsync(int days, Guid userId, Guid? groupId)
     {
         var cutoffDate = DateTime.UtcNow.Date.AddDays(-days);
 
-        var counts = await _db
-            .WatchSessions.Where(ws => ws.CoupleId == coupleId && ws.WatchedAt >= cutoffDate)
+        var countsQuery = _db.WatchSessions.Where(ws => ws.WatchedAt >= cutoffDate);
+
+        if (groupId is null)
+            countsQuery = countsQuery.Where(ws => ws.CreatedByUserId == userId);
+        else
+            countsQuery = countsQuery.Where(ws => ws.GroupId == groupId);
+
+        var counts = await countsQuery
             .GroupBy(ws => ws.WatchedAt.Date)
             .Select(g => new { Date = g.Key, Count = g.Count() })
             .ToListAsync();
@@ -187,8 +195,9 @@ public class WatchSessionService : IWatchSessionService
             dailyCounts[c.Date.ToString("yyyy-MM-dd")] = c.Count;
 
         _logger.LogInformation(
-            "Heatmap requested for couple {CoupleId}, days={Days}, dates={DateCount}",
-            coupleId,
+            "Heatmap requested for group={GroupId}, user={UserId}, days={Days}, dates={DateCount}",
+            groupId,
+            userId,
             days,
             dailyCounts.Count
         );

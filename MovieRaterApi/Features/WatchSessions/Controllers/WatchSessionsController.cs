@@ -3,7 +3,6 @@ using Microsoft.AspNetCore.Mvc;
 using MovieRaterApi.Features.Authentication.Infrastructure;
 using MovieRaterApi.Features.WatchSessions.DTOs;
 using MovieRaterApi.Features.WatchSessions.Interfaces;
-using MovieRaterApi.Infrastructure.Exceptions;
 
 namespace MovieRaterApi.Features.WatchSessions.Controllers;
 
@@ -27,13 +26,10 @@ public class WatchSessionsController : ControllerBase
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] CreateWatchSessionRequestDto request)
     {
-        if (!_currentUser.CoupleId.HasValue)
-            throw new BadRequestException("You must be in a couple to create watch sessions.");
-
         var result = await _watchSessionService.CreateAsync(
             request,
             _currentUser.UserId,
-            _currentUser.CoupleId.Value
+            request.GroupId
         );
         return CreatedAtAction(nameof(GetById), new { id = result.Id }, result);
     }
@@ -41,20 +37,14 @@ public class WatchSessionsController : ControllerBase
     [HttpGet]
     public async Task<IActionResult> GetAll([FromQuery] WatchSessionQueryDto query)
     {
-        if (!_currentUser.CoupleId.HasValue)
-            throw new BadRequestException("You must be in a couple to view watch sessions.");
-
-        var result = await _watchSessionService.GetAllAsync(query, _currentUser.CoupleId.Value);
+        var result = await _watchSessionService.GetAllAsync(query, query.GroupId);
         return Ok(result);
     }
 
     [HttpGet("{id}")]
     public async Task<IActionResult> GetById(Guid id)
     {
-        if (!_currentUser.CoupleId.HasValue)
-            throw new BadRequestException("You must be in a couple to view watch sessions.");
-
-        var result = await _watchSessionService.GetByIdAsync(id, _currentUser.CoupleId.Value);
+        var result = await _watchSessionService.GetByIdAsync(id);
         return Ok(result);
     }
 
@@ -68,12 +58,10 @@ public class WatchSessionsController : ControllerBase
     [HttpGet("heatmap")]
     public async Task<IActionResult> GetHeatmap([FromQuery] HeatmapQueryDto query)
     {
-        if (!_currentUser.CoupleId.HasValue)
-            throw new BadRequestException("You must be in a couple to view the heatmap.");
-
         var result = await _watchSessionService.GetHeatmapAsync(
             query.Days,
-            _currentUser.CoupleId.Value
+            _currentUser.UserId,
+            query.GroupId
         );
         return Ok(result);
     }

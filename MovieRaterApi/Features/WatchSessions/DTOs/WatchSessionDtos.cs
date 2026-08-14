@@ -3,6 +3,7 @@ namespace MovieRaterApi.Features.WatchSessions.DTOs;
 public class CreateWatchSessionRequestDto
 {
     public Guid MovieId { get; set; }
+    public Guid? GroupId { get; set; }
     public DateTime WatchedAt { get; set; }
     public string? Location { get; set; }
     public string? Notes { get; set; }
@@ -34,6 +35,7 @@ public class WatchSessionListResponseDto
 public class WatchSessionQueryDto
 {
     public Guid? MovieId { get; set; }
+    public Guid? GroupId { get; set; }
     public int Page { get; set; } = 1;
     public int PageSize { get; set; } = 20;
 }
@@ -69,5 +71,6 @@ public class HeatmapResponseDto
 
 public class HeatmapQueryDto
 {
+    public Guid? GroupId { get; set; }
     public int Days { get; set; } = 365;
 }

@@ -221,9 +221,7 @@ public class UserMovieService : IUserMovieService
         UserMovieListRequestDto request
     )
     {
-        var query = _db.UserMovies
-            .Include(um => um.Movie)
-            .Where(um => um.UserId == userId);
+        var query = _db.UserMovies.Include(um => um.Movie).Where(um => um.UserId == userId);
 
         if (request.FavoritesOnly == true)
             query = query.Where(um => um.IsFavorite);
@@ -257,14 +255,16 @@ public class UserMovieService : IUserMovieService
 
         var imageConfig = await GetImageConfigAsync();
 
-        var items = raw
-            .Select(r => new UserMovieWithMovieDto
+        var items = raw.Select(r => new UserMovieWithMovieDto
             {
                 Id = r.MovieId,
                 TmdbId = r.TmdbId,
                 Title = r.Title,
                 PosterUrl = MovieMapper.BuildPosterUrl(r.PosterPath, imageConfig.SecureBaseUrl),
-                BackdropUrl = MovieMapper.BuildBackdropUrl(r.BackdropPath, imageConfig.SecureBaseUrl),
+                BackdropUrl = MovieMapper.BuildBackdropUrl(
+                    r.BackdropPath,
+                    imageConfig.SecureBaseUrl
+                ),
                 ReleaseDate = r.ReleaseDate?.ToString("yyyy-MM-dd"),
                 VoteAverage = r.VoteAverage,
                 IsFavorite = r.IsFavorite,

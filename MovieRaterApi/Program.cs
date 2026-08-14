@@ -13,6 +13,8 @@ using MovieRaterApi.Features.Authentication.Options;
 using MovieRaterApi.Features.Authentication.Services;
 using MovieRaterApi.Features.Dashboard.Interfaces;
 using MovieRaterApi.Features.Dashboard.Services;
+using MovieRaterApi.Features.Groups.Interfaces;
+using MovieRaterApi.Features.Groups.Services;
 using MovieRaterApi.Features.Movies.Interfaces;
 using MovieRaterApi.Features.Movies.Services;
 using MovieRaterApi.Features.Ratings.Interfaces;
@@ -92,12 +94,13 @@ builder.Services.AddValidatorsFromAssemblyContaining<Program>();
 builder.Services.AddScoped<IPasswordHasher, PasswordHasher>();
 builder.Services.AddScoped<ITokenService, TokenService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
-builder.Services.AddScoped<IInvitationService, InvitationService>();
 builder.Services.AddScoped<IMovieService, MovieService>();
 builder.Services.AddScoped<IWatchSessionService, WatchSessionService>();
 builder.Services.AddScoped<IRatingService, RatingService>();
 builder.Services.AddScoped<IUserMovieService, UserMovieService>();
 builder.Services.AddScoped<IDashboardService, DashboardService>();
+builder.Services.AddScoped<IGroupService, GroupService>();
+builder.Services.AddScoped<IInvitationService, InvitationService>();
 builder.Services.AddMemoryCache();
 
 builder.Services.AddScoped<ICurrentUser>(sp =>
