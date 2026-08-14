@@ -274,7 +274,12 @@ public class MovieService : IMovieService
             ) ?? new TmdbImageConfig { SecureBaseUrl = "https://image.tmdb.org/t/p/" };
     }
 
-    private async Task UpsertMovieAsync(TmdbMovieDetails details, string? posterUrl, string? backdropUrl, CancellationToken ct)
+    private async Task UpsertMovieAsync(
+        TmdbMovieDetails details,
+        string? posterUrl,
+        string? backdropUrl,
+        CancellationToken ct
+    )
     {
         DateOnly? releaseDate = null;
         if (DateOnly.TryParse(details.ReleaseDate, out var parsed))
@@ -386,17 +391,22 @@ public class MovieService : IMovieService
                 .Select(um => um.MovieId)
                 .ToHashSet();
 
+            var currentUserId = _currentUser.UserId;
+
             Dictionary<Guid, int> watchedLookup = [];
-            if (_currentUser.CoupleId.HasValue)
-            {
-                watchedLookup = await _db
-                    .WatchSessions.Where(ws =>
-                        ws.CoupleId == _currentUser.CoupleId.Value && guidIds.Contains(ws.MovieId)
-                    )
-                    .GroupBy(ws => ws.MovieId)
-                    .Select(g => new { MovieId = g.Key, Count = g.Count() })
-                    .ToDictionaryAsync(g => g.MovieId, g => g.Count, ct);
-            }
+            watchedLookup = await _db
+                .WatchSessions.Where(ws =>
+                    (
+                        (ws.CreatedByUserId == currentUserId && ws.Group == null)
+                        || (
+                            ws.Group != null
+                            && ws.Group.UserGroups.Any(ug => ug.UserId == currentUserId)
+                        )
+                    ) && guidIds.Contains(ws.MovieId)
+                )
+                .GroupBy(ws => ws.MovieId)
+                .Select(g => new { MovieId = g.Key, Count = g.Count() })
+                .ToDictionaryAsync(g => g.MovieId, g => g.Count, ct);
 
             foreach (var result in results)
             {
@@ -434,12 +444,17 @@ public class MovieService : IMovieService
             }
         }
 
-        if (_currentUser.CoupleId.HasValue)
-        {
-            dto.WatchedCount = await _db.WatchSessions.CountAsync(
-                ws => ws.CoupleId == _currentUser.CoupleId.Value && ws.MovieId == movie.Id,
-                ct
-            );
-        }
+        var currentUserId = _currentUser.UserId;
+
+        dto.WatchedCount = await _db.WatchSessions.CountAsync(
+            ws =>
+                (ws.CreatedByUserId == currentUserId && ws.Group == null)
+                || (
+                    ws.Group != null
+                    && ws.MovieId == movie.Id
+                    && ws.Group.UserGroups.Any(ug => ug.UserId == currentUserId)
+                ),
+            ct
+        );
     }
 }

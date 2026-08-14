@@ -208,7 +208,7 @@ public class AuthService : IAuthService
         _logger.LogInformation("User {UserId} logged out", userId);
     }
 
-    public async Task<CurrentUserResponseDto> GetCurrentUserAsync(Guid userId)
+    public async Task<UserResponseDto> GetCurrentUserAsync(Guid userId)
     {
         var user = await _db.Users.FirstOrDefaultAsync(u => u.Id == userId);
 
@@ -217,7 +217,7 @@ public class AuthService : IAuthService
             throw new NotFoundException("User not found.");
         }
 
-        return new CurrentUserResponseDto
+        return new UserResponseDto
         {
             Id = user.Id,
             Username = user.Username,

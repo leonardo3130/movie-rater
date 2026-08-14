@@ -7,6 +7,8 @@ using MovieRaterApi.Features.Groups.DTOs;
 using MovieRaterApi.Features.Groups.Interfaces;
 using MovieRaterApi.Infrastructure.Exceptions;
 
+namespace MovieRaterApi.Features.Groups.Services;
+
 public class GroupService : IGroupService
 {
     private readonly ApplicationDbContext _db;

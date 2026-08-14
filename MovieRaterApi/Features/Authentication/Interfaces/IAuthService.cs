@@ -8,5 +8,5 @@ public interface IAuthService
     Task<AuthResponseDto> LoginAsync(LoginRequestDto request);
     Task<AuthResponseDto> RefreshAsync(string? refreshTokenCookie);
     Task LogoutAsync(Guid userId);
-    Task<CurrentUserResponseDto> GetCurrentUserAsync(Guid userId);
+    Task<UserResponseDto> GetCurrentUserAsync(Guid userId);
 }

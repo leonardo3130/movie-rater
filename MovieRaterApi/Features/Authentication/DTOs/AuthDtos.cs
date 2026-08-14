@@ -31,10 +31,4 @@ public class UserResponseDto
     public string Username { get; set; } = string.Empty;
     public string Email { get; set; } = string.Empty;
     public string? ProfilePictureUrl { get; set; }
-    public Guid? CoupleId { get; set; }
-}
-
-public class CurrentUserResponseDto : UserResponseDto
-{
-    public UserResponseDto? Partner { get; set; }
 }
