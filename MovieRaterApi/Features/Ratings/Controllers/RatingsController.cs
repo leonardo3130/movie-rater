@@ -3,7 +3,6 @@ using Microsoft.AspNetCore.Mvc;
 using MovieRaterApi.Features.Authentication.Infrastructure;
 using MovieRaterApi.Features.Ratings.DTOs;
 using MovieRaterApi.Features.Ratings.Interfaces;
-using MovieRaterApi.Infrastructure.Exceptions;
 
 namespace MovieRaterApi.Features.Ratings.Controllers;
 
@@ -44,13 +43,7 @@ public class RatingsController : ControllerBase
     [HttpGet]
     public async Task<IActionResult> GetBySession(Guid watchSessionId)
     {
-        if (!_currentUser.CoupleId.HasValue)
-            throw new BadRequestException("You must be in a couple to view ratings.");
-
-        var result = await _ratingService.GetBySessionAsync(
-            watchSessionId,
-            _currentUser.CoupleId.Value
-        );
+        var result = await _ratingService.GetBySessionAsync(watchSessionId);
         return Ok(result);
     }
 }

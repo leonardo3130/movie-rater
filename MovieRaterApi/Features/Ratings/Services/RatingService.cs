@@ -25,17 +25,16 @@ public class RatingService : IRatingService
     )
     {
         var session = await _db
-            .WatchSessions.Include(ws => ws.Couple)
+            .WatchSessions.Include(ws => ws.Group)
+                .ThenInclude(g => g!.UserGroups)
             .Include(ws => ws.Movie)
             .FirstOrDefaultAsync(ws => ws.Id == watchSessionId);
 
         if (session is null)
             throw new NotFoundException("Watch session not found.");
 
-        if (session.Couple.User1Id != userId && session.Couple.User2Id != userId)
-            throw new ForbiddenException(
-                "You are not part of the couple for this watch session."
-            );
+        if (session.Group != null && !session.Group.UserGroups.Any(ug => ug.UserId == userId))
+            throw new ForbiddenException("You are not part of the couple for this watch session.");
 
         var existingRating = await _db.Ratings.FirstOrDefaultAsync(r =>
             r.WatchSessionId == watchSessionId && r.UserId == userId
@@ -121,14 +120,9 @@ public class RatingService : IRatingService
         };
     }
 
-    public async Task<SessionRatingsResponseDto> GetBySessionAsync(
-        Guid watchSessionId,
-        Guid coupleId
-    )
+    public async Task<SessionRatingsResponseDto> GetBySessionAsync(Guid watchSessionId)
     {
-        var session = await _db.WatchSessions.FirstOrDefaultAsync(ws =>
-            ws.Id == watchSessionId && ws.CoupleId == coupleId
-        );
+        var session = await _db.WatchSessions.FirstOrDefaultAsync(ws => ws.Id == watchSessionId);
 
         if (session is null)
             throw new NotFoundException("Watch session not found.");
