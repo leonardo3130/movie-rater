@@ -170,6 +170,7 @@ public class DashboardService : IDashboardService
         return genreStats;
     }
 
+    // TODO:: add user infos for the 2 involed in the boggest disagreement
     private async Task<(
         MovieStatDto? BiggestDisagreement,
         double AverageDisagreement
@@ -191,7 +192,9 @@ public class DashboardService : IDashboardService
             .Select(s =>
             {
                 var ratings = s.Ratings.ToList();
-                var diff = Math.Abs(ratings[0].RatingValue - ratings[1].RatingValue);
+                var diff = Math.Abs(
+                    ratings.Min(r => r.RatingValue) - ratings.Max(r => r.RatingValue)
+                );
                 return new { Session = s, Disagreement = diff };
             })
             .ToList();
