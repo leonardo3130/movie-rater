@@ -54,7 +54,7 @@ public class ApplicationDbContext : DbContext
             entity
                 .HasOne(e => e.User)
                 .WithMany(g => g.UserGroups)
-                .HasForeignKey(ug => ug.User)
+                .HasForeignKey(ug => ug.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
         });
 
