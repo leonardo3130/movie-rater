@@ -184,8 +184,7 @@ public class UserMovieIntegrationTests : IAsyncLifetime
         _client.DefaultRequestHeaders.Authorization =
             new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
 
-        var response = await _client.PostAsync(
-            $"/api/user-movies/{Guid.NewGuid()}/favorite", null);
+        var response = await _client.PostAsync($"/api/user-movies/{Guid.NewGuid()}/favorite", null);
 
         response.StatusCode.Should().Be(HttpStatusCode.NotFound);
     }
@@ -195,8 +194,7 @@ public class UserMovieIntegrationTests : IAsyncLifetime
     {
         _client.DefaultRequestHeaders.Authorization = null;
 
-        var response = await _client.GetAsync(
-            $"/api/user-movies/{Guid.NewGuid()}");
+        var response = await _client.GetAsync($"/api/user-movies/{Guid.NewGuid()}");
 
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
     }

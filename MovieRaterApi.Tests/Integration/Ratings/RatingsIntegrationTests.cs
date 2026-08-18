@@ -7,6 +7,7 @@ using Microsoft.Extensions.DependencyInjection;
 using MovieRaterApi.Data;
 using MovieRaterApi.Data.Entities;
 using MovieRaterApi.Features.Authentication.DTOs;
+using MovieRaterApi.Features.Groups.DTOs;
 using MovieRaterApi.Features.Ratings.DTOs;
 using MovieRaterApi.Features.WatchSessions.DTOs;
 using Testcontainers.PostgreSql;
@@ -88,10 +89,7 @@ public class RatingsIntegrationTests : IAsyncLifetime
     [Fact]
     public async Task CreateRating_ShouldReturn201()
     {
-        var (token, userId, coupleId, sessionId) = await SeedSessionAsync(
-            "rtcreator",
-            "rtcreator@test.com"
-        );
+        var (token, userId, sessionId) = await SeedSessionAsync("rtcreator", "rtcreator@test.com");
         _client.DefaultRequestHeaders.Authorization =
             new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
 
@@ -112,10 +110,7 @@ public class RatingsIntegrationTests : IAsyncLifetime
     [Fact]
     public async Task UpdateRating_ShouldReturn200()
     {
-        var (token, userId, coupleId, sessionId) = await SeedSessionAsync(
-            "rtupdate",
-            "rtupdate@test.com"
-        );
+        var (token, userId, sessionId) = await SeedSessionAsync("rtupdate", "rtupdate@test.com");
         _client.DefaultRequestHeaders.Authorization =
             new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
 
@@ -144,10 +139,7 @@ public class RatingsIntegrationTests : IAsyncLifetime
     [Fact]
     public async Task GetSessionRatings_ShouldReturn200()
     {
-        var (token, userId, coupleId, sessionId) = await SeedSessionAsync(
-            "rtget",
-            "rtget@test.com"
-        );
+        var (token, userId, sessionId) = await SeedSessionAsync("rtget", "rtget@test.com");
         _client.DefaultRequestHeaders.Authorization =
             new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
 
@@ -168,10 +160,7 @@ public class RatingsIntegrationTests : IAsyncLifetime
     [Fact]
     public async Task DuplicateRating_ShouldReturn409()
     {
-        var (token, userId, coupleId, sessionId) = await SeedSessionAsync(
-            "rtdup",
-            "rtdup@test.com"
-        );
+        var (token, userId, sessionId) = await SeedSessionAsync("rtdup", "rtdup@test.com");
         _client.DefaultRequestHeaders.Authorization =
             new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
 
@@ -199,7 +188,7 @@ public class RatingsIntegrationTests : IAsyncLifetime
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
     }
 
-    private async Task<(string token, Guid userId, Guid coupleId, Guid sessionId)> SeedSessionAsync(
+    private async Task<(string token, Guid userId, Guid sessionId)> SeedSessionAsync(
         string username,
         string email
     )
@@ -235,12 +224,23 @@ public class RatingsIntegrationTests : IAsyncLifetime
                 userResult!.AccessToken
             );
 
+        var createGroupResponse = await _client.PostAsJsonAsync(
+            "api/groups/",
+            new CreateGroupRequest { GroupName = "New group" }
+        );
+
+        createGroupResponse.EnsureSuccessStatusCode();
+
+        var group = await createGroupResponse.Content.ReadFromJsonAsync<GroupDto>();
+
+        Assert.NotNull(group);
+
         var inviteResponse = await _client.PostAsJsonAsync(
-            "/api/auth/invite",
-            new InvitePartnerRequestDto { InviteeEmail = $"partner_{email}" }
+            "/api/groups/invite",
+            new InvitationRequestDto { InviteeEmail = $"partner_{email}", GroupId = group.Id }
         );
         inviteResponse.EnsureSuccessStatusCode();
-        var inviteResult = await inviteResponse.Content.ReadFromJsonAsync<InviteResponseDto>();
+        var inviteResult = await inviteResponse.Content.ReadFromJsonAsync<InvitationResponseDto>();
 
         _client.DefaultRequestHeaders.Authorization =
             new System.Net.Http.Headers.AuthenticationHeaderValue(
@@ -249,7 +249,7 @@ public class RatingsIntegrationTests : IAsyncLifetime
             );
 
         var acceptResponse = await _client.PostAsJsonAsync(
-            "/api/auth/invite/accept",
+            "/api/groups/invite/accept",
             new AcceptInvitationRequestDto { InviteToken = inviteResult!.InviteToken }
         );
         acceptResponse.EnsureSuccessStatusCode();
@@ -270,7 +270,7 @@ public class RatingsIntegrationTests : IAsyncLifetime
             );
 
         var meResponse = await _client.GetAsync("/api/auth/me");
-        var meResult = await meResponse.Content.ReadFromJsonAsync<CurrentUserResponseDto>();
+        var meResult = await meResponse.Content.ReadFromJsonAsync<UserResponseDto>();
 
         var movieId = Guid.NewGuid();
         _db.Movies.Add(
@@ -298,6 +298,6 @@ public class RatingsIntegrationTests : IAsyncLifetime
         var sessionResult =
             await createResponse.Content.ReadFromJsonAsync<WatchSessionResponseDto>();
 
-        return (loginResult.AccessToken, meResult!.Id, meResult.CoupleId!.Value, sessionResult!.Id);
+        return (loginResult.AccessToken, meResult!.Id, sessionResult!.Id);
     }
 }

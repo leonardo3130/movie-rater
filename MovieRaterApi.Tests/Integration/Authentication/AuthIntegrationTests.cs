@@ -204,7 +204,7 @@ public class AuthIntegrationTests : IAsyncLifetime
         var response = await _client.GetAsync("/api/auth/me");
         response.EnsureSuccessStatusCode();
 
-        var result = await response.Content.ReadFromJsonAsync<CurrentUserResponseDto>();
+        var result = await response.Content.ReadFromJsonAsync<UserResponseDto>();
         result.Should().NotBeNull();
         result!.Username.Should().Be("meuser");
         result.Email.Should().Be("meuser@example.com");
@@ -289,95 +289,10 @@ public class AuthIntegrationTests : IAsyncLifetime
 
         var meResponse = await _client.GetAsync("/api/auth/me");
         meResponse.EnsureSuccessStatusCode();
-        var meResult = await meResponse.Content.ReadFromJsonAsync<CurrentUserResponseDto>();
+        var meResult = await meResponse.Content.ReadFromJsonAsync<UserResponseDto>();
         meResult!.Username.Should().Be("lifecycle");
 
         var logoutResponse = await _client.PostAsync("/api/auth/logout", null);
         logoutResponse.StatusCode.Should().Be(HttpStatusCode.NoContent);
-    }
-
-    [Fact]
-    public async Task InvitePartner_ShouldReturnInviteToken()
-    {
-        var user1 = await RegisterUser("inviter", "inviter@example.com", "Password123!");
-        await RegisterUser("invitee", "invitee@example.com", "Password123!");
-
-        _client.DefaultRequestHeaders.Authorization =
-            new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", user1.AccessToken);
-
-        var request = new InvitePartnerRequestDto { InviteeEmail = "invitee@example.com" };
-        var response = await _client.PostAsJsonAsync("/api/auth/invite", request);
-        response.EnsureSuccessStatusCode();
-
-        var result = await response.Content.ReadFromJsonAsync<InviteResponseDto>();
-        result.Should().NotBeNull();
-        result!.InviteToken.Should().NotBeNullOrWhiteSpace();
-        result.InvitationId.Should().NotBeEmpty();
-    }
-
-    [Fact]
-    public async Task InvitePartner_ShouldReturn404_WhenInviteeNotFound()
-    {
-        var user1 = await RegisterUser("inviter2", "inviter2@example.com", "Password123!");
-
-        _client.DefaultRequestHeaders.Authorization =
-            new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", user1.AccessToken);
-
-        var request = new InvitePartnerRequestDto { InviteeEmail = "nonexistent@example.com" };
-        var response = await _client.PostAsJsonAsync("/api/auth/invite", request);
-
-        response.StatusCode.Should().Be(HttpStatusCode.NotFound);
-    }
-
-    [Fact]
-    public async Task AcceptInvitation_ShouldCreateCouple()
-    {
-        var user1 = await RegisterUser("inviter3", "inviter3@example.com", "Password123!");
-        var user2 = await RegisterUser("invitee3", "invitee3@example.com", "Password123!");
-
-        // fai la richiesta loggato come user 1
-        _client.DefaultRequestHeaders.Authorization =
-            new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", user1.AccessToken);
-
-        var inviteRequest = new InvitePartnerRequestDto { InviteeEmail = "invitee3@example.com" };
-        var inviteResponse = await _client.PostAsJsonAsync("/api/auth/invite", inviteRequest);
-        inviteResponse.EnsureSuccessStatusCode();
-        var inviteResult = await inviteResponse.Content.ReadFromJsonAsync<InviteResponseDto>();
-
-        // fai la richiesta loggato come user 2
-        _client.DefaultRequestHeaders.Authorization =
-            new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", user2.AccessToken);
-
-        var acceptRequest = new AcceptInvitationRequestDto
-        {
-            InviteToken = inviteResult!.InviteToken,
-        };
-        var acceptResponse = await _client.PostAsJsonAsync(
-            "/api/auth/invite/accept",
-            acceptRequest
-        );
-        acceptResponse.EnsureSuccessStatusCode();
-
-        var meResponse = await _client.GetAsync("/api/auth/me");
-        meResponse.EnsureSuccessStatusCode();
-        var meResult = await meResponse.Content.ReadFromJsonAsync<CurrentUserResponseDto>();
-
-        meResult!.CoupleId.Should().NotBeNull();
-        meResult.Partner.Should().NotBeNull();
-        meResult.Partner!.Username.Should().Be("inviter3");
-    }
-
-    [Fact]
-    public async Task AcceptInvitation_ShouldReturn404_WhenTokenInvalid()
-    {
-        var user2 = await RegisterUser("invitee4", "invitee4@example.com", "Password123!");
-
-        _client.DefaultRequestHeaders.Authorization =
-            new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", user2.AccessToken);
-
-        var request = new AcceptInvitationRequestDto { InviteToken = "invalid-token" };
-        var response = await _client.PostAsJsonAsync("/api/auth/invite/accept", request);
-
-        response.StatusCode.Should().Be(HttpStatusCode.NotFound);
     }
 }
