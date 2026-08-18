@@ -25,16 +25,14 @@ public class RatingServiceTests
     [Fact]
     public async Task CreateAsync_CreatesRating_WhenValid()
     {
-        var coupleId = Guid.NewGuid();
-        var userId = Guid.NewGuid();
-        var partnerId = Guid.NewGuid();
         var movieId = Guid.NewGuid();
         var sessionId = Guid.NewGuid();
-        SeedUser(userId, "user1");
-        SeedUser(partnerId, "user2");
         SeedMovie(movieId, 1, "Inception");
-        SeedCouple(coupleId, userId, partnerId);
-        SeedWatchSession(sessionId, coupleId, movieId, userId);
+        var ids = SeedGroupWithUsers(3, "user");
+        var groupId = ids[0];
+        var userId = ids[1];
+        var partnerId = ids[2];
+        SeedWatchSession(sessionId, groupId, movieId, userId);
 
         var request = new CreateRatingRequestDto { RatingValue = 8, Review = "Great movie!" };
 
@@ -43,7 +41,7 @@ public class RatingServiceTests
         result.RatingValue.Should().Be(8);
         result.Review.Should().Be("Great movie!");
         result.UserId.Should().Be(userId);
-        result.Username.Should().Be("user1");
+        result.Username.Should().Be("user 0");
         _db.Ratings.Count().Should().Be(1);
     }
 
@@ -60,20 +58,17 @@ public class RatingServiceTests
     }
 
     [Fact]
-    public async Task CreateAsync_Throws_WhenUserNotInCouple()
+    public async Task CreateAsync_Throws_WhenUserNotInGroup()
     {
         var sessionId = Guid.NewGuid();
-        var userId = Guid.NewGuid();
-        var strangerId = Guid.NewGuid();
-        var partnerId = Guid.NewGuid();
-        var coupleId = Guid.NewGuid();
         var movieId = Guid.NewGuid();
-        SeedUser(userId, "owner");
-        SeedUser(strangerId, "stranger");
-        SeedUser(partnerId, "partner");
         SeedMovie(movieId, 1, "Inception");
-        SeedCouple(coupleId, userId, partnerId);
-        SeedWatchSession(sessionId, coupleId, movieId, userId);
+        var ids = SeedGroupWithUsers(3, "member");
+        var groupId = ids[0];
+        var userId = ids[1];
+        var partnerId = ids[2];
+        var strangerId = Guid.NewGuid();
+        SeedWatchSession(sessionId, groupId, movieId, userId);
 
         var request = new CreateRatingRequestDto { RatingValue = 8 };
 
@@ -81,22 +76,20 @@ public class RatingServiceTests
             .Awaiting(() => _sut.CreateAsync(sessionId, request, strangerId))
             .Should()
             .ThrowAsync<ForbiddenException>()
-            .WithMessage("You are not part of the couple for this watch session.");
+            .WithMessage("You are not part of the group for this watch session.");
     }
 
     [Fact]
     public async Task CreateAsync_Throws_WhenAlreadyRated()
     {
-        var coupleId = Guid.NewGuid();
-        var userId = Guid.NewGuid();
-        var partnerId = Guid.NewGuid();
         var movieId = Guid.NewGuid();
         var sessionId = Guid.NewGuid();
-        SeedUser(userId, "user1");
-        SeedUser(partnerId, "user2");
         SeedMovie(movieId, 1, "Inception");
-        SeedCouple(coupleId, userId, partnerId);
-        SeedWatchSession(sessionId, coupleId, movieId, userId);
+        var ids = SeedGroupWithUsers(3, "member");
+        var groupId = ids[0];
+        var userId = ids[1];
+        var partnerId = ids[2];
+        SeedWatchSession(sessionId, groupId, movieId, userId);
         SeedRating(sessionId, userId, 8);
 
         var request = new CreateRatingRequestDto { RatingValue = 9 };
@@ -111,16 +104,14 @@ public class RatingServiceTests
     [Fact]
     public async Task UpdateAsync_UpdatesRatingAndReview()
     {
-        var coupleId = Guid.NewGuid();
-        var userId = Guid.NewGuid();
-        var partnerId = Guid.NewGuid();
         var movieId = Guid.NewGuid();
         var sessionId = Guid.NewGuid();
-        SeedUser(userId, "user1");
-        SeedUser(partnerId, "user2");
         SeedMovie(movieId, 1, "Inception");
-        SeedCouple(coupleId, userId, partnerId);
-        SeedWatchSession(sessionId, coupleId, movieId, userId);
+        var ids = SeedGroupWithUsers(3, "member");
+        var groupId = ids[0];
+        var userId = ids[1];
+        var partnerId = ids[2];
+        SeedWatchSession(sessionId, groupId, movieId, userId);
         SeedRating(sessionId, userId, 5);
 
         var request = new UpdateRatingRequestDto { RatingValue = 9, Review = "Actually amazing!" };
@@ -134,38 +125,72 @@ public class RatingServiceTests
     [Fact]
     public async Task GetBySessionAsync_ReturnsBothRatings()
     {
-        var coupleId = Guid.NewGuid();
-        var userId = Guid.NewGuid();
-        var partnerId = Guid.NewGuid();
         var movieId = Guid.NewGuid();
         var sessionId = Guid.NewGuid();
-        SeedUser(userId, "alice");
-        SeedUser(partnerId, "bob");
-        SeedMovie(movieId, 1, "Inception");
-        SeedCouple(coupleId, userId, partnerId);
-        SeedWatchSession(sessionId, coupleId, movieId, userId);
+        var ids = SeedGroupWithUsers(3, "member");
+        var groupId = ids[0];
+        var userId = ids[1];
+        var partnerId = ids[2];
+        SeedWatchSession(sessionId, groupId, movieId, userId);
         SeedRating(sessionId, userId, 8);
         SeedRating(sessionId, partnerId, 7);
 
-        var result = await _sut.GetBySessionAsync(sessionId, coupleId);
+        var result = await _sut.GetBySessionAsync(sessionId);
 
         result.Ratings.Should().HaveCount(2);
-        result.Ratings.Should().Contain(r => r.Username == "alice" && r.RatingValue == 8);
-        result.Ratings.Should().Contain(r => r.Username == "bob" && r.RatingValue == 7);
+        result.Ratings.Should().Contain(r => r.Username == "member 0" && r.RatingValue == 8);
+        result.Ratings.Should().Contain(r => r.Username == "member 1" && r.RatingValue == 7);
     }
 
-    private void SeedUser(Guid userId, string username)
+    private void SeedUserGroup(Guid groupId, Guid userId)
+    {
+        _db.UserGroups.Add(
+            new UserGroup
+            {
+                Id = Guid.NewGuid(),
+                GroupId = groupId,
+                UserId = userId,
+            }
+        );
+        _db.SaveChanges();
+    }
+
+    private void SeedUser(Guid id, string username)
     {
         _db.Users.Add(
             new User
             {
-                Id = userId,
+                Id = id,
                 Username = username,
                 Email = $"{username}@test.com",
                 PasswordHash = "h",
             }
         );
         _db.SaveChanges();
+    }
+
+    private void SeedGroup(Guid groupId)
+    {
+        _db.Groups.Add(new Group { Id = groupId, CreatedAt = DateTime.UtcNow });
+        _db.SaveChanges();
+    }
+
+    private List<Guid> SeedGroupWithUsers(int userCount, string prefix)
+    {
+        var groupId = Guid.NewGuid();
+        SeedGroup(groupId);
+        var ids = new List<Guid>() { groupId };
+        for (int i = 0; i < userCount; i++)
+        {
+            var username = $"{prefix} {i}";
+            var userId = Guid.NewGuid();
+            SeedUser(userId, username);
+            SeedUserGroup(groupId, userId);
+
+            ids.Add(userId);
+        }
+
+        return ids;
     }
 
     private void SeedMovie(Guid movieId, int tmdbId, string title)
@@ -183,27 +208,13 @@ public class RatingServiceTests
         _db.SaveChanges();
     }
 
-    private void SeedCouple(Guid coupleId, Guid user1Id, Guid user2Id)
-    {
-        _db.Couples.Add(
-            new Couple
-            {
-                Id = coupleId,
-                User1Id = user1Id,
-                User2Id = user2Id,
-                CreatedAt = DateTime.UtcNow,
-            }
-        );
-        _db.SaveChanges();
-    }
-
-    private void SeedWatchSession(Guid sessionId, Guid coupleId, Guid movieId, Guid createdByUserId)
+    private void SeedWatchSession(Guid sessionId, Guid groupId, Guid movieId, Guid createdByUserId)
     {
         _db.WatchSessions.Add(
             new WatchSession
             {
                 Id = sessionId,
-                CoupleId = coupleId,
+                GroupId = groupId,
                 MovieId = movieId,
                 WatchedAt = DateTime.UtcNow,
                 CreatedByUserId = createdByUserId,

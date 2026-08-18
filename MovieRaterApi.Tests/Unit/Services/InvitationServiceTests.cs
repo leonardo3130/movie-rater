@@ -5,26 +5,23 @@ using Microsoft.Extensions.Logging;
 using Moq;
 using MovieRaterApi.Data;
 using MovieRaterApi.Data.Entities;
-using MovieRaterApi.Features.Authentication.DTOs;
-using MovieRaterApi.Features.Authentication.Interfaces;
-using MovieRaterApi.Features.Authentication.Services;
+using MovieRaterApi.Features.Groups.DTOs;
+using MovieRaterApi.Features.Groups.Services;
 using MovieRaterApi.Infrastructure.Exceptions;
 
 namespace MovieRaterApi.Tests.Unit.Services;
 
-public class CoupleInvitationServiceTests
+public class InvitationServiceTests
 {
     private readonly ApplicationDbContext _db;
-    private readonly Mock<ILogger<CoupleInvitationService>> _loggerMock;
-    private readonly Mock<ITokenService> _tokenServiceMock;
-    private readonly CoupleInvitationService _sut;
+    private readonly Mock<ILogger<InvitationService>> _loggerMock;
+    private readonly InvitationService _sut;
 
-    public CoupleInvitationServiceTests()
+    public InvitationServiceTests()
     {
         _db = TestHelpers.CreateInMemoryDbContext();
-        _tokenServiceMock = new Mock<ITokenService>();
-        _loggerMock = new Mock<ILogger<CoupleInvitationService>>();
-        _sut = new CoupleInvitationService(_db, _loggerMock.Object, _tokenServiceMock.Object);
+        _loggerMock = new Mock<ILogger<InvitationService>>();
+        _sut = new InvitationService(_db, _loggerMock.Object);
     }
 
     private static string HashToken(string rawToken)
@@ -38,6 +35,8 @@ public class CoupleInvitationServiceTests
     {
         var inviterId = Guid.NewGuid();
         var inviteeId = Guid.NewGuid();
+        var groupId = Guid.NewGuid();
+
         _db.Users.AddRange(
             new User
             {
@@ -54,7 +53,11 @@ public class CoupleInvitationServiceTests
         );
         await _db.SaveChangesAsync();
 
-        var request = new InvitePartnerRequestDto { InviteeEmail = "user2@example.com" };
+        var request = new InvitationRequestDto
+        {
+            GroupId = groupId,
+            InviteeEmail = "user2@example.com",
+        };
 
         var result = await _sut.InviteAsync(inviterId, request);
 
@@ -66,7 +69,7 @@ public class CoupleInvitationServiceTests
     [Fact]
     public async Task InviteAsync_ShouldThrow_WhenInviterNotFound()
     {
-        var request = new InvitePartnerRequestDto { InviteeEmail = "partner@example.com" };
+        var request = new InvitationRequestDto { InviteeEmail = "partner@example.com" };
 
         await FluentActions
             .Awaiting(() => _sut.InviteAsync(Guid.NewGuid(), request))
@@ -87,7 +90,7 @@ public class CoupleInvitationServiceTests
         _db.Users.Add(inviter);
         await _db.SaveChangesAsync();
 
-        var request = new InvitePartnerRequestDto { InviteeEmail = "nonexistent@example.com" };
+        var request = new InvitationRequestDto { InviteeEmail = "nonexistent@example.com" };
 
         await FluentActions
             .Awaiting(() => _sut.InviteAsync(inviter.Id, request))
@@ -110,7 +113,7 @@ public class CoupleInvitationServiceTests
         );
         await _db.SaveChangesAsync();
 
-        var request = new InvitePartnerRequestDto { InviteeEmail = "self@example.com" };
+        var request = new InvitationRequestDto { InviteeEmail = "self@example.com" };
 
         await FluentActions
             .Awaiting(() => _sut.InviteAsync(userId, request))
@@ -120,10 +123,11 @@ public class CoupleInvitationServiceTests
     }
 
     [Fact]
-    public async Task InviteAsync_ShouldThrow_WhenAlreadyCoupled()
+    public async Task InviteAsync_ShouldThrow_WhenAlreadyInTheGroup()
     {
         var inviterId = Guid.NewGuid();
         var inviteeId = Guid.NewGuid();
+        var groupId = Guid.NewGuid();
         _db.Users.AddRange(
             new User
             {
@@ -138,23 +142,42 @@ public class CoupleInvitationServiceTests
                 Email = "user2@example.com",
             }
         );
-        _db.Couples.Add(
-            new Couple
+        _db.Groups.Add(
+            new Group
             {
-                Id = Guid.NewGuid(),
-                User1Id = inviterId,
-                User2Id = inviteeId,
+                Id = groupId,
+                Name = "g",
+                CreatedAt = DateTime.UtcNow,
             }
         );
+        _db.UserGroups.AddRange(
+            new UserGroup
+            {
+                Id = Guid.NewGuid(),
+                UserId = inviterId,
+                GroupId = groupId,
+            },
+            new UserGroup
+            {
+                Id = Guid.NewGuid(),
+                UserId = inviteeId,
+                GroupId = groupId,
+            }
+        );
+
         await _db.SaveChangesAsync();
 
-        var request = new InvitePartnerRequestDto { InviteeEmail = "user2@example.com" };
+        var request = new InvitationRequestDto
+        {
+            InviteeEmail = "user2@example.com",
+            GroupId = groupId,
+        };
 
         await FluentActions
             .Awaiting(() => _sut.InviteAsync(inviterId, request))
             .Should()
             .ThrowAsync<ConflictException>()
-            .WithMessage("You or the other user is already in a couple");
+            .WithMessage("Invited user is already in the group");
     }
 
     [Fact]
@@ -176,9 +199,9 @@ public class CoupleInvitationServiceTests
                 Email = "user2@example.com",
             }
         );
-        _db.Set<CoupleInvitation>()
+        _db.Set<Invitation>()
             .Add(
-                new CoupleInvitation
+                new Invitation
                 {
                     InviterUserId = inviterId,
                     InviteeEmail = "user2@example.com",
@@ -187,7 +210,7 @@ public class CoupleInvitationServiceTests
             );
         await _db.SaveChangesAsync();
 
-        var request = new InvitePartnerRequestDto { InviteeEmail = "user2@example.com" };
+        var request = new InvitationRequestDto { InviteeEmail = "user2@example.com" };
 
         await FluentActions
             .Awaiting(() => _sut.InviteAsync(inviterId, request))
@@ -197,10 +220,11 @@ public class CoupleInvitationServiceTests
     }
 
     [Fact]
-    public async Task AcceptInvitationAsync_ShouldCreateCouple_WhenValid()
+    public async Task AcceptInvitationAsync_ShouldJoinGroup_WhenValid()
     {
         var inviterId = Guid.NewGuid();
         var acceptorId = Guid.NewGuid();
+        var groupId = Guid.NewGuid();
         _db.Users.AddRange(
             new User
             {
@@ -215,8 +239,24 @@ public class CoupleInvitationServiceTests
                 Email = "user2@example.com",
             }
         );
+        _db.Groups.Add(
+            new Group
+            {
+                Id = groupId,
+                Name = "G",
+                CreatedAt = DateTime.UtcNow,
+            }
+        );
+        _db.UserGroups.Add(
+            new UserGroup
+            {
+                Id = Guid.NewGuid(),
+                GroupId = groupId,
+                UserId = inviterId,
+            }
+        );
         var rawToken = "valid-raw-token";
-        var invitation = new CoupleInvitation
+        var invitation = new Invitation
         {
             Id = Guid.NewGuid(),
             InviterUserId = inviterId,
@@ -224,8 +264,9 @@ public class CoupleInvitationServiceTests
             InviteTokenHash = HashToken(rawToken),
             Status = InvitationStatus.Pending,
             ExpiresAt = DateTime.UtcNow.AddDays(1),
+            GroupId = groupId,
         };
-        _db.Set<CoupleInvitation>().Add(invitation);
+        _db.Set<Invitation>().Add(invitation);
         await _db.SaveChangesAsync();
 
         var request = new AcceptInvitationRequestDto { InviteToken = rawToken };
@@ -234,7 +275,8 @@ public class CoupleInvitationServiceTests
 
         invitation.Status.Should().Be(InvitationStatus.Accepted);
         invitation.AcceptedByUserId.Should().Be(acceptorId);
-        _db.Couples.Should().Contain(c => c.User1Id == inviterId && c.User2Id == acceptorId);
+        _db.UserGroups.Should().Contain(ug => ug.UserId == acceptorId);
+        _db.UserGroups.Should().Contain(ug => ug.UserId == inviterId);
     }
 
     [Fact]
@@ -283,13 +325,13 @@ public class CoupleInvitationServiceTests
         };
         _db.Users.Add(acceptor);
         var rawToken = "raw-token";
-        var invitation = new CoupleInvitation
+        var invitation = new Invitation
         {
             InviteTokenHash = HashToken(rawToken),
             Status = InvitationStatus.Accepted,
             ExpiresAt = DateTime.UtcNow.AddDays(1),
         };
-        _db.Set<CoupleInvitation>().Add(invitation);
+        _db.Set<Invitation>().Add(invitation);
         await _db.SaveChangesAsync();
 
         var request = new AcceptInvitationRequestDto { InviteToken = rawToken };
@@ -312,13 +354,13 @@ public class CoupleInvitationServiceTests
         };
         _db.Users.Add(acceptor);
         var rawToken = "raw-token";
-        var invitation = new CoupleInvitation
+        var invitation = new Invitation
         {
             InviteTokenHash = HashToken(rawToken),
             Status = InvitationStatus.Pending,
             ExpiresAt = DateTime.UtcNow.AddDays(-1),
         };
-        _db.Set<CoupleInvitation>().Add(invitation);
+        _db.Set<Invitation>().Add(invitation);
         await _db.SaveChangesAsync();
 
         var request = new AcceptInvitationRequestDto { InviteToken = rawToken };
@@ -345,14 +387,14 @@ public class CoupleInvitationServiceTests
             }
         );
         var rawToken = "raw-token";
-        var invitation = new CoupleInvitation
+        var invitation = new Invitation
         {
             InviteTokenHash = HashToken(rawToken),
             InviteeEmail = "invited@example.com",
             Status = InvitationStatus.Pending,
             ExpiresAt = DateTime.UtcNow.AddDays(1),
         };
-        _db.Set<CoupleInvitation>().Add(invitation);
+        _db.Set<Invitation>().Add(invitation);
         await _db.SaveChangesAsync();
 
         var request = new AcceptInvitationRequestDto { InviteToken = rawToken };

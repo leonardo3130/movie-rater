@@ -47,7 +47,7 @@ public class TokenServiceTests
             Email = "test@example.com",
         };
 
-        var token = _sut.GenerateAccessToken(user, null);
+        var token = _sut.GenerateAccessToken(user);
         var handler = new JwtSecurityTokenHandler();
         var jwtToken = handler.ReadJwtToken(token);
 
@@ -67,7 +67,7 @@ public class TokenServiceTests
             Email = "test@example.com",
         };
 
-        var token = _sut.GenerateAccessToken(user, null);
+        var token = _sut.GenerateAccessToken(user);
         var handler = new JwtSecurityTokenHandler();
         var jwtToken = handler.ReadJwtToken(token);
 
@@ -84,7 +84,7 @@ public class TokenServiceTests
             Email = "test@example.com",
         };
 
-        var token = _sut.GenerateAccessToken(user, null);
+        var token = _sut.GenerateAccessToken(user);
         var handler = new JwtSecurityTokenHandler();
         var jwtToken = handler.ReadJwtToken(token);
 
@@ -92,41 +92,6 @@ public class TokenServiceTests
             .Claims.First(c => c.Type == ClaimTypes.Email)
             .Value.Should()
             .Be("test@example.com");
-    }
-
-    [Fact]
-    public void GenerateAccessToken_ShouldIncludeCoupleIdClaim_WhenProvided()
-    {
-        var user = new User
-        {
-            Id = Guid.NewGuid(),
-            Username = "testuser",
-            Email = "test@example.com",
-        };
-        var coupleId = Guid.NewGuid();
-
-        var token = _sut.GenerateAccessToken(user, coupleId);
-        var handler = new JwtSecurityTokenHandler();
-        var jwtToken = handler.ReadJwtToken(token);
-
-        jwtToken.Claims.First(c => c.Type == "coupleId").Value.Should().Be(coupleId.ToString());
-    }
-
-    [Fact]
-    public void GenerateAccessToken_ShouldNotIncludeCoupleIdClaim_WhenNull()
-    {
-        var user = new User
-        {
-            Id = Guid.NewGuid(),
-            Username = "testuser",
-            Email = "test@example.com",
-        };
-
-        var token = _sut.GenerateAccessToken(user, null);
-        var handler = new JwtSecurityTokenHandler();
-        var jwtToken = handler.ReadJwtToken(token);
-
-        jwtToken.Claims.Any(c => c.Type == "coupleId").Should().BeFalse();
     }
 
     [Fact]
@@ -139,7 +104,7 @@ public class TokenServiceTests
             Email = "test@example.com",
         };
 
-        var token = _sut.GenerateAccessToken(user, null);
+        var token = _sut.GenerateAccessToken(user);
         var handler = new JwtSecurityTokenHandler();
         var jwtToken = handler.ReadJwtToken(token);
 
@@ -158,7 +123,7 @@ public class TokenServiceTests
             Email = "test@example.com",
         };
 
-        var token = _sut.GenerateAccessToken(user, null);
+        var token = _sut.GenerateAccessToken(user);
         var handler = new JwtSecurityTokenHandler();
         var jwtToken = handler.ReadJwtToken(token);
 

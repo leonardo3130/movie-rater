@@ -28,10 +28,12 @@ public class UserMovieServiceTests
 
         _tmdbMock
             .Setup(x => x.GetConfigurationAsync(It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new TmdbConfiguration
-            {
-                Images = new TmdbImageConfig { SecureBaseUrl = "https://image.tmdb.org/t/p/" },
-            });
+            .ReturnsAsync(
+                new TmdbConfiguration
+                {
+                    Images = new TmdbImageConfig { SecureBaseUrl = "https://image.tmdb.org/t/p/" },
+                }
+            );
 
         _sut = new UserMovieService(_db, _tmdbMock.Object, _cache, _loggerMock.Object);
     }

@@ -25,10 +25,10 @@ public class WatchSessionServiceTests
     [Fact]
     public async Task CreateAsync_ReturnsSession_WhenValid()
     {
-        var coupleId = Guid.NewGuid();
-        var userId = Guid.NewGuid();
         var movieId = Guid.NewGuid();
-        SeedCouple(coupleId, userId, Guid.NewGuid());
+        var ids = SeedGroupWithUsers(3, "member");
+        var groupId = ids[0];
+        var userId = ids[1];
         SeedMovie(movieId, 1, "Inception");
 
         var request = new CreateWatchSessionRequestDto
@@ -39,7 +39,7 @@ public class WatchSessionServiceTests
             Notes = "Great movie!",
         };
 
-        var result = await _sut.CreateAsync(request, userId, coupleId);
+        var result = await _sut.CreateAsync(request, userId, groupId);
 
         result.MovieId.Should().Be(movieId);
         result.MovieTitle.Should().Be("Inception");
@@ -68,28 +68,28 @@ public class WatchSessionServiceTests
     [Fact]
     public async Task GetAllAsync_ReturnsCoupleSessions()
     {
-        var coupleId = Guid.NewGuid();
-        var userId = Guid.NewGuid();
         var movieId = Guid.NewGuid();
-        SeedCouple(coupleId, userId, Guid.NewGuid());
+        var ids = SeedGroupWithUsers(3, "member");
+        var groupId = ids[0];
+        var userId = ids[1];
         SeedMovie(movieId, 1, "Inception");
         SeedWatchSession(
             Guid.NewGuid(),
-            coupleId,
+            groupId,
             movieId,
             userId,
             new DateTime(2026, 2, 1, 20, 0, 0, DateTimeKind.Utc)
         );
         SeedWatchSession(
             Guid.NewGuid(),
-            coupleId,
+            groupId,
             movieId,
             userId,
             new DateTime(2026, 1, 15, 20, 0, 0, DateTimeKind.Utc)
         );
 
         var query = new WatchSessionQueryDto { Page = 1, PageSize = 20 };
-        var result = await _sut.GetAllAsync(query, coupleId);
+        var result = await _sut.GetAllAsync(query, groupId);
 
         result.TotalCount.Should().Be(2);
         result.Items.Should().HaveCount(2);
@@ -102,18 +102,18 @@ public class WatchSessionServiceTests
     [Fact]
     public async Task GetByIdAsync_ReturnsSessionWithMovieAndRatings()
     {
-        var coupleId = Guid.NewGuid();
-        var userId = Guid.NewGuid();
         var partnerId = Guid.NewGuid();
         var movieId = Guid.NewGuid();
         var sessionId = Guid.NewGuid();
-        SeedCouple(coupleId, userId, partnerId);
+        var ids = SeedGroupWithUsers(3, "member");
+        var groupId = ids[0];
+        var userId = ids[1];
         SeedMovie(movieId, 1, "Inception");
-        SeedWatchSession(sessionId, coupleId, movieId, userId, DateTime.UtcNow);
+        SeedWatchSession(sessionId, groupId, movieId, userId, DateTime.UtcNow);
         SeedRating(sessionId, userId, 8, "Great");
         SeedRating(sessionId, partnerId, 7, "Good");
 
-        var result = await _sut.GetByIdAsync(sessionId, coupleId);
+        var result = await _sut.GetByIdAsync(sessionId);
 
         result.MovieTitle.Should().Be("Inception");
         result.Ratings.Should().HaveCount(2);
@@ -127,7 +127,7 @@ public class WatchSessionServiceTests
         SeedWatchSession(sessionId, otherCoupleId, Guid.NewGuid(), Guid.NewGuid(), DateTime.UtcNow);
 
         await FluentActions
-            .Awaiting(() => _sut.GetByIdAsync(sessionId, Guid.NewGuid()))
+            .Awaiting(() => _sut.GetByIdAsync(sessionId))
             .Should()
             .ThrowAsync<NotFoundException>()
             .WithMessage("Watch session not found.");
@@ -167,71 +167,88 @@ public class WatchSessionServiceTests
     [Fact]
     public async Task GetHeatmapAsync_ReturnsDailyCounts()
     {
-        var coupleId = Guid.NewGuid();
-        var userId = Guid.NewGuid();
         var movieId = Guid.NewGuid();
         var firstDate = new DateTime(2026, 7, 1, 20, 0, 0, DateTimeKind.Utc);
-        SeedCouple(coupleId, userId, Guid.NewGuid());
+        var ids = SeedGroupWithUsers(3, "member");
+        var groupId = ids[0];
+        var userId = ids[1];
         SeedMovie(movieId, 1, "Inception");
-        SeedWatchSession(Guid.NewGuid(), coupleId, movieId, userId, firstDate);
+        SeedWatchSession(Guid.NewGuid(), groupId, movieId, userId, firstDate);
         SeedWatchSession(
             Guid.NewGuid(),
-            coupleId,
+            groupId,
             movieId,
             userId,
             new DateTime(2026, 7, 1, 22, 0, 0, DateTimeKind.Utc)
         );
         SeedWatchSession(
             Guid.NewGuid(),
-            coupleId,
+            groupId,
             movieId,
             userId,
             new DateTime(2026, 7, 2, 20, 0, 0, DateTimeKind.Utc)
         );
 
-        var result = await _sut.GetHeatmapAsync((DateTime.UtcNow - firstDate).Days + 1, coupleId);
+        var result = await _sut.GetHeatmapAsync(
+            (DateTime.UtcNow - firstDate).Days + 1,
+            userId,
+            groupId
+        );
 
         result.DailyCounts.Count.Should().Be(2);
         result.DailyCounts["2026-07-01"].Should().Be(2);
         result.DailyCounts["2026-07-02"].Should().Be(1);
     }
 
-    private void SeedCouple(Guid coupleId, Guid user1Id, Guid user2Id)
+    private void SeedGroup(Guid groupId)
     {
-        if (!_db.Users.Any(u => u.Id == user1Id))
-        {
-            _db.Users.Add(
-                new User
-                {
-                    Id = user1Id,
-                    Username = "user1",
-                    Email = "u1@test.com",
-                    PasswordHash = "h",
-                }
-            );
-        }
-        if (!_db.Users.Any(u => u.Id == user2Id))
-        {
-            _db.Users.Add(
-                new User
-                {
-                    Id = user2Id,
-                    Username = "user2",
-                    Email = "u2@test.com",
-                    PasswordHash = "h",
-                }
-            );
-        }
-        _db.Couples.Add(
-            new Couple
+        _db.Groups.Add(new Group { Id = groupId, CreatedAt = DateTime.UtcNow });
+        _db.SaveChanges();
+    }
+
+    private void SeedUserGroup(Guid groupId, Guid userId)
+    {
+        _db.UserGroups.Add(
+            new UserGroup
             {
-                Id = coupleId,
-                User1Id = user1Id,
-                User2Id = user2Id,
-                CreatedAt = DateTime.UtcNow,
+                Id = Guid.NewGuid(),
+                GroupId = groupId,
+                UserId = userId,
             }
         );
         _db.SaveChanges();
+    }
+
+    private void SeedUser(Guid id, string username)
+    {
+        _db.Users.Add(
+            new User
+            {
+                Id = id,
+                Username = username,
+                Email = $"{username}@test.com",
+                PasswordHash = "h",
+            }
+        );
+        _db.SaveChanges();
+    }
+
+    private List<Guid> SeedGroupWithUsers(int userCount, string prefix)
+    {
+        var groupId = Guid.NewGuid();
+        SeedGroup(groupId);
+        var ids = new List<Guid>() { groupId };
+        for (int i = 0; i < userCount; i++)
+        {
+            var username = $"{prefix} {i}";
+            var userId = Guid.NewGuid();
+            SeedUser(userId, username);
+            SeedUserGroup(groupId, userId);
+
+            ids.Add(userId);
+        }
+
+        return ids;
     }
 
     private void SeedMovie(Guid movieId, int tmdbId, string title)
@@ -251,7 +268,7 @@ public class WatchSessionServiceTests
 
     private void SeedWatchSession(
         Guid sessionId,
-        Guid coupleId,
+        Guid groupId,
         Guid movieId,
         Guid createdByUserId,
         DateTime watchedAt
@@ -261,7 +278,7 @@ public class WatchSessionServiceTests
             new WatchSession
             {
                 Id = sessionId,
-                CoupleId = coupleId,
+                GroupId = groupId,
                 MovieId = movieId,
                 WatchedAt = watchedAt,
                 CreatedByUserId = createdByUserId,

@@ -1,4 +1,5 @@
 using FluentAssertions;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 using Moq;
@@ -20,6 +21,7 @@ public class MovieServiceTests
     private readonly IMemoryCache _cache;
     private readonly MovieService _sut;
     private readonly TmdbImageConfig _imageConfig;
+    private readonly Guid _groupId;
 
     public MovieServiceTests()
     {
@@ -42,7 +44,6 @@ public class MovieServiceTests
 
         _currentUserMock.Setup(u => u.IsAuthenticated).Returns(true);
         _currentUserMock.Setup(u => u.UserId).Returns(Guid.NewGuid());
-        _currentUserMock.Setup(u => u.CoupleId).Returns(Guid.NewGuid());
 
         _sut = new MovieService(
             _tmdbMock.Object,
@@ -51,6 +52,8 @@ public class MovieServiceTests
             _cache,
             _loggerMock.Object
         );
+
+        _groupId = Guid.NewGuid();
     }
 
     [Fact]
@@ -106,11 +109,19 @@ public class MovieServiceTests
     [Fact]
     public async Task SearchMoviesAsync_ShouldEnrichWithUserData()
     {
-        var userId = Guid.NewGuid();
-        var coupleId = Guid.NewGuid();
+        var userId = _currentUserMock.Object.UserId;
 
         var db = TestHelpers.CreateInMemoryDbContext();
         var movieId = Guid.NewGuid();
+
+        db.Users.Add(
+            new User
+            {
+                Id = userId,
+                Username = "user",
+                Email = "user@test.com",
+            }
+        );
         db.Movies.Add(
             new Movie
             {
@@ -132,9 +143,20 @@ public class MovieServiceTests
             new WatchSession
             {
                 Id = Guid.NewGuid(),
-                CoupleId = coupleId,
+                GroupId = _groupId,
                 MovieId = movieId,
                 WatchedAt = DateTime.UtcNow,
+                CreatedByUserId = userId,
+            }
+        );
+
+        db.Groups.Add(new Group { Id = _groupId, Name = "G" });
+        db.UserGroups.Add(
+            new UserGroup
+            {
+                UserId = userId,
+                GroupId = _groupId,
+                Id = Guid.NewGuid(),
             }
         );
         db.SaveChanges();
@@ -148,7 +170,6 @@ public class MovieServiceTests
         );
 
         _currentUserMock.Setup(u => u.UserId).Returns(userId);
-        _currentUserMock.Setup(u => u.CoupleId).Returns(coupleId);
 
         var tmdbResponse = new TmdbPagedResponse<TmdbSearchMovieItem>
         {
@@ -165,9 +186,11 @@ public class MovieServiceTests
             .ReturnsAsync(tmdbResponse);
 
         var request = new SearchMoviesRequestDto { Query = "fight club" };
+        _currentUserMock.Setup(u => u.UserId).Returns(userId);
         var result = await svc.SearchMoviesAsync(request);
 
         result.Results[0].IsFavorite.Should().BeTrue();
+        result.Results[0].Title.Should().Be("Fight Club");
         result.Results[0].IsInWatchlist.Should().BeFalse();
         result.Results[0].WatchedCount.Should().Be(1);
     }
@@ -828,13 +851,30 @@ public class MovieServiceTests
                 IsInWatchlist = false,
             }
         );
-        db.WatchSessions.Add(
+        db.WatchSessions.AddRange(
             new WatchSession
             {
                 Id = Guid.NewGuid(),
-                CoupleId = coupleId,
+                GroupId = _groupId,
+                CreatedByUserId = userId,
                 MovieId = movieId,
                 WatchedAt = DateTime.UtcNow,
+            },
+            new WatchSession
+            {
+                Id = Guid.NewGuid(),
+                CreatedByUserId = userId,
+                MovieId = movieId,
+                WatchedAt = DateTime.UtcNow,
+            }
+        );
+        db.Groups.Add(new Group { Id = _groupId, Name = "G" });
+        db.UserGroups.Add(
+            new UserGroup
+            {
+                UserId = userId,
+                GroupId = _groupId,
+                Id = Guid.NewGuid(),
             }
         );
         db.SaveChanges();
@@ -848,7 +888,6 @@ public class MovieServiceTests
         );
 
         _currentUserMock.Setup(u => u.UserId).Returns(userId);
-        _currentUserMock.Setup(u => u.CoupleId).Returns(coupleId);
 
         var tmdbDetails = new TmdbMovieDetails
         {
@@ -896,6 +935,6 @@ public class MovieServiceTests
 
         result.IsFavorite.Should().BeTrue();
         result.IsInWatchlist.Should().BeFalse();
-        result.WatchedCount.Should().Be(1);
+        result.WatchedCount.Should().Be(2);
     }
 }

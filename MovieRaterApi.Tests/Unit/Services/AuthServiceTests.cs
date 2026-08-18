@@ -38,7 +38,7 @@ public class AuthServiceTests
     {
         _passwordHasherMock.Setup(p => p.Hash("ValidPass1!")).Returns("hashed-password");
         _tokenServiceMock
-            .Setup(t => t.GenerateAccessToken(It.IsAny<User>(), null))
+            .Setup(t => t.GenerateAccessToken(It.IsAny<User>()))
             .Returns("access-token");
         _tokenServiceMock
             .Setup(t => t.GenerateRefreshToken())
@@ -134,7 +134,7 @@ public class AuthServiceTests
 
         _passwordHasherMock.Setup(p => p.Verify("ValidPass1!", "hashed-password")).Returns(true);
         _tokenServiceMock
-            .Setup(t => t.GenerateAccessToken(It.IsAny<User>(), null))
+            .Setup(t => t.GenerateAccessToken(It.IsAny<User>()))
             .Returns("access-token");
         _tokenServiceMock
             .Setup(t => t.GenerateRefreshToken())
@@ -218,7 +218,7 @@ public class AuthServiceTests
 
         _tokenServiceMock.Setup(t => t.HashToken("raw-refresh-cookie")).Returns("hashed-old-token");
         _tokenServiceMock
-            .Setup(t => t.GenerateAccessToken(It.IsAny<User>(), null))
+            .Setup(t => t.GenerateAccessToken(It.IsAny<User>()))
             .Returns("new-access-token");
         _tokenServiceMock
             .Setup(t => t.GenerateRefreshToken())
@@ -383,45 +383,6 @@ public class AuthServiceTests
 
         result.Username.Should().Be("testuser");
         result.Email.Should().Be("test@example.com");
-        result.CoupleId.Should().BeNull();
-        result.Partner.Should().BeNull();
-    }
-
-    [Fact]
-    public async Task GetCurrentUserAsync_ShouldIncludePartner_WhenCoupled()
-    {
-        var userId = Guid.NewGuid();
-        var partnerId = Guid.NewGuid();
-        var coupleId = Guid.NewGuid();
-        _db.Users.AddRange(
-            new User
-            {
-                Id = userId,
-                Username = "user1",
-                Email = "user1@example.com",
-            },
-            new User
-            {
-                Id = partnerId,
-                Username = "user2",
-                Email = "user2@example.com",
-            }
-        );
-        _db.Couples.Add(
-            new Couple
-            {
-                Id = coupleId,
-                User1Id = userId,
-                User2Id = partnerId,
-            }
-        );
-        await _db.SaveChangesAsync();
-
-        var result = await _sut.GetCurrentUserAsync(userId);
-
-        result.CoupleId.Should().Be(coupleId);
-        result.Partner.Should().NotBeNull();
-        result.Partner!.Username.Should().Be("user2");
     }
 
     [Fact]
