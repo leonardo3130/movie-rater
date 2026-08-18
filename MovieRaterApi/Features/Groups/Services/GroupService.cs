@@ -22,7 +22,6 @@ public class GroupService : IGroupService
     )
     {
         _db = db;
-
         _currentUser = currentUser;
         _logger = logger;
     }
@@ -30,7 +29,8 @@ public class GroupService : IGroupService
     private GroupDto MapGroup(Group group)
     {
         var users = group
-            .UserGroups.Select(ug => new UserResponseDto
+            .UserGroups.Where(ug => ug != null)
+            .Select(ug => new UserResponseDto
             {
                 Id = ug.UserId,
                 Username = ug.User.Username,
@@ -75,7 +75,10 @@ public class GroupService : IGroupService
 
     public async Task<GroupDto> ChangeGroupName(Guid groupId, string newName)
     {
-        var group = await _db.Groups.Where(g => g.Id == groupId).FirstOrDefaultAsync();
+        var group = await _db
+            .Groups.Include(g => g.UserGroups)
+                .ThenInclude(ug => ug.User)
+            .FirstOrDefaultAsync(g => g.Id == groupId);
 
         if (group is null)
         {
@@ -112,7 +115,9 @@ public class GroupService : IGroupService
         var currentUserId = _currentUser.UserId;
 
         var groups = await _db
-            .Groups.Where(g => g.UserGroups.Any(ug => ug.UserId == currentUserId))
+            .Groups.Include(g => g.UserGroups)
+                .ThenInclude(ug => ug.User)
+            .Where(g => g.UserGroups.Any(ug => ug.UserId == currentUserId))
             .ToListAsync();
 
         _logger.LogInformation("Returning {GroupCount} groups successfully", groups.Count);
@@ -124,9 +129,9 @@ public class GroupService : IGroupService
     {
         var currentUserId = _currentUser.UserId;
         var group = await _db
-            .Groups.Where(g =>
-                g.Id == groupId && g.UserGroups.Any(ug => ug.UserId == currentUserId)
-            )
+            .Groups.Include(g => g.UserGroups)
+                .ThenInclude(ug => ug.User)
+            .Where(g => g.Id == groupId && g.UserGroups.Any(ug => ug.UserId == currentUserId))
             .FirstOrDefaultAsync();
 
         if (group is null)
