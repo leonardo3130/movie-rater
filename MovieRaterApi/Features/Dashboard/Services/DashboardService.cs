@@ -28,19 +28,20 @@ public class DashboardService : IDashboardService
             .AsQueryable();
 
         if (groupId is null)
-            sessionsQuery = sessionsQuery.Where(ws => ws.GroupId == groupId);
-        else
             sessionsQuery = sessionsQuery.Where(ws => ws.CreatedByUserId == userId);
+        else
+            sessionsQuery = sessionsQuery.Where(ws => ws.GroupId == groupId);
 
         var sessions = await sessionsQuery.ToListAsync();
-
         var moviesWatched = sessions.Count;
         var moviesThisMonth = sessions.Count(s => s.WatchedAt >= startOfMonth);
         var moviesThisYear = sessions.Count(s => s.WatchedAt >= startOfYear);
 
         var allRatings = sessions.SelectMany(s => s.Ratings).ToList();
         var averageRating =
-            allRatings.Count > 0 ? Math.Round(allRatings.Average(r => r.RatingValue), 2) : 0;
+            allRatings.Count > 0
+                ? Math.Round(allRatings.Average(r => r.RatingValue), allRatings.Count)
+                : 0;
 
         var favoriteGenres = await GetFavoriteGenresAsync(userId, groupId);
         var mostWatchedGenres = await GetMostWatchedGenresAsync(userId, groupId);
@@ -63,7 +64,7 @@ public class DashboardService : IDashboardService
         if (movieRatings.Count > 0)
         {
             var highest = movieRatings.OrderByDescending(m => m.AvgRating).First();
-            var lowest = movieRatings.OrderBy(m => m.AvgRating).First();
+            var lowest = movieRatings.OrderByDescending(m => m.AvgRating).Last();
 
             highestRated = new MovieStatDto
             {

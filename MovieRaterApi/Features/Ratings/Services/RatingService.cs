@@ -34,7 +34,7 @@ public class RatingService : IRatingService
             throw new NotFoundException("Watch session not found.");
 
         if (session.Group != null && !session.Group.UserGroups.Any(ug => ug.UserId == userId))
-            throw new ForbiddenException("You are not part of the couple for this watch session.");
+            throw new ForbiddenException("You are not part of the group for this watch session.");
 
         var existingRating = await _db.Ratings.FirstOrDefaultAsync(r =>
             r.WatchSessionId == watchSessionId && r.UserId == userId

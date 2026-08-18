@@ -42,10 +42,12 @@ public class InvitationService : IInvitationService
             throw new BadRequestException("You cannot invite yourself.");
         }
 
-        var existingGroups = await _db.Groups.AnyAsync(g => g.Id == request.GroupId);
+        var existingGroups = await _db.UserGroups.AnyAsync(ug =>
+            ug.UserId == invitee.Id && ug.GroupId == request.GroupId
+        );
         if (existingGroups)
         {
-            throw new ConflictException("You or the other user is already in a couple");
+            throw new ConflictException("Invited user is already in the group");
         }
 
         var existingInvitation = await _db.Set<Invitation>()

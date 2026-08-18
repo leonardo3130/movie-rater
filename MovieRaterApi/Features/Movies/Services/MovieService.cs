@@ -396,17 +396,20 @@ public class MovieService : IMovieService
             Dictionary<Guid, int> watchedLookup = [];
             watchedLookup = await _db
                 .WatchSessions.Where(ws =>
-                    (
-                        (ws.CreatedByUserId == currentUserId && ws.Group == null)
+                    guidIds.Contains(ws.MovieId)
+                    && (
+                        (ws.CreatedByUserId == currentUserId && ws.GroupId == null)
                         || (
                             ws.Group != null
                             && ws.Group.UserGroups.Any(ug => ug.UserId == currentUserId)
                         )
-                    ) && guidIds.Contains(ws.MovieId)
+                    )
                 )
                 .GroupBy(ws => ws.MovieId)
                 .Select(g => new { MovieId = g.Key, Count = g.Count() })
                 .ToDictionaryAsync(g => g.MovieId, g => g.Count, ct);
+
+            _logger.LogCritical("watched lookup {@WatchedLookup}", watchedLookup);
 
             foreach (var result in results)
             {
