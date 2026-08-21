@@ -6,8 +6,8 @@ import { MoviesPage } from '../features/movies/pages/MoviesPage'
 import { AppLayout } from '../features/layout/components/AppLayout'
 import { FavoritesPage } from '../features/user-movie/pages/FavoritesPage'
 import { WatchlistPage } from '../features/user-movie/pages/WatchlistPage'
-import { InvitePage } from '../features/authentication/pages/InvitePage'
-import { AcceptInvitePage } from '../features/authentication/pages/AcceptInvitePage'
+import { InvitePage } from '../features/groups/pages/InvitePage'
+import { AcceptInvitePage } from '../features/groups/pages/AcceptInvitePage'
 import { WatchHistoryPage } from '../features/movies/pages/WatchHistoryPage'
 import { WatchSessionDetailPage } from '../features/movies/pages/WatchSessionDetailPage'
 import { DashboardPage } from '../features/dashboard/pages/DashboardPage'
@@ -22,7 +22,7 @@ export const router = createBrowserRouter([
     element: <RegisterPage />,
   },
   {
-    element: <ProtectedRoute coupleCheck={false} />,
+    element: <ProtectedRoute />,
     children: [
       {
         element: <AppLayout />,
@@ -55,26 +55,16 @@ export const router = createBrowserRouter([
             path: '/watch-history/:id',
             element: <WatchSessionDetailPage />,
           },
+          {
+            path: '/invite',
+            element: <InvitePage />,
+          },
+          {
+            path: '/invite/accept',
+            element: <AcceptInvitePage />,
+          },
         ],
       },
-    ],
-  },
-  {
-    element: <ProtectedRoute coupleCheck={true} />,
-    children: [{
-      element: <AppLayout />,
-      children: [
-        {
-          path: '/invite',
-          element: <InvitePage />,
-        },
-        {
-          path: '/invite/accept',
-          element: <AcceptInvitePage />,
-        },
-      ]
-    }
-
     ],
   },
   {

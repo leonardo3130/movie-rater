@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useParams, Link } from 'react-router'
 import { motion } from 'framer-motion'
-import { ArrowLeft, Calendar, MapPin, FileText, Star, Loader2, User } from 'lucide-react'
+import { ArrowLeft, Calendar, MapPin, FileText, Star, User } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
@@ -11,6 +11,7 @@ import { Stars } from '../components/Stars'
 import { RateMovieDialog } from '../components/RateMovieDialog'
 import { useWatchSession } from '../hooks/use-watch-session'
 import { useAuthStore } from '../../../stores/auth-store'
+import type { RatingResponseDto } from '@/src/types/rating'
 
 export function WatchSessionDetailPage() {
   const { id } = useParams<{ id: string }>()
@@ -194,7 +195,7 @@ export function WatchSessionDetailPage() {
         watchSessionId={session.id}
         movieTitle={session.movieTitle}
         moviePosterUrl={session.moviePosterUrl}
-        existingRating={myRating ?? null}
+        existingRating={(myRating as RatingResponseDto) ?? null}
       />
     </div>
   )

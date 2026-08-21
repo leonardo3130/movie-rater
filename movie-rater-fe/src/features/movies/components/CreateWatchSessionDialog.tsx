@@ -8,6 +8,17 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { MoviePoster } from './MoviePoster'
 import { useCreateWatchSession } from '../hooks/use-create-watch-session'
 import { createWatchSessionSchema, type CreateWatchSessionFormValues } from '../schemas/watch-session.schema'
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import { useGroups } from '../../groups/hooks/use-groups'
+import { Controller } from 'react-hook-form'
 
 interface CreateWatchSessionDialogProps {
   open: boolean
@@ -27,10 +38,12 @@ export function CreateWatchSessionDialog({
   onSuccess,
 }: CreateWatchSessionDialogProps) {
   const createSession = useCreateWatchSession()
+  const groups = useGroups();
 
   const {
     register,
     handleSubmit,
+    control,
     formState: { errors, isSubmitting },
   } = useForm<CreateWatchSessionFormValues>({
     resolver: zodResolver(createWatchSessionSchema),
@@ -38,6 +51,7 @@ export function CreateWatchSessionDialog({
       watchedAt: new Date().toISOString().slice(0, 10),
       location: '',
       notes: '',
+      groupId: ''
     },
   })
 
@@ -45,6 +59,7 @@ export function CreateWatchSessionDialog({
     createSession.mutate(
       {
         movieId,
+        groupId: values.groupId,
         watchedAt: new Date(values.watchedAt).toISOString(),
         location: values.location || null,
         notes: values.notes || null,
@@ -80,6 +95,38 @@ export function CreateWatchSessionDialog({
         </div>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+          <div className="space-y-2">
+            <Select>
+              <SelectTrigger className="w-full max-w-48">
+                <SelectValue placeholder="Select group" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectGroup>
+                  <SelectLabel>Groups</SelectLabel>
+                  {!(groups.isPending || groups.isLoading) && groups.data && groups.data.map(g =>
+                    <SelectItem value={g.id}>{g.name}</SelectItem>)}
+                </SelectGroup>
+              </SelectContent>
+            </Select>
+            <Controller
+              name="groupId"
+              control={control}
+              render={({ field }) => (
+                <Select
+                  value={field.value}
+                  onValueChange={field.onChange}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select group" />
+                  </SelectTrigger>
+
+                  <SelectContent>
+                    {!groups.isPending && groups.data && groups.data.map(g => <SelectItem value={g.id} key={g.id}>{g.name}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              )}
+            />
+          </div>
           <div className="space-y-2">
             <Label htmlFor="watchedAt" className="flex items-center gap-1.5">
               <Calendar className="size-3.5 text-muted-foreground" />

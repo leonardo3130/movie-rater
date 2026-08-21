@@ -3,12 +3,10 @@ import { Navigate, Outlet } from 'react-router'
 import { Loader2 } from 'lucide-react'
 import { useAuthStore } from '../stores/auth-store'
 import { getCurrentUser } from '../api/endpoints/auth'
-import type { CurrentUserResponse } from '../types/auth'
 
-export function ProtectedRoute({ coupleCheck = false }: { coupleCheck: boolean }) {
+export function ProtectedRoute() {
   const status = useAuthStore((s) => s.status)
   const accessToken = useAuthStore((s) => s.accessToken)
-  const user = useAuthStore(s => s.user);
   const setUser = useAuthStore((s) => s.setUser)
   const clear = useAuthStore((s) => s.clear)
   const [booting, setBooting] = useState(status === 'idle')
@@ -42,9 +40,6 @@ export function ProtectedRoute({ coupleCheck = false }: { coupleCheck: boolean }
       </div>
     )
   }
-
-  if (coupleCheck && status === "authenticated" && (user as CurrentUserResponse).coupleId)
-    return <Navigate to="/dashboard" replace />
 
   return <Outlet />
 }

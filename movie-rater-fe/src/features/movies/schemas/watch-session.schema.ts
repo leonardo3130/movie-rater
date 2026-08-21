@@ -1,6 +1,7 @@
 import { z } from 'zod'
 
 export const createWatchSessionSchema = z.object({
+  groupId: z.guid("Group Id is not set."),
   watchedAt: z.string().min(1, 'Date is required'),
   location: z.string().max(200, 'Location must be at most 200 characters').optional().or(z.literal('')),
   notes: z.string().max(2000, 'Notes must be at most 2000 characters').optional().or(z.literal('')),
