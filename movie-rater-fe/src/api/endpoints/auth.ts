@@ -3,11 +3,7 @@ import type {
   AuthResponse,
   RegisterRequest,
   LoginRequest,
-  CurrentUserResponse,
-  InvitePartnerRequest,
-  InviteResponse,
-  AcceptInvitationRequest,
-  AcceptInvitationResponse,
+  UserResponse,
 } from '@src/types/auth'
 
 export function register(body: RegisterRequest) {
@@ -27,13 +23,5 @@ export function logout() {
 }
 
 export function getCurrentUser() {
-  return client.get<CurrentUserResponse>('/api/auth/me').then((r) => r.data)
-}
-
-export function invitePartner(body: InvitePartnerRequest) {
-  return client.post<InviteResponse>('/api/auth/invite', body).then((r) => r.data)
-}
-
-export function acceptInvitation(body: AcceptInvitationRequest) {
-  return client.post<AcceptInvitationResponse>('/api/auth/invite/accept', body).then((r) => r.data)
+  return client.get<UserResponse>('/api/auth/me').then((r) => r.data)
 }
