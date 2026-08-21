@@ -5,11 +5,6 @@ export interface UserResponse {
   profilePictureUrl?: string | null
 }
 
-export interface CurrentUserResponse extends UserResponse {
-  coupleId?: string | null
-  partner?: UserResponse | null
-}
-
 export interface AuthResponse {
   accessToken: string
   refreshToken: string
@@ -27,24 +22,6 @@ export interface LoginRequest {
   password: string
 }
 
-export interface InvitePartnerRequest {
-  inviteeEmail: string
-}
-
-export interface InviteResponse {
-  invitationId: string
-  inviteToken: string
-  expiresAt: string
-}
-
-export interface AcceptInvitationRequest {
-  inviteToken: string
-}
-
-export interface AcceptInvitationResponse {
-  newAccessToken: string
-  coupleId: string
-}
 
 export interface ApiError {
   type?: string

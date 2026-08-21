@@ -12,6 +12,7 @@ export interface MovieStatDto {
 }
 
 export interface DashboardResponseDto {
+  groupId: string,
   moviesWatched: number
   moviesThisMonth: number
   moviesThisYear: number

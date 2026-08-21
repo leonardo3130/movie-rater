@@ -43,6 +43,7 @@ export interface WatchSessionListResponseDto {
 
 export interface CreateWatchSessionRequestDto {
   movieId: string
+  groupId: string
   watchedAt: string
   location?: string | null
   notes?: string | null
@@ -50,8 +51,14 @@ export interface CreateWatchSessionRequestDto {
 
 export interface WatchSessionQueryDto {
   movieId?: string
+  groupId?: string
   page?: number
   pageSize?: number
+}
+
+export interface HetMapQueryDto {
+  groupId: string | null,
+  days: number
 }
 
 export interface HeatmapResponseDto {
