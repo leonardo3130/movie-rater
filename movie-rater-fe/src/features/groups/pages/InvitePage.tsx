@@ -1,7 +1,7 @@
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation } from '@tanstack/react-query'
-import { Loader2, UserPlus, CheckCircle2, Copy, ExternalLink } from 'lucide-react'
+import { Loader2, UserPlus, CheckCircle2, Copy, ExternalLink, Plus } from 'lucide-react'
 import { toast } from 'sonner'
 import { useState } from 'react'
 
@@ -23,6 +23,7 @@ import { inviteSchema, type InviteFormValues } from '../schemas/invite.schema'
 import { inviteInGroup } from '@/src/api/endpoints/group'
 import type { ApiError } from '@src/types/auth'
 import { useGroups } from '../hooks/use-groups'
+import { CreateGroupDialog } from '../components/CreateGroupDialog'
 
 interface InviteResult {
   inviteToken: string
@@ -32,6 +33,7 @@ interface InviteResult {
 
 export function InvitePage() {
   const [result, setResult] = useState<InviteResult | null>(null)
+  const [openModal, setOpenModal] = useState<boolean>(false);
   const groups = useGroups();
 
   const {
@@ -118,37 +120,45 @@ export function InvitePage() {
               )}
             </div>
 
-            <div className="space-y-2">
-              <Select>
-                <SelectTrigger className="w-full max-w-48">
-                  <SelectValue placeholder="Select group" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectGroup>
-                    <SelectLabel>Groups</SelectLabel>
-                    {!(groups.isPending || groups.isLoading) && groups.data && groups.data.map(g =>
-                      <SelectItem value={g.id}>{g.name}</SelectItem>)}
-                  </SelectGroup>
-                </SelectContent>
-              </Select>
-              <Controller
-                name="groupId"
-                control={control}
-                render={({ field }) => (
-                  <Select
-                    value={field.value}
-                    onValueChange={field.onChange}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select group" />
-                    </SelectTrigger>
-
-                    <SelectContent>
-                      {!groups.isPending && groups.data && groups.data.map(g => <SelectItem value={g.id} key={g.id}>{g.name}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
+            <div className='flex gap-2 items-center justify-between'>
+              <div>
+                <Controller
+                  name="groupId"
+                  control={control}
+                  render={({ field }) => {
+                    const selectedGroup = groups.data?.find(
+                      (g) => g.id === field.value
+                    );
+                    return (
+                      <div className='space-y-2'>
+                        <Label htmlFor="groupId">Group</Label>
+                        <Select value={field.value} onValueChange={field.onChange} >
+                          <SelectTrigger className="w-full max-w-48">
+                            {/*displyed value*/}
+                            <SelectValue placeholder="Select group" >
+                              {selectedGroup?.name}
+                            </SelectValue>
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectGroup>
+                              <SelectLabel>Groups</SelectLabel>
+                              {!(groups.isPending || groups.isLoading) && groups.data && groups.data.map(g =>
+                                <SelectItem key={g.id} value={g.id}>{g.name}</SelectItem>)}
+                            </SelectGroup>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    )
+                  }}
+                />
+                {errors.groupId && (
+                  <p className="text-xs text-destructive">{errors.groupId.message}</p>
                 )}
-              />
+              </div>
+              <Button className="cursor-pointer" onClick={() => setOpenModal(true)}>
+                <Plus className="w-5 h-5" />
+                Add group
+              </Button>
             </div>
             <Button type="submit" className="w-full" disabled={mutation.isPending}>
               {mutation.isPending && <Loader2 className="size-4 animate-spin" />}
@@ -157,6 +167,8 @@ export function InvitePage() {
           </form>
         </CardContent>
       </Card>
+
+      <CreateGroupDialog open={openModal} onOpenChange={(value: boolean) => setOpenModal(value)} />
 
       {result && (
         <Card className="border-primary/30">

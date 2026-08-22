@@ -74,10 +74,10 @@ public class AuthController : ControllerBase
         [FromBody] AcceptInvitationRequestDto request
     )
     {
-        var accessToken = await _invitationService.AcceptInvitationAsync(
+        var acceptInvitationResponse = await _invitationService.AcceptInvitationAsync(
             _currentUser.UserId,
             request
         );
-        return Ok(accessToken);
+        return Ok(acceptInvitationResponse);
     }
 }

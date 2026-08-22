@@ -50,7 +50,7 @@ export function CreateGroupDialog({ open, onOpenChange, onSuccess }: CreateGroup
         <DialogHeader>
           <DialogTitle>Create Group</DialogTitle>
           <DialogDescription>
-            Record when you watched this movie together
+            Create a new group for your friends !
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">

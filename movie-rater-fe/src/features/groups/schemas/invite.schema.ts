@@ -1,7 +1,7 @@
 import { z } from 'zod'
 
 export const inviteSchema = z.object({
-  groupId: z.guid().nonoptional(),
+  groupId: z.guid().nonoptional('Please selecta  group'),
   inviteeEmail: z.email('Please enter a valid email address').nonoptional(),
 })
 

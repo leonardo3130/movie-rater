@@ -1,6 +1,6 @@
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { Calendar, MapPin, FileText, Loader2, Eye } from 'lucide-react'
+import { Calendar, MapPin, FileText, Loader2, Eye, UsersRound } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -96,36 +96,41 @@ export function CreateWatchSessionDialog({
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div className="space-y-2">
-            <Select>
-              <SelectTrigger className="w-full max-w-48">
-                <SelectValue placeholder="Select group" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectGroup>
-                  <SelectLabel>Groups</SelectLabel>
-                  {!(groups.isPending || groups.isLoading) && groups.data && groups.data.map(g =>
-                    <SelectItem value={g.id}>{g.name}</SelectItem>)}
-                </SelectGroup>
-              </SelectContent>
-            </Select>
             <Controller
               name="groupId"
               control={control}
-              render={({ field }) => (
-                <Select
-                  value={field.value}
-                  onValueChange={field.onChange}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select group" />
-                  </SelectTrigger>
-
-                  <SelectContent>
-                    {!groups.isPending && groups.data && groups.data.map(g => <SelectItem value={g.id} key={g.id}>{g.name}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-              )}
+              render={({ field }) => {
+                const selectedGroup = groups.data?.find(
+                  (g) => g.id === field.value
+                );
+                return (
+                  <div className='space-y-2'>
+                    <Label htmlFor="groupId">
+                      <UsersRound className="size-3.5 text-muted-foreground" />
+                      Group
+                    </Label>
+                    <Select value={field.value} onValueChange={field.onChange} >
+                      <SelectTrigger className="w-full max-w-48">
+                        {/*displyed value*/}
+                        <SelectValue placeholder="Select group" >
+                          {selectedGroup?.name}
+                        </SelectValue>
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectGroup>
+                          <SelectLabel>Groups</SelectLabel>
+                          {!(groups.isPending || groups.isLoading) && groups.data && groups.data.map(g =>
+                            <SelectItem key={g.id} value={g.id}>{g.name}</SelectItem>)}
+                        </SelectGroup>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )
+              }}
             />
+            {errors.groupId && (
+              <p className="text-xs text-destructive">{errors.groupId.message}</p>
+            )}
           </div>
           <div className="space-y-2">
             <Label htmlFor="watchedAt" className="flex items-center gap-1.5">
