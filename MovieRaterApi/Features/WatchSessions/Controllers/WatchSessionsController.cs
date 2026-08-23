@@ -37,7 +37,7 @@ public class WatchSessionsController : ControllerBase
     [HttpGet]
     public async Task<IActionResult> GetAll([FromQuery] WatchSessionQueryDto query)
     {
-        var result = await _watchSessionService.GetAllAsync(query, query.GroupId);
+        var result = await _watchSessionService.GetAllAsync(query);
         return Ok(result);
     }
 

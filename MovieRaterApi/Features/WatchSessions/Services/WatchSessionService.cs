@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using MovieRaterApi.Data;
 using MovieRaterApi.Data.Entities;
+using MovieRaterApi.Features.Authentication.Infrastructure;
 using MovieRaterApi.Features.WatchSessions.DTOs;
 using MovieRaterApi.Features.WatchSessions.Interfaces;
 using MovieRaterApi.Infrastructure.Exceptions;
@@ -10,11 +11,17 @@ namespace MovieRaterApi.Features.WatchSessions.Services;
 public class WatchSessionService : IWatchSessionService
 {
     private readonly ApplicationDbContext _db;
+    private readonly ICurrentUser _currentUser;
     private readonly ILogger<WatchSessionService> _logger;
 
-    public WatchSessionService(ApplicationDbContext db, ILogger<WatchSessionService> logger)
+    public WatchSessionService(
+        ApplicationDbContext db,
+        ILogger<WatchSessionService> logger,
+        ICurrentUser currentUser
+    )
     {
         _db = db;
+        _currentUser = currentUser;
         _logger = logger;
     }
 
@@ -70,19 +77,30 @@ public class WatchSessionService : IWatchSessionService
         };
     }
 
-    public async Task<WatchSessionListResponseDto> GetAllAsync(
-        WatchSessionQueryDto query,
-        Guid? groupdId
-    )
+    public async Task<WatchSessionListResponseDto> GetAllAsync(WatchSessionQueryDto query)
     {
+        var userGroups = await _db
+            .UserGroups.Where(ug => ug.UserId == _currentUser.UserId)
+            .ToListAsync();
+
+        if (query.GroupId is not null && !userGroups.Any(ug => ug.GroupId == query.GroupId))
+            throw new ForbiddenException("You are not part of the group");
+
         var sessionsQuery = _db
             .WatchSessions.Include(ws => ws.Movie)
             .Include(ws => ws.CreatedByUser)
             .Include(ws => ws.Ratings)
             .AsQueryable();
 
-        if (groupdId is not null)
-            sessionsQuery = sessionsQuery.Where(ws => ws.GroupId == groupdId).AsQueryable();
+        var userGroupsIds = userGroups.Select(ug => ug.GroupId).ToList();
+
+        if (query.GroupId is not null)
+            sessionsQuery = sessionsQuery.Where(ws => ws.GroupId == query.GroupId);
+        else
+            sessionsQuery = sessionsQuery.Where(ws =>
+                ws.CreatedByUserId == _currentUser.UserId
+                || (ws.GroupId != null && userGroupsIds.Contains(ws.GroupId.Value))
+            );
 
         if (query.MovieId.HasValue)
             sessionsQuery = sessionsQuery.Where(ws => ws.MovieId == query.MovieId.Value);
