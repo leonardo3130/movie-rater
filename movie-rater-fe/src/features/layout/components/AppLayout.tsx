@@ -26,7 +26,7 @@ import {
   Clock,
 } from 'lucide-react'
 import { useAuthStore } from '../../../stores/auth-store'
-import { useMutation } from '@tanstack/react-query'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { logout as logoutApi } from '../../../api/endpoints/auth'
 import { cn } from '@/lib/utils'
 
@@ -75,11 +75,13 @@ function AppSidebar() {
   const navigate = useNavigate()
   const user = useAuthStore((s) => s.user)
   const clear = useAuthStore((s) => s.clear)
+  const queryClient = useQueryClient();
 
   const logoutMutation = useMutation({
     mutationFn: logoutApi,
     onSettled: () => {
       clear()
+      queryClient.invalidateQueries();
       navigate('/login', { replace: true })
     },
   })
