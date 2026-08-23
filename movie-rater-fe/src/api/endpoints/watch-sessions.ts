@@ -14,6 +14,7 @@ export function createWatchSession(data: CreateWatchSessionRequestDto) {
 export function getWatchSessions(params: WatchSessionQueryDto = {}) {
   const qp = new URLSearchParams()
   if (params.movieId) qp.set('movieId', params.movieId)
+  if (params.groupId) qp.set('groupId', params.groupId)
   if (params.page) qp.set('page', String(params.page))
   if (params.pageSize) qp.set('pageSize', String(params.pageSize))
   const qs = qp.toString()

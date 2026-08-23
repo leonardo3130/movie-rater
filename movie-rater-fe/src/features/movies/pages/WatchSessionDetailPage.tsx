@@ -47,7 +47,6 @@ export function WatchSessionDetailPage() {
   })
 
   const myRating = session.ratings.find((r) => r.userId === user?.id)
-  const partnerRating = session.ratings.find((r) => r.userId !== user?.id)
 
   return (
     <div className="p-6 max-w-3xl mx-auto space-y-6">
@@ -165,20 +164,6 @@ export function WatchSessionDetailPage() {
           )
         })}
       </div>
-
-      {myRating && partnerRating && (
-        <>
-          <Separator />
-          <div className="p-4 rounded-lg bg-gradient-to-r from-primary/5 to-primary/10 border border-primary/20">
-            <h3 className="font-heading text-sm font-medium text-primary mb-2">
-              Both rated this movie!
-            </h3>
-            <p className="text-sm text-muted-foreground">
-              AI summary coming soon...
-            </p>
-          </div>
-        </>
-      )}
 
       {!myRating && session.ratings.length > 0 && (
         <div className="text-center">

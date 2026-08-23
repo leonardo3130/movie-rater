@@ -51,7 +51,7 @@ export interface CreateWatchSessionRequestDto {
 
 export interface WatchSessionQueryDto {
   movieId?: string
-  groupId?: string
+  groupId?: string | null
   page?: number
   pageSize?: number
 }

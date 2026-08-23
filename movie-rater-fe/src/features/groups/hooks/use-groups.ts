@@ -9,14 +9,13 @@ export function useGroups() {
 
   const query = useQuery({
     queryKey: ['user-groups'],
-    queryFn: () =>
-      getGroups().then(res => res)
+    queryFn: getGroups
   })
 
   useEffect(() => {
     if (query.data) {
       setGroups(
-        query.data
+        structuredClone(query.data)
       )
     }
   }, [query.data, setGroups])
