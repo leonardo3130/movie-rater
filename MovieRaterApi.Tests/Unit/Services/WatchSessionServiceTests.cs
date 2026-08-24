@@ -3,6 +3,7 @@ using Microsoft.Extensions.Logging;
 using Moq;
 using MovieRaterApi.Data;
 using MovieRaterApi.Data.Entities;
+using MovieRaterApi.Features.Authentication.Infrastructure;
 using MovieRaterApi.Features.WatchSessions.DTOs;
 using MovieRaterApi.Features.WatchSessions.Services;
 using MovieRaterApi.Infrastructure.Exceptions;
@@ -13,13 +14,17 @@ public class WatchSessionServiceTests
 {
     private readonly ApplicationDbContext _db;
     private readonly Mock<ILogger<WatchSessionService>> _loggerMock;
+    private readonly Mock<ICurrentUser> _currentUserMock;
     private readonly WatchSessionService _sut;
 
     public WatchSessionServiceTests()
     {
         _db = TestHelpers.CreateInMemoryDbContext();
         _loggerMock = new Mock<ILogger<WatchSessionService>>();
-        _sut = new WatchSessionService(_db, _loggerMock.Object);
+        _currentUserMock = new Mock<ICurrentUser>();
+        _currentUserMock.Setup(u => u.IsAuthenticated).Returns(true);
+        _currentUserMock.Setup(u => u.UserId).Returns(Guid.NewGuid());
+        _sut = new WatchSessionService(_db, _currentUserMock.Object, _loggerMock.Object);
     }
 
     [Fact]
@@ -66,7 +71,69 @@ public class WatchSessionServiceTests
     }
 
     [Fact]
-    public async Task GetAllAsync_ReturnsCoupleSessions()
+    public async Task GetAllAsync_ReturnWatchSessions()
+    {
+        var movieId = Guid.NewGuid();
+        var groupId = Guid.NewGuid();
+        var groupId2 = Guid.NewGuid();
+        var wsId1 = Guid.NewGuid();
+        var wsId2 = Guid.NewGuid();
+        var wsId3 = Guid.NewGuid();
+        var userId = _currentUserMock.Object.UserId;
+        SeedUser(userId, "Leo");
+        SeedGroup(groupId);
+        SeedGroup(groupId2);
+        SeedUserGroup(groupId, userId);
+        SeedUserGroup(groupId2, userId);
+        SeedMovie(movieId, 1, "Inception");
+        SeedWatchSession(
+            wsId1,
+            groupId,
+            movieId,
+            userId,
+            new DateTime(2026, 2, 1, 20, 0, 0, DateTimeKind.Utc)
+        );
+        SeedWatchSession(
+            wsId2,
+            groupId,
+            movieId,
+            userId,
+            new DateTime(2026, 1, 15, 20, 0, 0, DateTimeKind.Utc)
+        );
+        SeedWatchSession(
+            wsId3,
+            groupId2,
+            movieId,
+            userId,
+            new DateTime(2026, 1, 15, 21, 0, 0, DateTimeKind.Utc)
+        );
+
+        await _db.SaveChangesAsync();
+
+        var query = new WatchSessionQueryDto
+        {
+            Page = 1,
+            PageSize = 20,
+            GroupId = groupId,
+        };
+
+        var result = await _sut.GetAllAsync(query);
+
+        var logger = _loggerMock.Object;
+
+        result.TotalCount.Should().Be(2);
+        result.Items.Count.Should().Be(2);
+        result.Items.Should().NotContain(ws => ws.GroupId == groupId2);
+        result
+            .Items.Should()
+            .AllSatisfy(ws =>
+            {
+                ws.GroupId.Should().Be(groupId);
+            });
+    }
+
+    [Fact]
+    public async Task GetAllAsync_Throws_WhenNotInGroup()
     {
         var movieId = Guid.NewGuid();
         var ids = SeedGroupWithUsers(3, "member");
@@ -88,15 +155,18 @@ public class WatchSessionServiceTests
             new DateTime(2026, 1, 15, 20, 0, 0, DateTimeKind.Utc)
         );
 
-        var query = new WatchSessionQueryDto { Page = 1, PageSize = 20 };
-        var result = await _sut.GetAllAsync(query, groupId);
+        var query = new WatchSessionQueryDto
+        {
+            Page = 1,
+            PageSize = 20,
+            GroupId = groupId,
+        };
 
-        result.TotalCount.Should().Be(2);
-        result.Items.Should().HaveCount(2);
-        result
-            .Items.First()
-            .WatchedAt.Should()
-            .Be(new DateTime(2026, 2, 1, 20, 0, 0, DateTimeKind.Utc));
+        await FluentActions
+            .Awaiting(() => _sut.GetAllAsync(query))
+            .Should()
+            .ThrowAsync<ForbiddenException>()
+            .WithMessage("You are not part of the group");
     }
 
     [Fact]

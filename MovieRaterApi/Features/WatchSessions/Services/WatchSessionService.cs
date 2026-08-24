@@ -16,8 +16,8 @@ public class WatchSessionService : IWatchSessionService
 
     public WatchSessionService(
         ApplicationDbContext db,
-        ILogger<WatchSessionService> logger,
-        ICurrentUser currentUser
+        ICurrentUser currentUser,
+        ILogger<WatchSessionService> logger
     )
     {
         _db = db;
@@ -127,6 +127,7 @@ public class WatchSessionService : IWatchSessionService
                 CreatedByUsername = s.CreatedByUser.Username,
                 CreatedAt = s.CreatedAt,
                 RatingCount = s.Ratings.Count,
+                GroupId = s.GroupId,
             })
             .ToList();
 

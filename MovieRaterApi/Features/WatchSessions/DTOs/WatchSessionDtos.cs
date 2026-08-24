@@ -13,6 +13,7 @@ public class WatchSessionListItemDto
 {
     public Guid Id { get; set; }
     public Guid MovieId { get; set; }
+    public Guid? GroupId { get; set; }
     public string MovieTitle { get; set; } = string.Empty;
     public string? MoviePosterUrl { get; set; }
     public DateTime WatchedAt { get; set; }
