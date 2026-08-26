@@ -129,9 +129,3 @@ docker compose run --rm api dotnet ef database update
 | Logging    | Serilog               |
 | Validation | FluentValidation      |
 | API docs   | Scalar (OpenAPI)      |
-
-# Known bugs
-
-- invite page: groups are loaded only after manually refreshing
-- watch history: fix visibility (if no group user can see every session, also ones from groups he is not part of) -->done, TODO: test
-- remove AI summary stuff
