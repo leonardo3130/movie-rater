@@ -1,10 +1,11 @@
 import { useQuery } from '@tanstack/react-query'
 import { getDashboard } from '../../../api/endpoints/dashboard'
 
-export function useDashboard() {
+export function useDashboard(groupId: string | null) {
   return useQuery({
-    queryKey: ['dashboard'],
-    queryFn: getDashboard,
+    queryKey: ['dashboard', groupId],
+    queryFn: () => getDashboard(groupId!),
     staleTime: 30_000,
+    enabled: !!groupId
   })
 }

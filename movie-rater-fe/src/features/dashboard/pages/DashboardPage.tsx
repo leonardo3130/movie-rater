@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { motion } from 'framer-motion'
 import {
   LayoutDashboard,
@@ -13,21 +14,25 @@ import {
   ThumbsDown,
   Film,
   Gauge,
+  UsersRound
 } from 'lucide-react'
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Separator } from '@/components/ui/separator'
 import { useDashboard } from '../hooks/use-dashboard'
 import type { GenreStatDto, MovieStatDto } from '@src/types/dashboard'
-
-const container = {
-  hidden: { opacity: 0 },
-  show: {
-    opacity: 1,
-    transition: { staggerChildren: 0.06 },
-  },
-} as const
+import { useGroups } from '../../groups/hooks/use-groups'
 
 const item = {
   hidden: { opacity: 0, y: 20 },
@@ -232,7 +237,11 @@ function RatingBar({ value, max = 10 }: { value: number; max?: number }) {
 }
 
 export function DashboardPage() {
-  const { data, isLoading, isError } = useDashboard()
+  const [groupId, setGroupId] = useState<string | null>(null);
+  const { data, isLoading } = useDashboard(groupId)
+  const groups = useGroups();
+  const selectedGroup = groups.data && groupId && !groups.isFetching ? groups.data.find(g => g.id == groupId) : undefined
+  const hasData = data && data.moviesWatched > 0
 
   if (isLoading) {
     return (
@@ -281,16 +290,6 @@ export function DashboardPage() {
     )
   }
 
-  if (isError || !data) {
-    return (
-      <div className="flex min-h-[60vh] items-center justify-center">
-        <p className="text-muted-foreground">Failed to load dashboard</p>
-      </div>
-    )
-  }
-
-  const hasData = data.moviesWatched > 0
-
   return (
     <div className="p-6 space-y-8">
       <motion.div
@@ -305,10 +304,34 @@ export function DashboardPage() {
         <div>
           <h1 className="text-2xl font-bold">Dashboard</h1>
           <p className="text-sm text-muted-foreground">
-            {hasData
-              ? `You've watched ${data.moviesWatched} movie${data.moviesWatched !== 1 ? 's' : ''} together`
-              : 'Start watching movies together!'}
+            {!groupId ? `Select one group to see stats` :
+              hasData
+                ? `You've watched ${data.moviesWatched} movie${data.moviesWatched !== 1 ? 's' : ''} together`
+                : 'Start watching movies together!'}
           </p>
+        </div>
+        <div className='space-y-2 ml-auto mr-3.5'>
+          <Label htmlFor="groupId">
+            <UsersRound className="size-3.5 text-muted-foreground" />
+            Group
+          </Label>
+          <Select value={groupId} onValueChange={(value) => {
+            setGroupId(value)
+          }} >
+            <SelectTrigger className="w-full max-w-48">
+              {/*displyed value*/}
+              <SelectValue placeholder="Select group" >
+                {selectedGroup?.name}
+              </SelectValue>
+            </SelectTrigger>
+            <SelectContent>
+              <SelectGroup>
+                <SelectLabel>Groups</SelectLabel>
+                {!(groups.isPending || groups.isLoading) && groups.data && groups.data.map(g =>
+                  <SelectItem key={g.id} value={g.id}>{g.name}</SelectItem>)}
+              </SelectGroup>
+            </SelectContent>
+          </Select>
         </div>
       </motion.div>
 
@@ -327,10 +350,14 @@ export function DashboardPage() {
         </motion.div>
       ) : (
         <motion.div
-          variants={container}
-          initial="hidden"
-          animate="show"
+          // variants={container}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.2 }}
           className="space-y-8"
+        // initial="hidden"
+        // animate="show"
+        // className="space-y-8"
         >
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
             <StatCard
