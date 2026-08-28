@@ -12,6 +12,9 @@ export default defineConfig({
     },
   },
   server: {
+    allowedHosts: [
+      'movie-rater.leopo.dev' // Permette al server Vite del frontend di accettare richieste su questo dominio
+    ],
     proxy: {
       '/api': {
         target: 'https://localhost:7283',
