@@ -1,0 +1,16 @@
+services:
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    container_name: movie-rater-cloudflared
+    command: tunnel --no-autoupdate run
+    environment:
+      TUNNEL_TOKEN: ${CLOUDFLARE_TUNNEL_TOKEN}
+    depends_on:
+      - api
+    networks:
+      - movie-rater
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+networks:
+  movie-rater:

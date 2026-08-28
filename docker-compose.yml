@@ -17,6 +17,8 @@ services:
     depends_on:
       db:
         condition: service_healthy
+    networks:
+      - movie-rater
     volumes:
       - ~/.aspnet/https:/https:ro
       - api-logs:/app/logs
@@ -30,6 +32,8 @@ services:
       POSTGRES_PASSWORD: postgres
     ports:
       - "5432:5432"
+    networks:
+      - movie-rater
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
