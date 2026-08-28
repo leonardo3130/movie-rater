@@ -147,6 +147,7 @@ builder.Services.AddOpenApi();
 
 var app = builder.Build();
 
+app.UseCors("Frontend");
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
@@ -156,8 +157,6 @@ if (app.Environment.IsDevelopment())
 app.UseMiddleware<ExceptionHandlingMiddleware>();
 
 app.UseSerilogRequestLogging();
-
-app.UseCors("Frontend");
 
 app.UseRateLimiter();
 app.UseAuthentication();
