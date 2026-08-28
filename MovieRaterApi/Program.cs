@@ -128,7 +128,20 @@ builder
         }
     )
     .AddHttpMessageHandler<TmdbRateLimitHandler>();
-
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy(
+        "Frontend",
+        policy =>
+        {
+            policy
+                .WithOrigins("http://localhost:5173", "https://movie-rater.leopo.dev")
+                .AllowAnyHeader()
+                .AllowAnyMethod()
+                .AllowCredentials();
+        }
+    );
+});
 builder.Services.AddControllers();
 builder.Services.AddOpenApi();
 
@@ -143,6 +156,8 @@ if (app.Environment.IsDevelopment())
 app.UseMiddleware<ExceptionHandlingMiddleware>();
 
 app.UseSerilogRequestLogging();
+
+app.UseCors("Frontend");
 
 app.UseRateLimiter();
 app.UseAuthentication();
