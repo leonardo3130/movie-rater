@@ -129,3 +129,8 @@ docker compose run --rm api dotnet ef database update
 | Logging    | Serilog               |
 | Validation | FluentValidation      |
 | API docs   | Scalar (OpenAPI)      |
+
+# TODO
+
+- password recovery
+- bug: group do not appear immediately after creation
