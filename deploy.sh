@@ -21,11 +21,15 @@ echo "==> Starting containers"
 docker compose -f docker-compose.yml -f docker-compose.tunnel.yml up -d --force-recreate
 
 echo "==> Waiting for database"
-until docker compose exec -T db pg_isready \
-  -U postgres \
-  -d movierater >/dev/null 2>&1; do
+
+until docker compose \
+  -f docker-compose.yml \
+  -f docker-compose.tunnel.yml \
+  exec -T db pg_isready -U postgres -d movierater; do
   sleep 2
 done
+
+cd "$APP_DIR/MovieRaterApi"
 
 echo "==> Applying migrations"
 dotnet ef database update \
@@ -33,12 +37,17 @@ dotnet ef database update \
 
 echo "==> Restarting frontend"
 
-if lsof -t -i:5173 >/dev/null 2>&1; then
-  kill "$(lsof -t -i:5173)"
+PIDS=$(lsof -t -i:5173)
+
+if [ -n "$PIDS" ]; then
+  echo "Stopping existing frontend processes: $PIDS"
+  kill $PIDS
+  sleep 1
 fi
 
 cd "$APP_DIR/movie-rater-fe"
 
 nohup pnpm dev --host 0.0.0.0 >frontend.log 2>&1 &
 
+echo "==> Frontend started"
 echo "==> Deployment complete"
