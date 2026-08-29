@@ -54,6 +54,7 @@ public class InvitationService : IInvitationService
             .FirstOrDefaultAsync(ci =>
                 ci.InviterUserId == inviterUserId
                 && ci.InviteeEmail == request.InviteeEmail
+                && ci.GroupId == request.GroupId
                 && ci.Status == InvitationStatus.Pending
             );
         if (existingInvitation is not null)
