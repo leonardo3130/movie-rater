@@ -134,5 +134,4 @@ docker compose run --rm api dotnet ef database update
 
 - password recovery
 - bug: group do not appear immediately after creation
-- in prod: refresh not working, cookie is missing
 - improve invitation system
