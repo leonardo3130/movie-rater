@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { useGroupsStore } from "@/src/stores/groups-store";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface CreateGroupDialogProps {
   open: boolean
@@ -18,6 +19,7 @@ interface CreateGroupDialogProps {
 export function CreateGroupDialog({ open, onOpenChange, onSuccess }: CreateGroupDialogProps) {
   const createGroup = useCreateGroup();
   const addGroup = useGroupsStore(s => s.createGroup);
+  const queryClient = useQueryClient();
 
   const {
     register,
@@ -36,6 +38,7 @@ export function CreateGroupDialog({ open, onOpenChange, onSuccess }: CreateGroup
         onSuccess: (data) => {
           addGroup(data);
           onOpenChange(false)
+          queryClient.invalidateQueries({ queryKey: ['user-groups'] })
           if (onSuccess) onSuccess(data.id)
         },
       },

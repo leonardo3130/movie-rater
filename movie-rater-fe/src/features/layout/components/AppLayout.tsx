@@ -107,7 +107,7 @@ function AppSidebar() {
               Movie Rater
             </span>
             <span className="text-[0.65rem] font-medium uppercase tracking-wider text-muted-foreground">
-              for couples
+              By Leonardo Po
             </span>
           </div>
         </Link>
