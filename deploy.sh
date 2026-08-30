@@ -51,3 +51,5 @@ nohup pnpm dev --host 0.0.0.0 >frontend.log 2>&1 &
 
 echo "==> Frontend started"
 echo "==> Deployment complete"
+
+exec 9>&-
