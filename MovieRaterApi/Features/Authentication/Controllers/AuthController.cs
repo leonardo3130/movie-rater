@@ -13,11 +13,13 @@ public class AuthController : ControllerBase
 {
     private readonly IAuthService _authService;
     private readonly ICurrentUser _currentUser;
+    private readonly IHostEnvironment _env;
 
-    public AuthController(IAuthService authService, ICurrentUser currentUser)
+    public AuthController(IAuthService authService, ICurrentUser currentUser, IHostEnvironment env)
     {
         _authService = authService;
         _currentUser = currentUser;
+        _env = env;
     }
 
     [HttpPost("register")]
@@ -72,8 +74,10 @@ public class AuthController : ControllerBase
             SameSite = SameSiteMode.Lax,
             Expires = DateTime.UtcNow.AddDays(30),
             Path = "/",
-            Domain = "leopo.dev",
         };
+
+        if (!_env.IsDevelopment())
+            cookieOptions.Domain = "leopo.dev";
 
         Response.Cookies.Append("mr_refresh", refreshToken, cookieOptions);
     }
