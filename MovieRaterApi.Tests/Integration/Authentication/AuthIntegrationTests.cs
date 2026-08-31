@@ -4,8 +4,10 @@ using FluentAssertions;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Moq;
 using MovieRaterApi.Data;
 using MovieRaterApi.Features.Authentication.DTOs;
+using MovieRaterApi.Infrastructure.Email;
 using Testcontainers.PostgreSql;
 
 namespace MovieRaterApi.Tests.Integration.Authentication;
@@ -15,6 +17,8 @@ public class AuthIntegrationTests : IAsyncLifetime
     private readonly PostgreSqlContainer _postgresContainer;
     private WebApplicationFactory<Program> _factory = null!;
     private HttpClient _client = null!;
+    private Mock<IEmailSender> _emailSenderMock = null!;
+    private readonly List<(string To, string Subject, string Body)> _sentEmails = new();
 
     public AuthIntegrationTests()
     {
@@ -45,6 +49,7 @@ public class AuthIntegrationTests : IAsyncLifetime
                 "Jwt:SigningKey",
                 "test-signing-key-that-is-at-least-32-characters-long-for-testing"
             );
+            builder.UseSetting("EmailSettings:FrontendBaseUrl", "https://movie-rater.leopo.dev");
 
             builder.ConfigureServices(services =>
             {
@@ -57,6 +62,28 @@ public class AuthIntegrationTests : IAsyncLifetime
                 services.AddDbContext<ApplicationDbContext>(options =>
                     options.UseNpgsql(_postgresContainer.GetConnectionString())
                 );
+
+                var emailDescriptor = services.SingleOrDefault(d =>
+                    d.ServiceType == typeof(IEmailSender)
+                );
+                if (emailDescriptor is not null)
+                    services.Remove(emailDescriptor);
+
+                _emailSenderMock = new Mock<IEmailSender>();
+                _emailSenderMock
+                    .Setup(e => e.SendAsync(
+                        It.IsAny<string>(),
+                        It.IsAny<string>(),
+                        It.IsAny<string>(),
+                        It.IsAny<CancellationToken>()
+                    ))
+                    .Callback<string, string, string, CancellationToken>(
+                        (to, subject, body, _) =>
+                            _sentEmails.Add((to, subject, body))
+                    )
+                    .Returns(Task.CompletedTask);
+
+                services.AddScoped(_ => _emailSenderMock.Object);
             });
         });
 
@@ -294,5 +321,115 @@ public class AuthIntegrationTests : IAsyncLifetime
 
         var logoutResponse = await _client.PostAsync("/api/auth/logout", null);
         logoutResponse.StatusCode.Should().Be(HttpStatusCode.NoContent);
+    }
+
+    private async Task<string> RequestPasswordReset(string email)
+    {
+        _sentEmails.Clear();
+        var response = await _client.PostAsJsonAsync(
+            "/api/auth/forgot-password",
+            new ForgotPasswordRequest { Email = email }
+        );
+        response.EnsureSuccessStatusCode();
+
+        var sentEmail = _sentEmails.Single(e => e.To == email);
+        return ExtractTokenFromBody(sentEmail.Body);
+    }
+
+    private static string ExtractTokenFromBody(string body)
+    {
+        const string marker = "reset-password?token=";
+        var start = body.IndexOf(marker, StringComparison.Ordinal) + marker.Length;
+        var end = body.IndexOf("\"", start, StringComparison.Ordinal);
+        return body[start..end];
+    }
+
+    private async Task<int> CountResetTokensAsync(Guid userId)
+    {
+        using var scope = _factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        return await db.PasswordResetTokens.CountAsync(t => t.UserId == userId);
+    }
+
+    [Fact]
+    public async Task ForgotPassword_ShouldReturn200AndPersistToken()
+    {
+        var user = await RegisterUser("pwduser", "pwduser@example.com", "Password123!");
+
+        var response = await _client.PostAsJsonAsync(
+            "/api/auth/forgot-password",
+            new ForgotPasswordRequest { Email = "pwduser@example.com" }
+        );
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        _sentEmails.Should().ContainSingle(e => e.To == "pwduser@example.com");
+        (await CountResetTokensAsync(user.User.Id)).Should().Be(1);
+    }
+
+    [Fact]
+    public async Task ForgotPassword_ShouldReturn200_WhenEmailUnknown()
+    {
+        var response = await _client.PostAsJsonAsync(
+            "/api/auth/forgot-password",
+            new ForgotPasswordRequest { Email = "unknown@example.com" }
+        );
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        _sentEmails.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task ResetPassword_ShouldAllowLoginWithNewPassword()
+    {
+        var user = await RegisterUser("resetuser", "resetuser@example.com", "Password123!");
+
+        var token = await RequestPasswordReset("resetuser@example.com");
+
+        var resetResponse = await _client.PostAsJsonAsync(
+            "/api/auth/reset-password",
+            new ResetPasswordRequest { Token = token, Password = "NewPassword123!" }
+        );
+        resetResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+
+        var loginResponse = await _client.PostAsJsonAsync(
+            "/api/auth/login",
+            new LoginRequestDto { Email = "resetuser@example.com", Password = "NewPassword123!" }
+        );
+        loginResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+
+        var result = await loginResponse.Content.ReadFromJsonAsync<AuthResponseDto>();
+        result!.User.Username.Should().Be("resetuser");
+        result.User.Id.Should().Be(user.User.Id);
+    }
+
+    [Fact]
+    public async Task ResetPassword_ShouldReturn401_WhenTokenInvalid()
+    {
+        var response = await _client.PostAsJsonAsync(
+            "/api/auth/reset-password",
+            new ResetPasswordRequest { Token = "invalid-token", Password = "NewPassword123!" }
+        );
+
+        response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+    }
+
+    [Fact]
+    public async Task ResetPassword_ShouldBeSingleUse()
+    {
+        await RegisterUser("singleuse", "singleuse@example.com", "Password123!");
+
+        var token = await RequestPasswordReset("singleuse@example.com");
+
+        var first = await _client.PostAsJsonAsync(
+            "/api/auth/reset-password",
+            new ResetPasswordRequest { Token = token, Password = "NewPassword123!" }
+        );
+        first.StatusCode.Should().Be(HttpStatusCode.OK);
+
+        var second = await _client.PostAsJsonAsync(
+            "/api/auth/reset-password",
+            new ResetPasswordRequest { Token = token, Password = "AnotherPassword123!" }
+        );
+        second.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
     }
 }
