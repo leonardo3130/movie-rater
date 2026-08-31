@@ -22,6 +22,11 @@ export interface LoginRequest {
   password: string
 }
 
+export interface ResetPasswordRequest {
+  password: string
+  token: string
+}
+
 
 export interface ApiError {
   type?: string

@@ -1,6 +1,7 @@
 import { createBrowserRouter, Navigate } from 'react-router'
 import { LoginPage } from '../features/authentication/pages/LoginPage'
 import { RegisterPage } from '../features/authentication/pages/RegisterPage'
+import { ResetPasswordPage } from '../features/authentication/pages/ResetPasswordPage'
 import { ProtectedRoute } from './ProtectedRoute'
 import { MoviesPage } from '../features/movies/pages/MoviesPage'
 import { AppLayout } from '../features/layout/components/AppLayout'
@@ -20,6 +21,10 @@ export const router = createBrowserRouter([
   {
     path: '/register',
     element: <RegisterPage />,
+  },
+  {
+    path: '/reset-password',
+    element: <ResetPasswordPage />,
   },
   {
     element: <ProtectedRoute />,

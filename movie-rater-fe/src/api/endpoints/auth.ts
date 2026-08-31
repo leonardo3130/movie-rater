@@ -3,6 +3,7 @@ import type {
   AuthResponse,
   RegisterRequest,
   LoginRequest,
+  ResetPasswordRequest,
   UserResponse,
 } from '@src/types/auth'
 
@@ -24,4 +25,8 @@ export function logout() {
 
 export function getCurrentUser() {
   return client.get<UserResponse>('/api/auth/me').then((r) => r.data)
+}
+
+export function resetPassword(body: ResetPasswordRequest) {
+  return client.post('/api/auth/reset-password', body).then((r) => r.data)
 }
