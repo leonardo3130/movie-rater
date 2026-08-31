@@ -1,4 +1,5 @@
 using System.Text;
+using System.Threading.RateLimiting;
 using FluentValidation;
 using FluentValidation.AspNetCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -26,6 +27,7 @@ using MovieRaterApi.Features.WatchSessions.Services;
 using MovieRaterApi.Infrastructure.Email;
 using MovieRaterApi.Infrastructure.Email.Options;
 using MovieRaterApi.Infrastructure.Middleware;
+using MovieRaterApi.Infrastructure.RateLimiting;
 using MovieRaterApi.Infrastructure.Tmdb;
 using MovieRaterApi.Infrastructure.Tmdb.Handlers;
 using MovieRaterApi.Infrastructure.Tmdb.Options;
@@ -82,8 +84,36 @@ builder
 
 builder.Services.AddAuthorization();
 
+builder.Services.Configure<PasswordResetRateLimitOptions>(
+    builder.Configuration.GetSection(PasswordResetRateLimitOptions.SectionName)
+);
+
+var passwordResetRateLimitOptions = new PasswordResetRateLimitOptions();
+builder
+    .Configuration.GetSection(PasswordResetRateLimitOptions.SectionName)
+    .Bind(passwordResetRateLimitOptions);
+
 builder.Services.AddRateLimiter(options =>
 {
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+
+    options.GlobalLimiter = PasswordResetRateLimiterFactory.Create(passwordResetRateLimitOptions);
+
+    options.OnRejected = async (context, cancellationToken) =>
+    {
+        if (context.Lease.TryGetMetadata(MetadataName.RetryAfter, out var retryAfter))
+        {
+            context.HttpContext.Response.Headers.RetryAfter = (
+                (int)retryAfter.TotalSeconds
+            ).ToString(System.Globalization.CultureInfo.InvariantCulture);
+        }
+
+        await context.HttpContext.Response.WriteAsJsonAsync(
+            new { Message = "Too many requests. Please try again later." },
+            cancellationToken
+        );
+    };
+
     options.AddFixedWindowLimiter(
         "auth",
         config =>
@@ -166,6 +196,7 @@ app.UseMiddleware<ExceptionHandlingMiddleware>();
 
 app.UseSerilogRequestLogging();
 
+app.UseRouting();
 app.UseRateLimiter();
 app.UseAuthentication();
 app.UseAuthorization();
