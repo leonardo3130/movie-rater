@@ -1,3 +1,4 @@
+using System.Reflection;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using MovieRaterApi.Data;
@@ -20,7 +21,6 @@ public class PasswordResetService : IPasswordResetService
     private readonly IPasswordHasher _passwordHasher;
     private readonly IEmailSender _emailSender;
     private readonly EmailConfiguration _emailOptions;
-    private readonly IHostEnvironment _env;
     private readonly ILogger<AuthService> _logger;
 
     public PasswordResetService(
@@ -29,7 +29,6 @@ public class PasswordResetService : IPasswordResetService
         IPasswordHasher passwordHasher,
         IEmailSender emailSender,
         IOptions<EmailConfiguration> emailOptions,
-        IHostEnvironment env,
         ILogger<AuthService> logger
     )
     {
@@ -38,7 +37,6 @@ public class PasswordResetService : IPasswordResetService
         _passwordHasher = passwordHasher;
         _emailSender = emailSender;
         _emailOptions = emailOptions.Value;
-        _env = env;
         _logger = logger;
     }
 
@@ -67,15 +65,7 @@ public class PasswordResetService : IPasswordResetService
 
         var resetUrl = BuildResetUrl(rawToken);
 
-        var template = await File.ReadAllTextAsync(
-            Path.Combine(
-                _env.ContentRootPath,
-                "Infrastructure",
-                "Email",
-                "Templates",
-                TemplateFileName
-            )
-        );
+        var template = await LoadTemplateAsync();
 
         var body = template
             .Replace("{{Username}}", user.Username)
@@ -133,5 +123,31 @@ public class PasswordResetService : IPasswordResetService
         }
 
         return $"{(int)lifetime.TotalMinutes} minute{(lifetime.TotalMinutes >= 2 ? "s" : "")}";
+    }
+
+    private static async Task<string> LoadTemplateAsync()
+    {
+        var assembly = Assembly.GetExecutingAssembly();
+        var resourceName = assembly
+            .GetManifestResourceNames()
+            .FirstOrDefault(n => n.EndsWith(TemplateFileName, StringComparison.OrdinalIgnoreCase));
+
+        if (resourceName is null)
+        {
+            throw new InvalidOperationException(
+                $"Email template '{TemplateFileName}' was not found as an embedded resource."
+            );
+        }
+
+        using var stream = assembly.GetManifestResourceStream(resourceName);
+        if (stream is null)
+        {
+            throw new InvalidOperationException(
+                $"Email template '{TemplateFileName}' could not be read from embedded resources."
+            );
+        }
+
+        using var reader = new StreamReader(stream);
+        return await reader.ReadToEndAsync();
     }
 }

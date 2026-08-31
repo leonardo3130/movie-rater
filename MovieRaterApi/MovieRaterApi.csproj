@@ -8,7 +8,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <None Include="Infrastructure/Email/Templates/**" />
+    <EmbeddedResource Include="Infrastructure/Email/Templates/**" />
   </ItemGroup>
 
   <ItemGroup>

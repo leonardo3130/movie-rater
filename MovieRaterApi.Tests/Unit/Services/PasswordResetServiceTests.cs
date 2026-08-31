@@ -1,6 +1,4 @@
 using FluentAssertions;
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Moq;
@@ -22,10 +20,8 @@ public class PasswordResetServiceTests : IDisposable
     private readonly Mock<IPasswordHasher> _passwordHasherMock;
     private readonly Mock<IEmailSender> _emailSenderMock;
     private readonly EmailConfiguration _emailOptions;
-    private readonly Mock<IHostEnvironment> _envMock;
     private readonly Mock<ILogger<AuthService>> _loggerMock;
     private readonly PasswordResetService _sut;
-    private readonly string _tempRoot;
 
     public PasswordResetServiceTests()
     {
@@ -43,12 +39,7 @@ public class PasswordResetServiceTests : IDisposable
             SmtpServer = "smtp.example.com",
         };
 
-        _envMock = new Mock<IHostEnvironment>();
         _loggerMock = new Mock<ILogger<AuthService>>();
-
-        _tempRoot = CopyTemplateToTemp();
-
-        _envMock.Setup(e => e.ContentRootPath).Returns(_tempRoot);
 
         _sut = new PasswordResetService(
             _db,
@@ -56,7 +47,6 @@ public class PasswordResetServiceTests : IDisposable
             _passwordHasherMock.Object,
             _emailSenderMock.Object,
             Options.Create(_emailOptions),
-            _envMock.Object,
             _loggerMock.Object
         );
     }
@@ -64,33 +54,6 @@ public class PasswordResetServiceTests : IDisposable
     public void Dispose()
     {
         _db.Dispose();
-        if (Directory.Exists(_tempRoot))
-        {
-            Directory.Delete(_tempRoot, recursive: true);
-        }
-    }
-
-    private static string CopyTemplateToTemp()
-    {
-        var tempRoot = Path.Combine(Path.GetTempPath(), "pwdreset-" + Guid.NewGuid().ToString("N"));
-        var targetDir = Path.Combine(tempRoot, "Infrastructure", "Email", "Templates");
-        Directory.CreateDirectory(targetDir);
-
-        var source = Path.Combine(
-            AppContext.BaseDirectory,
-            "..",
-            "..",
-            "..",
-            "..",
-            "MovieRaterApi",
-            "Infrastructure",
-            "Email",
-            "Templates",
-            "password-reset-template.html"
-        );
-
-        File.Copy(Path.GetFullPath(source), Path.Combine(targetDir, "password-reset-template.html"));
-        return tempRoot;
     }
 
     private User SeedUser(string email = "user@example.com", string username = "testuser")
