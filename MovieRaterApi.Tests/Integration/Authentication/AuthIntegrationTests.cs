@@ -432,4 +432,83 @@ public class AuthIntegrationTests : IAsyncLifetime
         );
         second.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
     }
+
+    private async Task<HttpResponseMessage> PostForgotPassword(string email)
+    {
+        return await _client.PostAsJsonAsync(
+            "/api/auth/forgot-password",
+            new ForgotPasswordRequest { Email = email }
+        );
+    }
+
+    [Fact]
+    public async Task ForgotPassword_ShouldReturn429_AfterEmailLimit()
+    {
+        for (var i = 0; i < 3; i++)
+        {
+            (await PostForgotPassword("ratelimit@example.com"))
+                .StatusCode.Should()
+                .Be(HttpStatusCode.OK);
+        }
+
+        (await PostForgotPassword("ratelimit@example.com"))
+            .StatusCode.Should()
+            .Be(HttpStatusCode.TooManyRequests);
+    }
+
+    [Fact]
+    public async Task ForgotPassword_ShouldReturn429_AfterIpLimit()
+    {
+        for (var i = 0; i < 10; i++)
+        {
+            (await PostForgotPassword($"ratelimit{i}@example.com"))
+                .StatusCode.Should()
+                .Be(HttpStatusCode.OK);
+        }
+
+        (await PostForgotPassword("ratelimit-over@example.com"))
+            .StatusCode.Should()
+            .Be(HttpStatusCode.TooManyRequests);
+    }
+
+    [Fact]
+    public async Task ForgotPassword_ShouldReturnGenericMessage_ForExistingEmail()
+    {
+        await RegisterUser("generic", "generic@example.com", "Password123!");
+
+        var response = await PostForgotPassword("generic@example.com");
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var body = await response.Content.ReadAsStringAsync();
+        body.Should().Contain("If an account with that email exists");
+    }
+
+    [Fact]
+    public async Task ForgotPassword_ShouldReturnGenericMessage_ForUnknownEmail()
+    {
+        var response = await PostForgotPassword("unknown-generic@example.com");
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var body = await response.Content.ReadAsStringAsync();
+        body.Should().Contain("If an account with that email exists");
+    }
+
+    [Fact]
+    public async Task Login_ShouldReturn429_AfterAuthLimit()
+    {
+        var request = new LoginRequestDto
+        {
+            Email = "nobody@example.com",
+            Password = "WrongPassword!",
+        };
+
+        for (var i = 0; i < 10; i++)
+        {
+            var response = await _client.PostAsJsonAsync("/api/auth/login", request);
+            response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+        }
+
+        var limited = await _client.PostAsJsonAsync("/api/auth/login", request);
+        limited.StatusCode.Should().Be(HttpStatusCode.TooManyRequests);
+    }
 }
