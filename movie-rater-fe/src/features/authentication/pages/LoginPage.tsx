@@ -11,7 +11,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { AuthLayout } from '../components/AuthLayout'
 import { loginSchema, type LoginFormValues } from '../schemas/login.schema'
-import { login as loginApi } from '../../../api/endpoints/auth'
+import { login as loginApi, forgotPassword as forgotPasswordApi } from '../../../api/endpoints/auth'
 import { useAuthStore } from '../../../stores/auth-store'
 
 export function LoginPage() {
@@ -22,6 +22,7 @@ export function LoginPage() {
   const {
     register,
     handleSubmit,
+    watch,
     formState: { errors, isSubmitting },
   } = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
@@ -38,11 +39,30 @@ export function LoginPage() {
     },
   })
 
+  const forgotPasswordMutation = useMutation({
+    mutationFn: forgotPasswordApi,
+    onSuccess: () => {
+      toast.success("If an account with that email exists, you'll receive a password reset link.")
+    },
+    onError: () => {
+      toast.error('Something went wrong sending the reset link. Please try again.')
+    },
+  })
+
   const onSubmit = (values: LoginFormValues) => {
     mutation.mutate(values)
   }
 
   const pending = isSubmitting || mutation.isPending
+
+  const onForgotPassword = () => {
+    const email = watch('email')
+    if (!email || email.trim() === '') {
+      toast.error('Enter your email address first to receive a reset link')
+      return
+    }
+    forgotPasswordMutation.mutate({ email })
+  }
 
   return (
     <AuthLayout
@@ -89,6 +109,17 @@ export function LoginPage() {
           {errors.password && (
             <p className="text-xs text-destructive">{errors.password.message}</p>
           )}
+          <Button
+            type="button"
+            variant="link"
+            size="sm"
+            className="h-auto px-0 font-normal"
+            onClick={onForgotPassword}
+            disabled={forgotPasswordMutation.isPending}
+          >
+            {forgotPasswordMutation.isPending && <Loader2 className="size-3 animate-spin" />}
+            Forgot password?
+          </Button>
         </div>
 
         <Button type="submit" className="w-full" disabled={pending}>
