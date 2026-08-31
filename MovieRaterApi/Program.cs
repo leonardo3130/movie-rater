@@ -23,6 +23,8 @@ using MovieRaterApi.Features.UserMovie.Interfaces;
 using MovieRaterApi.Features.UserMovie.Services;
 using MovieRaterApi.Features.WatchSessions.Interfaces;
 using MovieRaterApi.Features.WatchSessions.Services;
+using MovieRaterApi.Infrastructure.Email;
+using MovieRaterApi.Infrastructure.Email.Options;
 using MovieRaterApi.Infrastructure.Middleware;
 using MovieRaterApi.Infrastructure.Tmdb;
 using MovieRaterApi.Infrastructure.Tmdb.Handlers;
@@ -45,6 +47,11 @@ builder.Host.UseSerilog(
 );
 
 builder.Services.Configure<JwtOptions>(builder.Configuration.GetSection(JwtOptions.SectionName));
+
+builder.Services.Configure<EmailConfiguration>(
+    builder.Configuration.GetSection(EmailConfiguration.SectionName)
+);
+builder.Services.AddScoped<IEmailSender, SmtpEmailSender>();
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"))
@@ -94,6 +101,7 @@ builder.Services.AddValidatorsFromAssemblyContaining<Program>();
 builder.Services.AddScoped<IPasswordHasher, PasswordHasher>();
 builder.Services.AddScoped<ITokenService, TokenService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<IPasswordResetService, PasswordResetService>();
 builder.Services.AddScoped<IMovieService, MovieService>();
 builder.Services.AddScoped<IWatchSessionService, WatchSessionService>();
 builder.Services.AddScoped<IRatingService, RatingService>();
