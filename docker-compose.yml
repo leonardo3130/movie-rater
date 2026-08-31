@@ -14,6 +14,10 @@ services:
       - ASPNETCORE_Kestrel__Certificates__Default__Path=/https/aspnetapp.pfx
       - ConnectionStrings__DefaultConnection=Host=db;Port=5432;Database=movierater;Username=postgres;Password=postgres
       - Tmdb__ApiKey=${TMDB_API_KEY}
+      - EmailSettings__Username=${EMAIL_USERNAME}
+      - EmailSettings__Password=${EMAIL_PASSWORD}
+      - EmailSettings__FrontendBaseUrl=${FRONTEND_BASE_URL:-http://localhost:5173}
+      - Jwt__SigningKey=${JWT_SIGNING_KEY:-this-is-not-a-real-key-replace-in-production-with-at-least-32-chars}
     depends_on:
       db:
         condition: service_healthy
