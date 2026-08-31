@@ -53,12 +53,16 @@ public class TokenService : ITokenService
         return new JwtSecurityTokenHandler().WriteToken(token);
     }
 
-    public (string rawToken, string tokenHash) GenerateRefreshToken()
+    private (string rawToken, string tokenHash) GenerateToken()
     {
         var rawToken = Convert.ToBase64String(RandomNumberGenerator.GetBytes(64));
         var tokenHash = HashToken(rawToken);
         return (rawToken, tokenHash);
     }
+
+    public (string rawToken, string tokenHash) GenerateRefreshToken() => GenerateToken();
+
+    public (string rawToken, string tokenHash) GeneratePasswordResetToken() => GenerateToken();
 
     public string HashToken(string rawToken)
     {

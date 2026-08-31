@@ -6,6 +6,7 @@ public interface ITokenService
 {
     string GenerateAccessToken(User user);
     (string rawToken, string tokenHash) GenerateRefreshToken();
+    (string rawToken, string tokenHash) GeneratePasswordResetToken();
     string HashToken(string rawToken);
     Task<bool> IsRefreshTokenValidAsync(string tokenHash);
     Task RevokeRefreshTokenAsync(string tokenHash, string? replacedByTokenHash = null);

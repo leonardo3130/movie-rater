@@ -22,6 +22,7 @@ public class ApplicationDbContext : DbContext
     public DbSet<AiSummary> AiSummaries => Set<AiSummary>();
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
     public DbSet<Invitation> Invitations => Set<Invitation>();
+    public DbSet<PasswordResetToken> PasswordResetTokens => Set<PasswordResetToken>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -208,6 +209,18 @@ public class ApplicationDbContext : DbContext
                 .HasOne(e => e.AcceptedByUser)
                 .WithMany()
                 .HasForeignKey(e => e.AcceptedByUserId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<PasswordResetToken>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.TokenHash).IsRequired().HasMaxLength(100);
+            entity.HasIndex(e => e.TokenHash).IsUnique();
+            entity
+                .HasOne(e => e.User)
+                .WithMany()
+                .HasForeignKey(e => e.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
         });
     }

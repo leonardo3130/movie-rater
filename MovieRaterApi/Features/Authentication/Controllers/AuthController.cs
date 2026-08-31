@@ -12,12 +12,19 @@ namespace MovieRaterApi.Features.Authentication.Controllers;
 public class AuthController : ControllerBase
 {
     private readonly IAuthService _authService;
+    private readonly IPasswordResetService _passwordResetService;
     private readonly ICurrentUser _currentUser;
     private readonly IHostEnvironment _env;
 
-    public AuthController(IAuthService authService, ICurrentUser currentUser, IHostEnvironment env)
+    public AuthController(
+        IAuthService authService,
+        IPasswordResetService passwordResetService,
+        ICurrentUser currentUser,
+        IHostEnvironment env
+    )
     {
         _authService = authService;
+        _passwordResetService = passwordResetService;
         _currentUser = currentUser;
         _env = env;
     }
@@ -63,6 +70,22 @@ public class AuthController : ControllerBase
     {
         var result = await _authService.GetCurrentUserAsync(_currentUser.UserId);
         return Ok(result);
+    }
+
+    [HttpPost("forgot-password")]
+    [AllowAnonymous]
+    public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordRequest request)
+    {
+        await _passwordResetService.SendResetPasswordEmail(request.Email);
+        return Ok();
+    }
+
+    [HttpPost("reset-password")]
+    [AllowAnonymous]
+    public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordRequest request)
+    {
+        await _passwordResetService.ResetPassword(request);
+        return Ok();
     }
 
     private void SetRefreshTokenCookie(string refreshToken)

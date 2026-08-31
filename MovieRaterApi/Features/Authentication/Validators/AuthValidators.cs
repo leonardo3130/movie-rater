@@ -32,3 +32,20 @@ public class RefreshRequestValidator : AbstractValidator<RefreshRequestDto>
         RuleFor(x => x.RefreshToken).NotEmpty();
     }
 }
+
+public class ResetPasswordRequestValidator : AbstractValidator<ResetPasswordRequest>
+{
+    public ResetPasswordRequestValidator()
+    {
+        RuleFor(x => x.Token).NotEmpty();
+        RuleFor(x => x.Password).NotEmpty().MinimumLength(8).MaximumLength(100);
+    }
+}
+
+public class ForgotPasswordRequestValidator : AbstractValidator<ForgotPasswordRequest>
+{
+    public ForgotPasswordRequestValidator()
+    {
+        RuleFor(x => x.Email).NotEmpty().EmailAddress().MaximumLength(255);
+    }
+}

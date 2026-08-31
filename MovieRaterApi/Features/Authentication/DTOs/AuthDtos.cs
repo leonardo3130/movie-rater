@@ -32,3 +32,14 @@ public class UserResponseDto
     public string Email { get; set; } = string.Empty;
     public string? ProfilePictureUrl { get; set; }
 }
+
+public class ResetPasswordRequest
+{
+    public string Password { get; set; } = string.Empty;
+    public string Token { get; set; } = string.Empty;
+}
+
+public class ForgotPasswordRequest
+{
+    public string Email { get; set; } = string.Empty;
+}
