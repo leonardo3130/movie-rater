@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using MovieRaterApi.Features.Authentication.DTOs;
 using MovieRaterApi.Features.Authentication.Infrastructure;
 using MovieRaterApi.Features.Authentication.Interfaces;
@@ -31,6 +32,7 @@ public class AuthController : ControllerBase
 
     [HttpPost("register")]
     [AllowAnonymous]
+    [EnableRateLimiting("auth")]
     public async Task<IActionResult> Register([FromBody] RegisterRequestDto request)
     {
         var result = await _authService.RegisterAsync(request);
@@ -40,6 +42,7 @@ public class AuthController : ControllerBase
 
     [HttpPost("login")]
     [AllowAnonymous]
+    [EnableRateLimiting("auth")]
     public async Task<IActionResult> Login([FromBody] LoginRequestDto request)
     {
         var result = await _authService.LoginAsync(request);
@@ -77,7 +80,9 @@ public class AuthController : ControllerBase
     public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordRequest request)
     {
         await _passwordResetService.SendResetPasswordEmail(request.Email);
-        return Ok();
+        return Ok(
+            new { Message = "If an account with that email exists, you'll receive a password reset link." }
+        );
     }
 
     [HttpPost("reset-password")]
