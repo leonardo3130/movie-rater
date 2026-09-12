@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useParams, Link } from 'react-router'
 import { motion } from 'framer-motion'
-import { ArrowLeft, Calendar, MapPin, FileText, Star, User } from 'lucide-react'
+import { ArrowLeft, Calendar, MapPin, FileText, Star, User, Pencil } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
@@ -9,6 +9,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { MoviePoster } from '../components/MoviePoster'
 import { Stars } from '../components/Stars'
 import { RateMovieDialog } from '../components/RateMovieDialog'
+import { EditWatchSessionDialog } from '../components/EditWatchSessionDialog'
 import { useWatchSession } from '../hooks/use-watch-session'
 import { useAuthStore } from '../../../stores/auth-store'
 import type { RatingResponseDto } from '@/src/types/rating'
@@ -18,6 +19,7 @@ export function WatchSessionDetailPage() {
   const user = useAuthStore((s) => s.user)
   const { data: session, isLoading, isError } = useWatchSession(id)
   const [rateDialogOpen, setRateDialogOpen] = useState(false)
+  const [editDialogOpen, setEditDialogOpen] = useState(false)
 
   if (isLoading) {
     return (
@@ -74,6 +76,17 @@ export function WatchSessionDetailPage() {
               <span className="flex items-center gap-1">
                 <Calendar className="size-3.5" />
                 {formattedDate}
+                {session.createdByUserId === user?.id && (
+                  <Button
+                    variant="ghost"
+                    size="xs"
+                    className="ml-1 text-muted-foreground hover:text-foreground"
+                    onClick={() => setEditDialogOpen(true)}
+                  >
+                    <Pencil className="size-3.5" />
+                    Edit
+                  </Button>
+                )}
               </span>
               {session.location && (
                 <span className="flex items-center gap-1">
@@ -181,6 +194,12 @@ export function WatchSessionDetailPage() {
         movieTitle={session.movieTitle}
         moviePosterUrl={session.moviePosterUrl}
         existingRating={(myRating as RatingResponseDto) ?? null}
+      />
+
+      <EditWatchSessionDialog
+        open={editDialogOpen}
+        onOpenChange={setEditDialogOpen}
+        session={session}
       />
     </div>
   )

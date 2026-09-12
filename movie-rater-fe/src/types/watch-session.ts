@@ -49,6 +49,12 @@ export interface CreateWatchSessionRequestDto {
   notes?: string | null
 }
 
+export interface UpdateWatchSessionRequestDto {
+  watchedAt: string
+  location?: string | null
+  notes?: string | null
+}
+
 export interface WatchSessionQueryDto {
   movieId?: string
   groupId?: string | null

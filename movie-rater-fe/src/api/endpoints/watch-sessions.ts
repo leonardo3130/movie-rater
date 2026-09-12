@@ -3,6 +3,7 @@ import type {
   WatchSessionResponseDto,
   WatchSessionListResponseDto,
   CreateWatchSessionRequestDto,
+  UpdateWatchSessionRequestDto,
   WatchSessionQueryDto,
   HeatmapResponseDto,
 } from '@src/types/watch-session'
@@ -25,6 +26,12 @@ export function getWatchSessions(params: WatchSessionQueryDto = {}) {
 
 export function getWatchSession(id: string) {
   return client.get<WatchSessionResponseDto>(`/api/watch-sessions/${id}`).then((r) => r.data)
+}
+
+export function updateWatchSession(id: string, data: UpdateWatchSessionRequestDto) {
+  return client
+    .put<WatchSessionResponseDto>(`/api/watch-sessions/${id}`, data)
+    .then((r) => r.data)
 }
 
 export function deleteWatchSession(id: string) {
