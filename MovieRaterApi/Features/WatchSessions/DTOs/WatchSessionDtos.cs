@@ -9,6 +9,13 @@ public class CreateWatchSessionRequestDto
     public string? Notes { get; set; }
 }
 
+public class UpdateWatchSessionRequestDto
+{
+    public DateTime WatchedAt { get; set; }
+    public string? Location { get; set; }
+    public string? Notes { get; set; }
+}
+
 public class WatchSessionListItemDto
 {
     public Guid Id { get; set; }

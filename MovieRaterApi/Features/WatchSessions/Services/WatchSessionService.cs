@@ -152,6 +152,45 @@ public class WatchSessionService : IWatchSessionService
         if (session is null)
             throw new NotFoundException("Watch session not found.");
 
+        return ToResponseDto(session);
+    }
+
+    public async Task<WatchSessionResponseDto> UpdateAsync(
+        Guid id,
+        UpdateWatchSessionRequestDto request,
+        Guid userId
+    )
+    {
+        var session = await _db
+            .WatchSessions.Include(ws => ws.Movie)
+            .Include(ws => ws.CreatedByUser)
+            .FirstOrDefaultAsync(ws => ws.Id == id);
+
+        if (session is null)
+            throw new NotFoundException("Watch session not found.");
+
+        if (session.CreatedByUserId != userId)
+            throw new ForbiddenException("You can only edit your own watch sessions.");
+
+        session.WatchedAt = request.WatchedAt;
+        session.Location = request.Location;
+        session.Notes = request.Notes;
+        session.UpdatedAt = DateTime.UtcNow;
+
+        await _db.SaveChangesAsync();
+
+        _logger.LogInformation(
+            "Watch session {SessionId} updated by user {UserId} with watchedAt {WatchedAt}",
+            id,
+            userId,
+            request.WatchedAt
+        );
+
+        return ToResponseDto(session);
+    }
+
+    private static WatchSessionResponseDto ToResponseDto(WatchSession session)
+    {
         return new WatchSessionResponseDto
         {
             Id = session.Id,

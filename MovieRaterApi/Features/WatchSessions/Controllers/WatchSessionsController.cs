@@ -48,6 +48,16 @@ public class WatchSessionsController : ControllerBase
         return Ok(result);
     }
 
+    [HttpPut("{id}")]
+    public async Task<IActionResult> Update(
+        Guid id,
+        [FromBody] UpdateWatchSessionRequestDto request
+    )
+    {
+        var result = await _watchSessionService.UpdateAsync(id, request, _currentUser.UserId);
+        return Ok(result);
+    }
+
     [HttpDelete("{id}")]
     public async Task<IActionResult> Delete(Guid id)
     {

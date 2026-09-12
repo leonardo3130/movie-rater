@@ -11,6 +11,11 @@ public interface IWatchSessionService
     );
     Task<WatchSessionListResponseDto> GetAllAsync(WatchSessionQueryDto query);
     Task<WatchSessionResponseDto> GetByIdAsync(Guid id);
+    Task<WatchSessionResponseDto> UpdateAsync(
+        Guid id,
+        UpdateWatchSessionRequestDto request,
+        Guid userId
+    );
     Task DeleteAsync(Guid id, Guid userId);
     Task<HeatmapResponseDto> GetHeatmapAsync(int days, Guid userId, Guid? groupId);
 }

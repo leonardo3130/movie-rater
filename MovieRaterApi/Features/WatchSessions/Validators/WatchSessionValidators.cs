@@ -14,6 +14,16 @@ public class CreateWatchSessionRequestValidator : AbstractValidator<CreateWatchS
     }
 }
 
+public class UpdateWatchSessionRequestValidator : AbstractValidator<UpdateWatchSessionRequestDto>
+{
+    public UpdateWatchSessionRequestValidator()
+    {
+        RuleFor(x => x.WatchedAt).NotEmpty();
+        RuleFor(x => x.Location).MaximumLength(200).When(x => x.Location is not null);
+        RuleFor(x => x.Notes).MaximumLength(2000).When(x => x.Notes is not null);
+    }
+}
+
 public class HeatmapQueryValidator : AbstractValidator<HeatmapQueryDto>
 {
     public HeatmapQueryValidator()
