@@ -153,6 +153,44 @@ public class WatchSessionsIntegrationTests : IAsyncLifetime
     }
 
     [Fact]
+    public async Task UpdateWatchSession_ShouldReturn200()
+    {
+        var (token, userId) = await SeedUserAndGroupAsync("wsupdate", "wsupdate@test.com");
+        var movieId = await SeedMovieAsync(1004, "Tenet");
+        _client.DefaultRequestHeaders.Authorization =
+            new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+
+        var createRequest = new CreateWatchSessionRequestDto
+        {
+            MovieId = movieId,
+            WatchedAt = new DateTime(2026, 7, 25, 20, 0, 0, DateTimeKind.Utc),
+            Location = "Home",
+            Notes = "First watch",
+        };
+        var createResponse = await _client.PostAsJsonAsync("/api/watch-sessions", createRequest);
+        var created = await createResponse.Content.ReadFromJsonAsync<WatchSessionResponseDto>();
+
+        var updateRequest = new UpdateWatchSessionRequestDto
+        {
+            WatchedAt = new DateTime(2026, 8, 1, 21, 30, 0, DateTimeKind.Utc),
+            Location = "Cinema",
+            Notes = "Updated",
+        };
+
+        var response = await _client.PutAsJsonAsync(
+            $"/api/watch-sessions/{created!.Id}",
+            updateRequest
+        );
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+
+        var result = await response.Content.ReadFromJsonAsync<WatchSessionResponseDto>();
+        result!.Id.Should().Be(created.Id);
+        result.WatchedAt.Should().Be(updateRequest.WatchedAt);
+        result.Location.Should().Be("Cinema");
+        result.Notes.Should().Be("Updated");
+    }
+
+    [Fact]
     public async Task DeleteOwnWatchSession_ShouldReturn204()
     {
         var (token, userId) = await SeedUserAndGroupAsync("wsdel", "wsdel@test.com");

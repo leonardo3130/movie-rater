@@ -235,6 +235,83 @@ public class WatchSessionServiceTests
     }
 
     [Fact]
+    public async Task UpdateAsync_UpdatesDateAndDetails_WhenUserIsCreator()
+    {
+        var userId = Guid.NewGuid();
+        var sessionId = Guid.NewGuid();
+        var groupId = Guid.NewGuid();
+        var movieId = Guid.NewGuid();
+        SeedUser(userId, "Leo");
+        SeedGroup(groupId);
+        SeedMovie(movieId, 1, "Inception");
+        SeedWatchSession(
+            sessionId,
+            groupId,
+            movieId,
+            userId,
+            new DateTime(2026, 1, 15, 20, 0, 0, DateTimeKind.Utc)
+        );
+
+        var request = new UpdateWatchSessionRequestDto
+        {
+            WatchedAt = new DateTime(2026, 3, 1, 21, 0, 0, DateTimeKind.Utc),
+            Location = "Cinema",
+            Notes = "Rewatch",
+        };
+
+        var result = await _sut.UpdateAsync(sessionId, request, userId);
+
+        result.WatchedAt.Should().Be(request.WatchedAt);
+        result.Location.Should().Be("Cinema");
+        result.Notes.Should().Be("Rewatch");
+
+        var updated = _db.WatchSessions.First(ws => ws.Id == sessionId);
+        updated.WatchedAt.Should().Be(request.WatchedAt);
+        updated.Location.Should().Be("Cinema");
+        updated.Notes.Should().Be("Rewatch");
+        updated.UpdatedAt.Should().BeAfter(DateTime.UtcNow.AddMinutes(-1));
+    }
+
+    [Fact]
+    public async Task UpdateAsync_Throws_WhenNotFound()
+    {
+        var request = new UpdateWatchSessionRequestDto { WatchedAt = DateTime.UtcNow };
+
+        await FluentActions
+            .Awaiting(() => _sut.UpdateAsync(Guid.NewGuid(), request, Guid.NewGuid()))
+            .Should()
+            .ThrowAsync<NotFoundException>()
+            .WithMessage("Watch session not found.");
+    }
+
+    [Fact]
+    public async Task UpdateAsync_Throws_WhenUserIsNotCreator()
+    {
+        var creatorId = Guid.NewGuid();
+        var sessionId = Guid.NewGuid();
+        var groupId = Guid.NewGuid();
+        var movieId = Guid.NewGuid();
+        SeedUser(creatorId, "Creator");
+        SeedGroup(groupId);
+        SeedMovie(movieId, 1, "Inception");
+        SeedWatchSession(
+            sessionId,
+            groupId,
+            movieId,
+            creatorId,
+            new DateTime(2026, 1, 15, 20, 0, 0, DateTimeKind.Utc)
+        );
+
+        var request = new UpdateWatchSessionRequestDto { WatchedAt = DateTime.UtcNow };
+
+        await FluentActions
+            .Awaiting(() => _sut.UpdateAsync(sessionId, request, Guid.NewGuid()))
+            .Should()
+            .ThrowAsync<ForbiddenException>()
+            .WithMessage("You can only edit your own watch sessions.");
+    }
+
+    [Fact]
     public async Task GetHeatmapAsync_ReturnsDailyCounts()
     {
         var movieId = Guid.NewGuid();

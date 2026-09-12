@@ -75,6 +75,64 @@ public class CreateWatchSessionRequestValidatorTests
     }
 }
 
+public class UpdateWatchSessionRequestValidatorTests
+{
+    private readonly UpdateWatchSessionRequestValidator _sut = new();
+
+    [Fact]
+    public void ShouldHaveError_WhenWatchedAtIsDefault()
+    {
+        var result = _sut.TestValidate(
+            new UpdateWatchSessionRequestDto { WatchedAt = default }
+        );
+
+        result.ShouldHaveValidationErrorFor(x => x.WatchedAt);
+    }
+
+    [Fact]
+    public void ShouldHaveError_WhenLocationExceedsMaxLength()
+    {
+        var result = _sut.TestValidate(
+            new UpdateWatchSessionRequestDto
+            {
+                WatchedAt = DateTime.UtcNow,
+                Location = new string('x', 201),
+            }
+        );
+
+        result.ShouldHaveValidationErrorFor(x => x.Location);
+    }
+
+    [Fact]
+    public void ShouldHaveError_WhenNotesExceedsMaxLength()
+    {
+        var result = _sut.TestValidate(
+            new UpdateWatchSessionRequestDto
+            {
+                WatchedAt = DateTime.UtcNow,
+                Notes = new string('x', 2001),
+            }
+        );
+
+        result.ShouldHaveValidationErrorFor(x => x.Notes);
+    }
+
+    [Fact]
+    public void ShouldNotHaveError_WhenValid()
+    {
+        var result = _sut.TestValidate(
+            new UpdateWatchSessionRequestDto
+            {
+                WatchedAt = DateTime.UtcNow,
+                Location = "Home",
+                Notes = "Great movie!",
+            }
+        );
+
+        result.ShouldNotHaveAnyValidationErrors();
+    }
+}
+
 public class HeatmapQueryValidatorTests
 {
     private readonly HeatmapQueryValidator _sut = new();
