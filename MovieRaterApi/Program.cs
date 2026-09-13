@@ -16,6 +16,8 @@ using MovieRaterApi.Features.Dashboard.Interfaces;
 using MovieRaterApi.Features.Dashboard.Services;
 using MovieRaterApi.Features.Groups.Interfaces;
 using MovieRaterApi.Features.Groups.Services;
+using MovieRaterApi.Features.MovieLists.Interfaces;
+using MovieRaterApi.Features.MovieLists.Services;
 using MovieRaterApi.Features.Movies.Interfaces;
 using MovieRaterApi.Features.Movies.Services;
 using MovieRaterApi.Features.Ratings.Interfaces;
@@ -139,6 +141,7 @@ builder.Services.AddScoped<IUserMovieService, UserMovieService>();
 builder.Services.AddScoped<IDashboardService, DashboardService>();
 builder.Services.AddScoped<IGroupService, GroupService>();
 builder.Services.AddScoped<IInvitationService, InvitationService>();
+builder.Services.AddScoped<IMovieListService, MovieListService>();
 builder.Services.AddMemoryCache();
 
 builder.Services.AddScoped<ICurrentUser>(sp =>
