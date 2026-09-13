@@ -23,6 +23,9 @@ public class ApplicationDbContext : DbContext
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
     public DbSet<Invitation> Invitations => Set<Invitation>();
     public DbSet<PasswordResetToken> PasswordResetTokens => Set<PasswordResetToken>();
+    public DbSet<MovieList> MovieLists => Set<MovieList>();
+    public DbSet<MovieListMovie> MovieListMovies => Set<MovieListMovie>();
+    public DbSet<MovieListGroup> MovieListGroups => Set<MovieListGroup>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -221,6 +224,49 @@ public class ApplicationDbContext : DbContext
                 .HasOne(e => e.User)
                 .WithMany()
                 .HasForeignKey(e => e.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<MovieList>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Name).IsRequired().HasMaxLength(100);
+            entity.Property(e => e.Description).HasMaxLength(500);
+            entity.HasIndex(e => e.OwnerUserId);
+            entity
+                .HasOne(e => e.OwnerUser)
+                .WithMany(u => u.MovieLists)
+                .HasForeignKey(e => e.OwnerUserId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<MovieListMovie>(entity =>
+        {
+            entity.HasKey(e => new { e.MovieListId, e.MovieId });
+            entity
+                .HasOne(e => e.MovieList)
+                .WithMany(l => l.Movies)
+                .HasForeignKey(e => e.MovieListId)
+                .OnDelete(DeleteBehavior.Cascade);
+            entity
+                .HasOne(e => e.Movie)
+                .WithMany(m => m.MovieListMovies)
+                .HasForeignKey(e => e.MovieId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<MovieListGroup>(entity =>
+        {
+            entity.HasKey(e => new { e.MovieListId, e.GroupId });
+            entity
+                .HasOne(e => e.MovieList)
+                .WithMany(l => l.SharedGroups)
+                .HasForeignKey(e => e.MovieListId)
+                .OnDelete(DeleteBehavior.Cascade);
+            entity
+                .HasOne(e => e.Group)
+                .WithMany(g => g.MovieListGroups)
+                .HasForeignKey(e => e.GroupId)
                 .OnDelete(DeleteBehavior.Cascade);
         });
     }

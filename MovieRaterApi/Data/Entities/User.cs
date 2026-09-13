@@ -16,4 +16,5 @@ public class User
     public ICollection<UserAchievement> UserAchievements { get; set; } =
         new List<UserAchievement>();
     public ICollection<WatchSession> CreatedWatchSessions { get; set; } = new List<WatchSession>();
+    public ICollection<MovieList> MovieLists { get; set; } = new List<MovieList>();
 }

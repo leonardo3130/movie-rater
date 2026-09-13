@@ -17,4 +17,5 @@ public class Movie
     public ICollection<MovieGenre> MovieGenres { get; set; } = new List<MovieGenre>();
     public ICollection<WatchSession> WatchSessions { get; set; } = new List<WatchSession>();
     public ICollection<UserMovie> UserMovies { get; set; } = new List<UserMovie>();
+    public ICollection<MovieListMovie> MovieListMovies { get; set; } = new List<MovieListMovie>();
 }

@@ -8,4 +8,5 @@ public class Group
 
     public ICollection<UserGroup> UserGroups { get; set; } = new List<UserGroup>();
     public ICollection<WatchSession> WatchSessions { get; set; } = new List<WatchSession>();
+    public ICollection<MovieListGroup> MovieListGroups { get; set; } = new List<MovieListGroup>();
 }
