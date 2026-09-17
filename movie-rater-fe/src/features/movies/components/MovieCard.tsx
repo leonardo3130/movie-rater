@@ -1,12 +1,13 @@
 import { useState } from 'react'
 import { Link } from 'react-router'
 import { motion } from 'framer-motion'
-import { Star, Eye } from 'lucide-react'
+import { Star, Eye, ListPlus } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { MoviePoster } from './MoviePoster'
 import { UserMovieToggle } from '../../user-movie/components/UserMovieToggle'
 import { CreateWatchSessionDialog } from './CreateWatchSessionDialog'
 import { RateMovieDialog } from './RateMovieDialog'
+import { AddToListDialog } from '../../movie-lists/components/AddToListDialog'
 import { useUserMovieStore } from '../../../stores/user-movie-store'
 import type { MovieSummaryDto } from '@src/types/movie'
 
@@ -25,6 +26,7 @@ export function MovieCard({ movie, index = 0 }: MovieCardProps) {
   const [wsDialogOpen, setWsDialogOpen] = useState(false)
   const [rateDialogOpen, setRateDialogOpen] = useState(false)
   const [rateSessionId, setRateSessionId] = useState<string | null>(null)
+  const [addToListOpen, setAddToListOpen] = useState(false)
 
   return (
     <motion.div
@@ -50,6 +52,19 @@ export function MovieCard({ movie, index = 0 }: MovieCardProps) {
               isInWatchlist={isInWatchlist}
               size="sm"
             />
+            <motion.button
+              type="button"
+              whileTap={{ scale: 0.8 }}
+              onClick={(e) => {
+                e.preventDefault()
+                e.stopPropagation()
+                setAddToListOpen(true)
+              }}
+              className="rounded-full p-1 transition-colors hover:bg-white/10 text-white/60 hover:text-white/90"
+              aria-label="Add to list"
+            >
+              <ListPlus className="size-3.5" />
+            </motion.button>
             <motion.button
               type="button"
               whileTap={{ scale: 0.8 }}
@@ -94,6 +109,14 @@ export function MovieCard({ movie, index = 0 }: MovieCardProps) {
           existingRating={null}
         />
       )}
+      <AddToListDialog
+        open={addToListOpen}
+        onOpenChange={setAddToListOpen}
+        movieId={movie.id}
+        tmdbId={movie.tmdbId}
+        movieTitle={movie.title}
+        moviePosterUrl={movie.posterUrl}
+      />
     </motion.div>
   )
 }

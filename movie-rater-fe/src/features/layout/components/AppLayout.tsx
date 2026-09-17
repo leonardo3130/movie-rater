@@ -24,6 +24,7 @@ import {
   LogOut,
   Clapperboard,
   Clock,
+  Library,
 } from 'lucide-react'
 import { useAuthStore } from '../../../stores/auth-store'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
@@ -33,6 +34,7 @@ import { cn } from '@/lib/utils'
 const NAV_ITEMS = [
   { icon: LayoutDashboard, label: 'Dashboard', path: '/dashboard' },
   { icon: Film, label: 'Movies', path: '/movies' },
+  { icon: Library, label: 'Lists', path: '/lists' },
   { icon: Clock, label: 'Watch History', path: '/watch-history' },
   { icon: Heart, label: 'Favorites', path: '/favorites' },
   { icon: Bookmark, label: 'Watchlist', path: '/watchlist' },
@@ -89,6 +91,7 @@ function AppSidebar() {
   const isActive = (path: string) =>
     location.pathname === path ||
     (path === '/movies' && location.pathname.startsWith('/movies/')) ||
+    (path === '/lists' && location.pathname.startsWith('/lists/')) ||
     (path === '/watch-history' && location.pathname.startsWith('/watch-history/'))
 
   return (

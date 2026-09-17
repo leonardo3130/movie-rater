@@ -12,6 +12,8 @@ import { AcceptInvitePage } from '../features/groups/pages/AcceptInvitePage'
 import { WatchHistoryPage } from '../features/movies/pages/WatchHistoryPage'
 import { WatchSessionDetailPage } from '../features/movies/pages/WatchSessionDetailPage'
 import { DashboardPage } from '../features/dashboard/pages/DashboardPage'
+import { ListsPage } from '../features/movie-lists/pages/ListsPage'
+import { MovieListDetailPage } from '../features/movie-lists/pages/MovieListDetailPage'
 
 export const router = createBrowserRouter([
   {
@@ -51,6 +53,14 @@ export const router = createBrowserRouter([
           {
             path: '/watchlist',
             element: <WatchlistPage />,
+          },
+          {
+            path: '/lists',
+            element: <ListsPage />,
+          },
+          {
+            path: '/lists/:listId',
+            element: <MovieListDetailPage />,
           },
           {
             path: '/watch-history',

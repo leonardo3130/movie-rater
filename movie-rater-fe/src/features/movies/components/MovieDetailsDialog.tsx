@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useNavigate, useParams } from 'react-router'
 import { motion } from 'framer-motion'
-import { Star, Clock, Calendar, Users, Play, ExternalLink, Heart, Bookmark, Eye } from 'lucide-react'
+import { Star, Clock, Calendar, Users, Play, ExternalLink, Heart, Bookmark, Eye, ListPlus } from 'lucide-react'
 import { Dialog, DialogContent } from '@/components/ui/dialog'
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -11,6 +11,7 @@ import { MoviePoster } from './MoviePoster'
 import { MovieCard } from './MovieCard'
 import { CreateWatchSessionDialog } from './CreateWatchSessionDialog'
 import { RateMovieDialog } from './RateMovieDialog'
+import { AddToListDialog } from '../../movie-lists/components/AddToListDialog'
 import { useMovieDetails } from '../hooks/use-movie-details'
 import { useMovieRecommendations } from '../hooks/use-movie-recommendations'
 import { useToggleFavorite } from '../../user-movie/hooks/use-toggle-favorite'
@@ -39,6 +40,7 @@ export function MovieDetailsDialog() {
   const [wsDialogOpen, setWsDialogOpen] = useState(false)
   const [rateDialogOpen, setRateDialogOpen] = useState(false)
   const [rateSessionId, setRateSessionId] = useState<string | null>(null)
+  const [addToListOpen, setAddToListOpen] = useState(false)
 
   const open = movieId !== null && !isNaN(Number(tmdbId))
 
@@ -140,6 +142,17 @@ export function MovieDetailsDialog() {
                   >
                     <Bookmark className="size-4" fill={isInWatchlist ? 'currentColor' : 'none'} />
                     {isInWatchlist ? 'Remove from Watchlist' : 'Add to Watchlist'}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={(e) => {
+                      e.preventDefault()
+                      setAddToListOpen(true)
+                    }}
+                  >
+                    <ListPlus className="size-4" />
+                    Add to List
                   </Button>
                   <Button
                     variant="default"
@@ -269,6 +282,14 @@ export function MovieDetailsDialog() {
             existingRating={null}
           />
         )}
+        <AddToListDialog
+          open={addToListOpen}
+          onOpenChange={setAddToListOpen}
+          movieId={movie?.id ?? ''}
+          tmdbId={movie?.tmdbId ?? 0}
+          movieTitle={movie?.title ?? ''}
+          moviePosterUrl={movie?.posterUrl ?? null}
+        />
       </DialogContent>
     </Dialog>
   )
