@@ -1,4 +1,3 @@
-import { Library } from 'lucide-react'
 import { MoviePoster } from '../../movies/components/MoviePoster'
 
 const GRADIENTS = [
@@ -20,15 +19,31 @@ function hashCode(input: string) {
   return hash
 }
 
+function getInitials(name: string, max = 4) {
+  const words = name.trim().split(/\s+/).filter(Boolean)
+  if (words.length >= 2) {
+    return words.slice(0, max).map((w) => w[0]).join('').toUpperCase()
+  }
+  return name.trim().slice(0, max).toUpperCase()
+}
+
+function initialsSize(initials: string) {
+  if (initials.length >= 4) return 'text-2xl sm:text-3xl'
+  if (initials.length === 3) return 'text-3xl sm:text-4xl'
+  return 'text-4xl sm:text-5xl'
+}
+
 interface ListCoverProps {
   id: string
+  name: string
   movieCount: number
   posters?: Array<string | null>
 }
 
-export function ListCover({ id, movieCount, posters }: ListCoverProps) {
+export function ListCover({ id, name, movieCount, posters }: ListCoverProps) {
   const gradient = GRADIENTS[hashCode(id) % GRADIENTS.length]
   const visible = (posters ?? []).slice(0, 4).filter(Boolean) as string[]
+  const initials = getInitials(name)
 
   if (visible.length > 0) {
     return (
@@ -60,10 +75,12 @@ export function ListCover({ id, movieCount, posters }: ListCoverProps) {
 
   return (
     <div className={`aspect-[16/10] overflow-hidden rounded-lg bg-gradient-to-br ${gradient}`}>
-      <div className="flex size-full flex-col items-center justify-center gap-1.5 text-primary-foreground/90">
-        <Library className="size-8" strokeWidth={1.5} />
-        <span className="text-xs font-medium tabular-nums">
-          {movieCount} movie{movieCount === 1 ? '' : 's'}
+      <div className="flex size-full items-center justify-center">
+        <span
+          className={`font-heading font-bold tracking-tight text-primary-foreground/95 ${initialsSize(initials)}`}
+          aria-hidden="true"
+        >
+          {initials || movieCount}
         </span>
       </div>
     </div>

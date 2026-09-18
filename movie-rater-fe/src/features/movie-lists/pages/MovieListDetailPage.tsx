@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useParams, Link, useNavigate } from 'react-router'
 import { motion } from 'framer-motion'
-import { Library, Loader2, Pencil, Trash2, Star, Lock, Users, X } from 'lucide-react'
+import { Library, Loader2, Pencil, Trash2, Star, Lock, Users, X, ArrowLeft } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { MoviePoster } from '../../movies/components/MoviePoster'
@@ -56,7 +56,14 @@ export function MovieListDetailPage() {
     movie.releaseDate ? movie.releaseDate.slice(0, 4) : null
 
   return (
-    <div className="p-6 space-y-8">
+    <div className="p-6 space-y-6">
+      <div className="flex flex-wrap items-center gap-2">
+        <Button variant="ghost" size="sm" onClick={() => navigate('/lists')}>
+          <ArrowLeft className="size-4" />
+          Back to lists
+        </Button>
+      </div>
+
       <div className="flex flex-wrap items-start gap-3 justify-between">
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">

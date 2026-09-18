@@ -25,7 +25,7 @@ export function ListCard({ list, index = 0, onEdit, onDelete }: ListCardProps) {
         to={`/lists/${list.id}`}
         className="flex flex-col overflow-hidden rounded-xl bg-card text-sm text-card-foreground ring-1 ring-foreground/10 transition-shadow group-hover:shadow-md group-hover:ring-primary/30"
       >
-        <ListCover id={list.id} movieCount={list.movieCount} />
+        <ListCover id={list.id} name={list.name} movieCount={list.movieCount} />
 
         <div className="p-3 space-y-1">
           <p className="font-heading text-sm font-medium leading-snug text-foreground line-clamp-1 group-hover:text-primary transition-colors">
