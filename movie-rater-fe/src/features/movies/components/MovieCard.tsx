@@ -60,7 +60,7 @@ export function MovieCard({ movie, index = 0 }: MovieCardProps) {
                 e.stopPropagation()
                 setAddToListOpen(true)
               }}
-              className="rounded-full p-1 transition-colors hover:bg-white/10 text-white/60 hover:text-white/90"
+              className="rounded-full p-1 cursor-pointer transition-colors hover:bg-white/10 text-white/60 hover:text-white/90"
               aria-label="Add to list"
             >
               <ListPlus className="size-3.5" />
@@ -73,7 +73,7 @@ export function MovieCard({ movie, index = 0 }: MovieCardProps) {
                 e.stopPropagation()
                 setWsDialogOpen(true)
               }}
-              className="rounded-full p-1 transition-colors hover:bg-white/10 text-white/60 hover:text-white/90"
+              className="rounded-full p-1 cursor-pointer transition-colors hover:bg-white/10 text-white/60 hover:text-white/90"
               aria-label="Mark as watched"
             >
               <Eye className="size-3.5" />

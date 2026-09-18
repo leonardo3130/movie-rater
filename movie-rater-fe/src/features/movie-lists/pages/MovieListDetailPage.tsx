@@ -144,7 +144,7 @@ export function MovieListDetailPage() {
                             e.stopPropagation()
                             setRemovingMovie(movie)
                           }}
-                          className="rounded-full p-1 transition-colors hover:bg-red-500/20 text-white/70 hover:text-red-400"
+                          className="rounded-full p-1 cursor-pointer transition-colors hover:bg-red-500/20 text-white/70 hover:text-red-400"
                           aria-label={`Remove ${movie.title} from list`}
                         >
                           <X className="size-3.5" />

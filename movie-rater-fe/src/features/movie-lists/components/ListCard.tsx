@@ -67,7 +67,7 @@ export function ListCard({ list, index = 0, onEdit, onDelete }: ListCardProps) {
               e.stopPropagation()
               onEdit()
             }}
-            className="rounded-full p-1.5 transition-colors hover:bg-white/10 text-white/70 hover:text-white/95"
+            className="rounded-full p-1.5 cursor-pointer transition-colors hover:bg-white/10 text-white/70 hover:text-white/95"
             aria-label={`Edit list ${list.name}`}
           >
             <Pencil className="size-3.5" />
@@ -80,7 +80,7 @@ export function ListCard({ list, index = 0, onEdit, onDelete }: ListCardProps) {
               e.stopPropagation()
               onDelete()
             }}
-            className="rounded-full p-1.5 transition-colors hover:bg-red-500/20 text-red-400"
+            className="rounded-full p-1.5 cursor-pointer transition-colors hover:bg-red-500/20 text-red-400"
             aria-label={`Delete list ${list.name}`}
           >
             <Trash2 className="size-3.5" />

@@ -41,7 +41,7 @@ export function UserMovieToggle({
           e.stopPropagation()
           toggleFavorite.mutate({ movieId, value: !isFavorite })
         }}
-        className={`rounded-full ${buttonSizeMap[size]} transition-colors hover:bg-white/10 ${
+        className={`rounded-full ${buttonSizeMap[size]} cursor-pointer transition-colors hover:bg-white/10 ${
           isFavorite ? 'text-red-500' : 'text-white/60 hover:text-white/90'
         }`}
         aria-label={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
@@ -60,7 +60,7 @@ export function UserMovieToggle({
           e.stopPropagation()
           toggleWatchlist.mutate({ movieId, value: !isInWatchlist })
         }}
-        className={`rounded-full ${buttonSizeMap[size]} transition-colors hover:bg-white/10 ${
+        className={`rounded-full ${buttonSizeMap[size]} cursor-pointer transition-colors hover:bg-white/10 ${
           isInWatchlist ? 'text-yellow-400' : 'text-white/60 hover:text-white/90'
         }`}
         aria-label={isInWatchlist ? 'Remove from watchlist' : 'Add to watchlist'}
