@@ -443,6 +443,37 @@ public class MovieListServiceTests
     }
 
     [Fact]
+    public async Task GetAsync_WhenMovieImagePathsAreMissing_DoesNotCallTmdbConfiguration()
+    {
+        var ownerId = SeedUser("owner");
+        var movieId = Guid.NewGuid();
+        _db.Movies.Add(
+            new Movie
+            {
+                Id = movieId,
+                TmdbId = 12345,
+                Title = "No image movie",
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow,
+            }
+        );
+        _db.SaveChanges();
+        var created = await _sut.CreateAsync(
+            new CreateMovieListRequestDto { Name = "List" },
+            ownerId
+        );
+        await _sut.AddMovieAsync(created.Id, movieId, ownerId);
+        _tmdbMock.Invocations.Clear();
+
+        var result = await _sut.GetAsync(created.Id, ownerId);
+
+        result.Movies.Should().HaveCount(1);
+        result.Movies[0].PosterUrl.Should().BeNull();
+        result.Movies[0].BackdropUrl.Should().BeNull();
+        _tmdbMock.Verify(t => t.GetConfigurationAsync(It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
     public async Task GetAsync_SharedList_GroupMember_CanView()
     {
         var ownerId = SeedUser("owner");
