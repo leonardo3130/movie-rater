@@ -371,7 +371,9 @@ public class MovieListService : IMovieListService
         if (ordered.Count == 0)
             return [];
 
-        var imageConfig = await GetImageConfigAsync();
+        var baseUrl = ordered.Any(m => m.Movie.PosterUrl is not null || m.Movie.BackdropUrl is not null)
+            ? (await GetImageConfigAsync()).SecureBaseUrl
+            : "https://image.tmdb.org/t/p/";
 
         return ordered
             .Select(m => new MovieListItemDto
@@ -381,11 +383,11 @@ public class MovieListService : IMovieListService
                 Title = m.Movie.Title,
                 PosterUrl = MovieMapper.BuildPosterUrl(
                     m.Movie.PosterUrl,
-                    imageConfig.SecureBaseUrl
+                    baseUrl
                 ),
                 BackdropUrl = MovieMapper.BuildBackdropUrl(
                     m.Movie.BackdropUrl,
-                    imageConfig.SecureBaseUrl
+                    baseUrl
                 ),
                 ReleaseDate = m.Movie.ReleaseDate?.ToString("yyyy-MM-dd"),
                 VoteAverage = m.Movie.AverageTmdbRating,
