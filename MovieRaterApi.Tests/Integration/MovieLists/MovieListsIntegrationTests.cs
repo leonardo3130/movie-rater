@@ -160,9 +160,19 @@ public class MovieListsIntegrationTests : IAsyncLifetime
         createResponse.EnsureSuccessStatusCode();
         var created = await createResponse.Content.ReadFromJsonAsync<MovieListResponseDto>();
 
-        await _client.PostAsync($"/api/movie-lists/{created!.Id}/movies/{movieA}", null);
-        await _client.PostAsync($"/api/movie-lists/{created.Id}/movies/{movieB}", null);
+        var addResponseA = await _client.PostAsync(
+            $"/api/movie-lists/{created!.Id}/movies/{movieA}",
+            null
+        );
+        var addResponseB = await _client.PostAsync(
+            $"/api/movie-lists/{created.Id}/movies/{movieB}",
+            null
+        );
 
+        addResponseA.StatusCode.Should().Be(HttpStatusCode.NoContent);
+        addResponseB.StatusCode.Should().Be(HttpStatusCode.NoContent);
+
+        _client.DefaultRequestHeaders.Authorization = Bearer(token);
         var response = await _client.GetAsync($"/api/movie-lists/{created.Id}");
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
@@ -451,8 +461,18 @@ public class MovieListsIntegrationTests : IAsyncLifetime
             }
         );
         _db.UserGroups.AddRange(
-            new UserGroup { Id = Guid.NewGuid(), GroupId = groupId, UserId = ownerId },
-            new UserGroup { Id = Guid.NewGuid(), GroupId = groupId, UserId = memberId }
+            new UserGroup
+            {
+                Id = Guid.NewGuid(),
+                GroupId = groupId,
+                UserId = ownerId,
+            },
+            new UserGroup
+            {
+                Id = Guid.NewGuid(),
+                GroupId = groupId,
+                UserId = memberId,
+            }
         );
         _db.SaveChanges();
         return groupId;
