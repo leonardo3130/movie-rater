@@ -242,12 +242,12 @@ public class MovieListServiceTests
             ownerId
         );
         await _sut.AddMovieAsync(created.Id, movieId, ownerId);
-        _db.MovieListMovies.Count().Should().Be(1);
+        _db.MediaListMedias.Count().Should().Be(1);
 
         await _sut.DeleteAsync(created.Id, ownerId);
 
         _db.MovieLists.Count().Should().Be(0);
-        _db.MovieListMovies.Count().Should().Be(0);
+        _db.MediaListMedias.Count().Should().Be(0);
     }
 
     [Fact]
@@ -280,9 +280,9 @@ public class MovieListServiceTests
 
         await _sut.AddMovieAsync(created.Id, movieId, ownerId);
 
-        var row = _db.MovieListMovies.Single();
-        row.MovieListId.Should().Be(created.Id);
-        row.MovieId.Should().Be(movieId);
+        var row = _db.MediaListMedias.Single();
+        row.MediaListId.Should().Be(created.Id);
+        row.MediaId.Should().Be(movieId);
 
         var list = _db.MovieLists.Single();
         list.LastUpdatedAt.Should().BeAfter(created.LastUpdatedAt);
@@ -319,7 +319,7 @@ public class MovieListServiceTests
             .Awaiting(() => _sut.AddMovieAsync(created.Id, Guid.NewGuid(), ownerId))
             .Should()
             .ThrowAsync<NotFoundException>()
-            .WithMessage("Movie not found.");
+            .WithMessage("Media not found.");
     }
 
     [Fact]
@@ -367,7 +367,7 @@ public class MovieListServiceTests
 
         await _sut.AddMovieAsync(created.Id, movieId, memberId);
 
-        _db.MovieListMovies.Count().Should().Be(1);
+        _db.MediaListMedias.Count().Should().Be(1);
     }
 
     [Fact]
@@ -398,7 +398,7 @@ public class MovieListServiceTests
 
         await _sut.RemoveMovieAsync(created.Id, movieId, ownerId);
 
-        _db.MovieListMovies.Count().Should().Be(0);
+        _db.MediaListMedias.Count().Should().Be(0);
         _db.MovieLists.Single().LastUpdatedAt.Should().BeAfter(beforeRemove);
     }
 

@@ -11,7 +11,7 @@ public class User
     public DateTime UpdatedAt { get; set; }
 
     public ICollection<Rating> Ratings { get; set; } = new List<Rating>();
-    public ICollection<UserMovie> UserMovies { get; set; } = new List<UserMovie>();
+    public ICollection<UserMedia> UserMedias { get; set; } = new List<UserMedia>();
     public ICollection<UserGroup> UserGroups { get; set; } = new List<UserGroup>();
     public ICollection<UserAchievement> UserAchievements { get; set; } =
         new List<UserAchievement>();

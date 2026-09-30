@@ -51,7 +51,7 @@ public class UserMovieServiceTests
         result.MovieId.Should().Be(movieId);
         result.UserId.Should().Be(userId);
 
-        var row = _db.UserMovies.Single();
+        var row = _db.UserMedias.Single();
         row.IsFavorite.Should().BeTrue();
         row.IsInWatchlist.Should().BeFalse();
     }
@@ -79,7 +79,7 @@ public class UserMovieServiceTests
         result.MovieId.Should().Be(movieId);
         result.UserId.Should().Be(userId);
 
-        var row = _db.UserMovies.Single();
+        var row = _db.UserMedias.Single();
         row.IsInWatchlist.Should().BeTrue();
         row.IsFavorite.Should().BeFalse();
     }
@@ -101,13 +101,13 @@ public class UserMovieServiceTests
         var userId = Guid.NewGuid();
 
         await _sut.SetFavoriteAsync(movieId, userId, true);
-        _db.UserMovies.Count().Should().Be(1);
+        _db.UserMedias.Count().Should().Be(1);
 
         var result = await _sut.SetFavoriteAsync(movieId, userId, false);
 
         result.IsFavorite.Should().BeFalse();
         result.IsInWatchlist.Should().BeFalse();
-        _db.UserMovies.Count().Should().Be(0);
+        _db.UserMedias.Count().Should().Be(0);
     }
 
     [Fact]
@@ -117,13 +117,13 @@ public class UserMovieServiceTests
         var userId = Guid.NewGuid();
 
         await _sut.SetWatchlistAsync(movieId, userId, true);
-        _db.UserMovies.Count().Should().Be(1);
+        _db.UserMedias.Count().Should().Be(1);
 
         var result = await _sut.SetWatchlistAsync(movieId, userId, false);
 
         result.IsInWatchlist.Should().BeFalse();
         result.IsFavorite.Should().BeFalse();
-        _db.UserMovies.Count().Should().Be(0);
+        _db.UserMedias.Count().Should().Be(0);
     }
 
     [Fact]
@@ -134,15 +134,15 @@ public class UserMovieServiceTests
 
         await _sut.SetWatchlistAsync(movieId, userId, true);
         await _sut.SetFavoriteAsync(movieId, userId, true);
-        _db.UserMovies.Count().Should().Be(1);
+        _db.UserMedias.Count().Should().Be(1);
 
         var result = await _sut.SetFavoriteAsync(movieId, userId, false);
 
         result.IsFavorite.Should().BeFalse();
         result.IsInWatchlist.Should().BeTrue();
-        _db.UserMovies.Count().Should().Be(1);
+        _db.UserMedias.Count().Should().Be(1);
 
-        var row = _db.UserMovies.Single();
+        var row = _db.UserMedias.Single();
         row.IsFavorite.Should().BeFalse();
         row.IsInWatchlist.Should().BeTrue();
     }
@@ -155,15 +155,15 @@ public class UserMovieServiceTests
 
         await _sut.SetFavoriteAsync(movieId, userId, true);
         await _sut.SetWatchlistAsync(movieId, userId, true);
-        _db.UserMovies.Count().Should().Be(1);
+        _db.UserMedias.Count().Should().Be(1);
 
         var result = await _sut.SetWatchlistAsync(movieId, userId, false);
 
         result.IsInWatchlist.Should().BeFalse();
         result.IsFavorite.Should().BeTrue();
-        _db.UserMovies.Count().Should().Be(1);
+        _db.UserMedias.Count().Should().Be(1);
 
-        var row = _db.UserMovies.Single();
+        var row = _db.UserMedias.Single();
         row.IsInWatchlist.Should().BeFalse();
         row.IsFavorite.Should().BeTrue();
     }
@@ -178,7 +178,7 @@ public class UserMovieServiceTests
 
         result.IsFavorite.Should().BeFalse();
         result.IsInWatchlist.Should().BeFalse();
-        _db.UserMovies.Count().Should().Be(0);
+        _db.UserMedias.Count().Should().Be(0);
     }
 
     [Fact]
@@ -191,7 +191,7 @@ public class UserMovieServiceTests
 
         result.IsInWatchlist.Should().BeFalse();
         result.IsFavorite.Should().BeFalse();
-        _db.UserMovies.Count().Should().Be(0);
+        _db.UserMedias.Count().Should().Be(0);
     }
 
     [Fact]

@@ -426,7 +426,7 @@ public class WatchSessionServiceTests
             {
                 Id = sessionId,
                 GroupId = groupId,
-                MovieId = movieId,
+                MediaId = movieId,
                 WatchedAt = watchedAt,
                 CreatedByUserId = createdByUserId,
                 CreatedAt = DateTime.UtcNow,

@@ -149,10 +149,13 @@ Exactly two users.
 
 ---
 
-## Movie
+## Media
+
+Single table (TPH) shared by all watchable/collectable items.
 
 ```
 Id
+MediaType            (Movie, TvSeries, TvSeason, TvEpisode)
 
 TmdbId
 
@@ -172,7 +175,50 @@ CreatedAt
 UpdatedAt
 ```
 
+Unique constraint
+
+```
+(MediaType, TmdbId)
+```
+
 Only cache TMDB fields that are actually required.
+
+### Movie
+
+Subclass of `Media`. No extra fields today.
+
+### TvSeries
+
+Subclass of `Media`. `ReleaseDate` holds the first air date.
+
+```
+NumberOfSeasons
+NumberOfEpisodes
+LastAirDate
+Status
+Type
+```
+
+### TvSeason
+
+Subclass of `Media`. `Title` holds "Season N".
+
+```
+SeasonNumber
+SeriesId
+```
+
+### TvEpisode
+
+Subclass of `Media`. `PosterUrl` holds the episode still.
+
+```
+EpisodeNumber
+SeasonNumber
+SeasonId
+```
+
+Episodes reach their series through `Season.SeriesId`.
 
 ---
 
@@ -188,12 +234,12 @@ Name
 
 ---
 
-## MovieGenre
+## MediaGenre
 
 Composite PK
 
 ```
-MovieId
+MediaId
 GenreId
 ```
 
@@ -201,13 +247,13 @@ GenreId
 
 ## WatchSession
 
-Represents one movie night.
+Represents one movie night (or one episode watched).
 
 ```
 Id
 
-CoupleId
-MovieId
+GroupId
+MediaId
 
 WatchedAt
 
@@ -220,7 +266,7 @@ CreatedAt
 UpdatedAt
 ```
 
-Watching the same movie twice creates multiple sessions.
+Watching the same title twice creates multiple sessions.
 
 ---
 
@@ -250,13 +296,13 @@ Each user can review a watch session only once.
 
 ---
 
-## UserMovie
+## UserMedia
 
-Represents a user's relationship with a movie.
+Represents a user's relationship with a media item (movie, series, season or episode).
 
 ```
 UserId
-MovieId
+MediaId
 
 IsFavorite
 IsInWatchlist
@@ -268,7 +314,7 @@ UpdatedAt
 Composite PK
 
 ```
-(UserId, MovieId)
+(UserId, MediaId)
 ```
 
 This design allows

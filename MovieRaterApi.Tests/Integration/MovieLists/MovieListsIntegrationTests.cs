@@ -232,7 +232,7 @@ public class MovieListsIntegrationTests : IAsyncLifetime
 
         response.StatusCode.Should().Be(HttpStatusCode.NoContent);
         _db.MovieLists.Count().Should().Be(0);
-        _db.MovieListMovies.Count().Should().Be(0);
+        _db.MediaListMedias.Count().Should().Be(0);
     }
 
     [Fact]
@@ -246,7 +246,7 @@ public class MovieListsIntegrationTests : IAsyncLifetime
         var response = await _client.PostAsync($"/api/movie-lists/{listId}/movies/{movieId}", null);
 
         response.StatusCode.Should().Be(HttpStatusCode.NoContent);
-        _db.MovieListMovies.Count().Should().Be(1);
+        _db.MediaListMedias.Count().Should().Be(1);
     }
 
     [Fact]
@@ -290,7 +290,7 @@ public class MovieListsIntegrationTests : IAsyncLifetime
         var response = await _client.DeleteAsync($"/api/movie-lists/{listId}/movies/{movieId}");
 
         response.StatusCode.Should().Be(HttpStatusCode.NoContent);
-        _db.MovieListMovies.Count().Should().Be(0);
+        _db.MediaListMedias.Count().Should().Be(0);
     }
 
     [Fact]

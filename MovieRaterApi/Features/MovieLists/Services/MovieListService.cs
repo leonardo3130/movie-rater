@@ -87,8 +87,8 @@ public class MovieListService : IMovieListService
     )
     {
         var list = await _db
-            .MovieLists.Include(l => l.Movies)
-                .ThenInclude(m => m.Movie)
+            .MovieLists.Include(l => l.MediaItems)
+                .ThenInclude(m => m.Media)
             .Include(l => l.SharedGroups)
             .FirstOrDefaultAsync(l => l.Id == listId);
 
@@ -131,8 +131,8 @@ public class MovieListService : IMovieListService
     public async Task<MovieListResponseDto> GetAsync(Guid listId, Guid userId)
     {
         var list = await _db
-            .MovieLists.Include(l => l.Movies)
-                .ThenInclude(m => m.Movie)
+            .MovieLists.Include(l => l.MediaItems)
+                .ThenInclude(m => m.Media)
             .Include(l => l.SharedGroups)
             .FirstOrDefaultAsync(l => l.Id == listId);
 
@@ -177,8 +177,8 @@ public class MovieListService : IMovieListService
         if (listIds.Count > 0)
         {
             var rows = await _db
-                .MovieListMovies.Where(m => listIds.Contains(m.MovieListId))
-                .GroupBy(m => m.MovieListId)
+                .MediaListMedias.Where(m => listIds.Contains(m.MediaListId))
+                .GroupBy(m => m.MediaListId)
                 .Select(g => new { MovieListId = g.Key, Count = g.Count() })
                 .ToListAsync();
 
@@ -231,21 +231,21 @@ public class MovieListService : IMovieListService
     {
         var list = await GetEditableListAsync(listId, userId);
 
-        var movieExists = await _db.Movies.AnyAsync(m => m.Id == movieId);
-        if (!movieExists)
-            throw new NotFoundException("Movie not found.");
+        var mediaExists = await _db.Media.AnyAsync(m => m.Id == movieId);
+        if (!mediaExists)
+            throw new NotFoundException("Media not found.");
 
-        var alreadyInList = await _db.MovieListMovies.AnyAsync(m =>
-            m.MovieListId == listId && m.MovieId == movieId
+        var alreadyInList = await _db.MediaListMedias.AnyAsync(m =>
+            m.MediaListId == listId && m.MediaId == movieId
         );
         if (alreadyInList)
             throw new ConflictException("Movie is already in this list.");
 
-        _db.MovieListMovies.Add(
-            new MovieListMovie
+        _db.MediaListMedias.Add(
+            new MediaListMedia
             {
-                MovieListId = listId,
-                MovieId = movieId,
+                MediaListId = listId,
+                MediaId = movieId,
                 CreatedAt = DateTime.UtcNow,
             }
         );
@@ -266,13 +266,13 @@ public class MovieListService : IMovieListService
     {
         var list = await GetEditableListAsync(listId, userId);
 
-        var association = await _db.MovieListMovies.FirstOrDefaultAsync(m =>
-            m.MovieListId == listId && m.MovieId == movieId
+        var association = await _db.MediaListMedias.FirstOrDefaultAsync(m =>
+            m.MediaListId == listId && m.MediaId == movieId
         );
         if (association is null)
             throw new NotFoundException("Movie is not in this list.");
 
-        _db.MovieListMovies.Remove(association);
+        _db.MediaListMedias.Remove(association);
 
         list.LastUpdatedAt = DateTime.UtcNow;
 
@@ -366,31 +366,31 @@ public class MovieListService : IMovieListService
 
     private async Task<List<MovieListItemDto>> BuildMovieItemsAsync(MovieList list)
     {
-        var ordered = list.Movies.OrderBy(m => m.CreatedAt).ToList();
+        var ordered = list.MediaItems.OrderBy(m => m.CreatedAt).ToList();
 
         if (ordered.Count == 0)
             return [];
 
-        var baseUrl = ordered.Any(m => m.Movie.PosterUrl is not null || m.Movie.BackdropUrl is not null)
+        var baseUrl = ordered.Any(m => m.Media.PosterUrl is not null || m.Media.BackdropUrl is not null)
             ? (await GetImageConfigAsync()).SecureBaseUrl
             : "https://image.tmdb.org/t/p/";
 
         return ordered
             .Select(m => new MovieListItemDto
             {
-                Id = m.Movie.Id,
-                TmdbId = m.Movie.TmdbId,
-                Title = m.Movie.Title,
+                Id = m.Media.Id,
+                TmdbId = m.Media.TmdbId,
+                Title = m.Media.Title,
                 PosterUrl = MovieMapper.BuildPosterUrl(
-                    m.Movie.PosterUrl,
+                    m.Media.PosterUrl,
                     baseUrl
                 ),
                 BackdropUrl = MovieMapper.BuildBackdropUrl(
-                    m.Movie.BackdropUrl,
+                    m.Media.BackdropUrl,
                     baseUrl
                 ),
-                ReleaseDate = m.Movie.ReleaseDate?.ToString("yyyy-MM-dd"),
-                VoteAverage = m.Movie.AverageTmdbRating,
+                ReleaseDate = m.Media.ReleaseDate?.ToString("yyyy-MM-dd"),
+                VoteAverage = m.Media.AverageTmdbRating,
                 AddedAt = m.CreatedAt,
             })
             .ToList();

@@ -52,12 +52,12 @@ public class UserMovieService : IUserMovieService
         bool isFavorite
     )
     {
-        var movieExists = await _db.Movies.AnyAsync(m => m.Id == movieId);
+        var movieExists = await _db.Media.AnyAsync(m => m.Id == movieId);
         if (!movieExists)
             throw new NotFoundException("Movie not found.");
 
-        var existing = await _db.UserMovies.FirstOrDefaultAsync(um =>
-            um.UserId == userId && um.MovieId == movieId
+        var existing = await _db.UserMedias.FirstOrDefaultAsync(um =>
+            um.UserId == userId && um.MediaId == movieId
         );
 
         if (!isFavorite)
@@ -70,11 +70,11 @@ public class UserMovieService : IUserMovieService
 
             if (!existing.IsFavorite && !existing.IsInWatchlist)
             {
-                _db.UserMovies.Remove(existing);
+                _db.UserMedias.Remove(existing);
                 await _db.SaveChangesAsync();
 
                 _logger.LogInformation(
-                    "Removed UserMovie for user {UserId}, movie {MovieId} (both flags false)",
+                    "Removed UserMedia for user {UserId}, media {MediaId} (both flags false)",
                     userId,
                     movieId
                 );
@@ -96,16 +96,16 @@ public class UserMovieService : IUserMovieService
 
         if (existing is null)
         {
-            existing = new Data.Entities.UserMovie
+            existing = new Data.Entities.UserMedia
             {
                 UserId = userId,
-                MovieId = movieId,
+                MediaId = movieId,
                 IsFavorite = true,
                 IsInWatchlist = false,
                 CreatedAt = DateTime.UtcNow,
                 UpdatedAt = DateTime.UtcNow,
             };
-            _db.UserMovies.Add(existing);
+            _db.UserMedias.Add(existing);
         }
         else
         {
@@ -131,12 +131,12 @@ public class UserMovieService : IUserMovieService
         bool isInWatchlist
     )
     {
-        var movieExists = await _db.Movies.AnyAsync(m => m.Id == movieId);
+        var movieExists = await _db.Media.AnyAsync(m => m.Id == movieId);
         if (!movieExists)
             throw new NotFoundException("Movie not found.");
 
-        var existing = await _db.UserMovies.FirstOrDefaultAsync(um =>
-            um.UserId == userId && um.MovieId == movieId
+        var existing = await _db.UserMedias.FirstOrDefaultAsync(um =>
+            um.UserId == userId && um.MediaId == movieId
         );
 
         if (!isInWatchlist)
@@ -149,11 +149,11 @@ public class UserMovieService : IUserMovieService
 
             if (!existing.IsFavorite && !existing.IsInWatchlist)
             {
-                _db.UserMovies.Remove(existing);
+                _db.UserMedias.Remove(existing);
                 await _db.SaveChangesAsync();
 
                 _logger.LogInformation(
-                    "Removed UserMovie for user {UserId}, movie {MovieId} (both flags false)",
+                    "Removed UserMedia for user {UserId}, media {MediaId} (both flags false)",
                     userId,
                     movieId
                 );
@@ -175,16 +175,16 @@ public class UserMovieService : IUserMovieService
 
         if (existing is null)
         {
-            existing = new Data.Entities.UserMovie
+            existing = new Data.Entities.UserMedia
             {
                 UserId = userId,
-                MovieId = movieId,
+                MediaId = movieId,
                 IsFavorite = false,
                 IsInWatchlist = true,
                 CreatedAt = DateTime.UtcNow,
                 UpdatedAt = DateTime.UtcNow,
             };
-            _db.UserMovies.Add(existing);
+            _db.UserMedias.Add(existing);
         }
         else
         {
@@ -206,8 +206,8 @@ public class UserMovieService : IUserMovieService
 
     public async Task<UserMovieResponseDto> GetAsync(Guid movieId, Guid userId)
     {
-        var existing = await _db.UserMovies.FirstOrDefaultAsync(um =>
-            um.UserId == userId && um.MovieId == movieId
+        var existing = await _db.UserMedias.FirstOrDefaultAsync(um =>
+            um.UserId == userId && um.MediaId == movieId
         );
 
         if (existing is null)
@@ -221,7 +221,7 @@ public class UserMovieService : IUserMovieService
         UserMovieListRequestDto request
     )
     {
-        var query = _db.UserMovies.Include(um => um.Movie).Where(um => um.UserId == userId);
+        var query = _db.UserMedias.Include(um => um.Media).Where(um => um.UserId == userId);
 
         if (request.FavoritesOnly == true)
             query = query.Where(um => um.IsFavorite);
@@ -239,13 +239,13 @@ public class UserMovieService : IUserMovieService
             .Take(request.PageSize)
             .Select(um => new
             {
-                MovieId = um.Movie.Id,
-                TmdbId = um.Movie.TmdbId,
-                Title = um.Movie.Title,
-                PosterPath = um.Movie.PosterUrl,
-                BackdropPath = um.Movie.BackdropUrl,
-                ReleaseDate = um.Movie.ReleaseDate,
-                VoteAverage = um.Movie.AverageTmdbRating,
+                MediaId = um.Media.Id,
+                TmdbId = um.Media.TmdbId,
+                Title = um.Media.Title,
+                PosterPath = um.Media.PosterUrl,
+                BackdropPath = um.Media.BackdropUrl,
+                ReleaseDate = um.Media.ReleaseDate,
+                VoteAverage = um.Media.AverageTmdbRating,
                 IsFavorite = um.IsFavorite,
                 IsInWatchlist = um.IsInWatchlist,
                 CreatedAt = um.CreatedAt,
@@ -257,7 +257,7 @@ public class UserMovieService : IUserMovieService
 
         var items = raw.Select(r => new UserMovieWithMovieDto
             {
-                Id = r.MovieId,
+                Id = r.MediaId,
                 TmdbId = r.TmdbId,
                 Title = r.Title,
                 PosterUrl = MovieMapper.BuildPosterUrl(r.PosterPath, imageConfig.SecureBaseUrl),
@@ -291,12 +291,12 @@ public class UserMovieService : IUserMovieService
         };
     }
 
-    private static UserMovieResponseDto ToDto(Data.Entities.UserMovie um)
+    private static UserMovieResponseDto ToDto(Data.Entities.UserMedia um)
     {
         return new UserMovieResponseDto
         {
             UserId = um.UserId,
-            MovieId = um.MovieId,
+            MovieId = um.MediaId,
             IsFavorite = um.IsFavorite,
             IsInWatchlist = um.IsInWatchlist,
             CreatedAt = um.CreatedAt,

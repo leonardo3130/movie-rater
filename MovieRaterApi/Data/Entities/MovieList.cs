@@ -12,6 +12,6 @@ public class MovieList
     public DateTime LastUpdatedAt { get; set; }
 
     public User OwnerUser { get; set; } = null!;
-    public ICollection<MovieListMovie> Movies { get; set; } = new List<MovieListMovie>();
+    public ICollection<MediaListMedia> MediaItems { get; set; } = new List<MediaListMedia>();
     public ICollection<MovieListGroup> SharedGroups { get; set; } = new List<MovieListGroup>();
 }

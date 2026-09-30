@@ -1,10 +1,10 @@
 namespace MovieRaterApi.Data.Entities;
 
-public class MovieGenre
+public class MediaGenre
 {
-    public Guid MovieId { get; set; }
+    public Guid MediaId { get; set; }
     public Guid GenreId { get; set; }
 
-    public Movie Movie { get; set; } = null!;
+    public Media Media { get; set; } = null!;
     public Genre Genre { get; set; } = null!;
 }

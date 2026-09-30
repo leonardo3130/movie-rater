@@ -293,7 +293,7 @@ public class DashboardServiceTests
             {
                 Id = id,
                 GroupId = groupId,
-                MovieId = movieId,
+                MediaId = movieId,
                 WatchedAt = watchedAt,
                 CreatedByUserId = createdByUserId,
                 CreatedAt = DateTime.UtcNow,

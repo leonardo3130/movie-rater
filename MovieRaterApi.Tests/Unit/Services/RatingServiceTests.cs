@@ -215,7 +215,7 @@ public class RatingServiceTests
             {
                 Id = sessionId,
                 GroupId = groupId,
-                MovieId = movieId,
+                MediaId = movieId,
                 WatchedAt = DateTime.UtcNow,
                 CreatedByUserId = createdByUserId,
                 CreatedAt = DateTime.UtcNow,

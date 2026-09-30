@@ -11,12 +11,16 @@ public class ApplicationDbContext : DbContext
     public DbSet<User> Users => Set<User>();
     public DbSet<Group> Groups => Set<Group>();
     public DbSet<UserGroup> UserGroups => Set<UserGroup>();
+    public DbSet<Media> Media => Set<Media>();
     public DbSet<Movie> Movies => Set<Movie>();
+    public DbSet<TvSeries> TvSeries => Set<TvSeries>();
+    public DbSet<TvSeason> TvSeasons => Set<TvSeason>();
+    public DbSet<TvEpisode> TvEpisodes => Set<TvEpisode>();
     public DbSet<Genre> Genres => Set<Genre>();
-    public DbSet<MovieGenre> MovieGenres => Set<MovieGenre>();
+    public DbSet<MediaGenre> MediaGenres => Set<MediaGenre>();
     public DbSet<WatchSession> WatchSessions => Set<WatchSession>();
     public DbSet<Rating> Ratings => Set<Rating>();
-    public DbSet<UserMovie> UserMovies => Set<UserMovie>();
+    public DbSet<UserMedia> UserMedias => Set<UserMedia>();
     public DbSet<Achievement> Achievements => Set<Achievement>();
     public DbSet<UserAchievement> UserAchievements => Set<UserAchievement>();
     public DbSet<AiSummary> AiSummaries => Set<AiSummary>();
@@ -24,7 +28,7 @@ public class ApplicationDbContext : DbContext
     public DbSet<Invitation> Invitations => Set<Invitation>();
     public DbSet<PasswordResetToken> PasswordResetTokens => Set<PasswordResetToken>();
     public DbSet<MovieList> MovieLists => Set<MovieList>();
-    public DbSet<MovieListMovie> MovieListMovies => Set<MovieListMovie>();
+    public DbSet<MediaListMedia> MediaListMedias => Set<MediaListMedia>();
     public DbSet<MovieListGroup> MovieListGroups => Set<MovieListGroup>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -62,13 +66,43 @@ public class ApplicationDbContext : DbContext
                 .OnDelete(DeleteBehavior.Cascade);
         });
 
-        modelBuilder.Entity<Movie>(entity =>
+        modelBuilder.Entity<Media>(entity =>
         {
             entity.HasKey(e => e.Id);
+            entity
+                .HasDiscriminator(e => e.MediaType)
+                .HasValue<Movie>(MediaType.Movie)
+                .HasValue<TvSeries>(MediaType.TvSeries)
+                .HasValue<TvSeason>(MediaType.TvSeason)
+                .HasValue<TvEpisode>(MediaType.TvEpisode);
             entity.Property(e => e.Title).IsRequired().HasMaxLength(500);
             entity.Property(e => e.PosterUrl).HasMaxLength(500);
             entity.Property(e => e.BackdropUrl).HasMaxLength(500);
-            entity.HasIndex(e => e.TmdbId).IsUnique();
+            entity.HasIndex(e => new { e.MediaType, e.TmdbId }).IsUnique();
+        });
+
+        modelBuilder.Entity<TvSeries>(entity =>
+        {
+            entity.Property(e => e.Status).HasMaxLength(50);
+            entity.Property(e => e.Type).HasMaxLength(50);
+        });
+
+        modelBuilder.Entity<TvSeason>(entity =>
+        {
+            entity
+                .HasOne(e => e.Series)
+                .WithMany(s => s.Seasons)
+                .HasForeignKey(e => e.SeriesId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<TvEpisode>(entity =>
+        {
+            entity
+                .HasOne(e => e.Season)
+                .WithMany(s => s.Episodes)
+                .HasForeignKey(e => e.SeasonId)
+                .OnDelete(DeleteBehavior.Cascade);
         });
 
         modelBuilder.Entity<Genre>(entity =>
@@ -78,17 +112,17 @@ public class ApplicationDbContext : DbContext
             entity.HasIndex(e => e.TmdbId).IsUnique();
         });
 
-        modelBuilder.Entity<MovieGenre>(entity =>
+        modelBuilder.Entity<MediaGenre>(entity =>
         {
-            entity.HasKey(e => new { e.MovieId, e.GenreId });
+            entity.HasKey(e => new { e.MediaId, e.GenreId });
             entity
-                .HasOne(e => e.Movie)
-                .WithMany(m => m.MovieGenres)
-                .HasForeignKey(e => e.MovieId)
+                .HasOne(e => e.Media)
+                .WithMany(m => m.MediaGenres)
+                .HasForeignKey(e => e.MediaId)
                 .OnDelete(DeleteBehavior.Cascade);
             entity
                 .HasOne(e => e.Genre)
-                .WithMany(g => g.MovieGenres)
+                .WithMany(g => g.MediaGenres)
                 .HasForeignKey(e => e.GenreId)
                 .OnDelete(DeleteBehavior.Cascade);
         });
@@ -104,9 +138,9 @@ public class ApplicationDbContext : DbContext
                 .HasForeignKey(e => e.GroupId)
                 .OnDelete(DeleteBehavior.Restrict);
             entity
-                .HasOne(e => e.Movie)
+                .HasOne(e => e.Media)
                 .WithMany(m => m.WatchSessions)
-                .HasForeignKey(e => e.MovieId)
+                .HasForeignKey(e => e.MediaId)
                 .OnDelete(DeleteBehavior.Restrict);
             entity
                 .HasOne(e => e.CreatedByUser)
@@ -133,18 +167,18 @@ public class ApplicationDbContext : DbContext
                 .OnDelete(DeleteBehavior.Restrict);
         });
 
-        modelBuilder.Entity<UserMovie>(entity =>
+        modelBuilder.Entity<UserMedia>(entity =>
         {
-            entity.HasKey(e => new { e.UserId, e.MovieId });
+            entity.HasKey(e => new { e.UserId, e.MediaId });
             entity
                 .HasOne(e => e.User)
-                .WithMany(u => u.UserMovies)
+                .WithMany(u => u.UserMedias)
                 .HasForeignKey(e => e.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
             entity
-                .HasOne(e => e.Movie)
-                .WithMany(m => m.UserMovies)
-                .HasForeignKey(e => e.MovieId)
+                .HasOne(e => e.Media)
+                .WithMany(m => m.UserMedias)
+                .HasForeignKey(e => e.MediaId)
                 .OnDelete(DeleteBehavior.Cascade);
         });
 
@@ -240,18 +274,18 @@ public class ApplicationDbContext : DbContext
                 .OnDelete(DeleteBehavior.Cascade);
         });
 
-        modelBuilder.Entity<MovieListMovie>(entity =>
+        modelBuilder.Entity<MediaListMedia>(entity =>
         {
-            entity.HasKey(e => new { e.MovieListId, e.MovieId });
+            entity.HasKey(e => new { e.MediaListId, e.MediaId });
             entity
-                .HasOne(e => e.MovieList)
-                .WithMany(l => l.Movies)
-                .HasForeignKey(e => e.MovieListId)
+                .HasOne(e => e.MediaList)
+                .WithMany(l => l.MediaItems)
+                .HasForeignKey(e => e.MediaListId)
                 .OnDelete(DeleteBehavior.Cascade);
             entity
-                .HasOne(e => e.Movie)
-                .WithMany(m => m.MovieListMovies)
-                .HasForeignKey(e => e.MovieId)
+                .HasOne(e => e.Media)
+                .WithMany(m => m.MediaListMedias)
+                .HasForeignKey(e => e.MediaId)
                 .OnDelete(DeleteBehavior.Cascade);
         });
 

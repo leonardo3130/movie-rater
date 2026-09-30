@@ -23,7 +23,7 @@ public class DashboardService : IDashboardService
         var startOfYear = new DateTime(now.Year, 1, 1, 0, 0, 0, DateTimeKind.Utc);
 
         var sessionsQuery = _db
-            .WatchSessions.Include(ws => ws.Movie)
+            .WatchSessions.Include(ws => ws.Media)
             .Include(ws => ws.Ratings)
             .AsQueryable();
 
@@ -48,11 +48,11 @@ public class DashboardService : IDashboardService
 
         var movieRatings = sessions
             .Where(s => s.Ratings.Count > 0)
-            .GroupBy(s => s.MovieId)
+            .GroupBy(s => s.MediaId)
             .Select(g => new
             {
-                MovieId = g.Key,
-                Title = g.First().Movie.Title,
+                MediaId = g.Key,
+                Title = g.First().Media.Title,
                 WatchedCount = g.Count(),
                 AvgRating = Math.Round(g.SelectMany(s => s.Ratings).Average(r => r.RatingValue), 2),
             })
@@ -68,7 +68,7 @@ public class DashboardService : IDashboardService
 
             highestRated = new MovieStatDto
             {
-                MovieId = highest.MovieId,
+                MovieId = highest.MediaId,
                 Title = highest.Title,
                 AverageRating = highest.AvgRating,
                 WatchedCount = highest.WatchedCount,
@@ -76,7 +76,7 @@ public class DashboardService : IDashboardService
 
             lowestRated = new MovieStatDto
             {
-                MovieId = lowest.MovieId,
+                MovieId = lowest.MediaId,
                 Title = lowest.Title,
                 AverageRating = lowest.AvgRating,
                 WatchedCount = lowest.WatchedCount,
@@ -86,7 +86,7 @@ public class DashboardService : IDashboardService
         var disagreementInfo = await GetDisagreementInfoAsync(userId, groupId);
 
         var rewatchCount = sessions
-            .GroupBy(s => s.MovieId)
+            .GroupBy(s => s.MediaId)
             .Where(g => g.Count() > 1)
             .Sum(g => g.Count() - 1);
 
@@ -125,9 +125,9 @@ public class DashboardService : IDashboardService
                 groupId != null ? r.WatchSession.GroupId == groupId : r.UserId == userId
             )
             .Join(
-                _db.MovieGenres,
-                r => r.WatchSession.MovieId,
-                mg => mg.MovieId,
+                _db.MediaGenres,
+                r => r.WatchSession.MediaId,
+                mg => mg.MediaId,
                 (r, mg) => new { r.RatingValue, mg.GenreId }
             )
             .Join(
@@ -156,7 +156,7 @@ public class DashboardService : IDashboardService
             .WatchSessions.Where(ws =>
                 groupId != null ? ws.GroupId == groupId : ws.CreatedByUserId == userId
             )
-            .SelectMany(ws => ws.Movie.MovieGenres)
+            .SelectMany(ws => ws.Media.MediaGenres)
             .GroupBy(mg => mg.Genre.Name)
             .Select(g => new GenreStatDto
             {
@@ -178,7 +178,7 @@ public class DashboardService : IDashboardService
     )> GetDisagreementInfoAsync(Guid userId, Guid? groupId)
     {
         var sessionsWithAtLeastTwoRatings = await _db
-            .WatchSessions.Include(ws => ws.Movie)
+            .WatchSessions.Include(ws => ws.Media)
             .Include(ws => ws.Ratings)
             .Where(ws =>
                 (groupId != null ? ws.GroupId == groupId : ws.CreatedByUserId == userId)
@@ -204,8 +204,8 @@ public class DashboardService : IDashboardService
 
         var biggestDisagreement = new MovieStatDto
         {
-            MovieId = biggest.Session.MovieId,
-            Title = biggest.Session.Movie.Title,
+            MovieId = biggest.Session.MediaId,
+            Title = biggest.Session.Media.Title,
             AverageRating = Math.Round(biggest.Session.Ratings.Average(r => r.RatingValue), 2),
             WatchedCount = 1,
         };

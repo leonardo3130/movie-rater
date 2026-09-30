@@ -288,7 +288,7 @@ public class MovieService : IMovieService
         }
 
         var existingMovie = await _db
-            .Movies.Include(m => m.MovieGenres)
+            .Movies.Include(m => m.MediaGenres)
             .FirstOrDefaultAsync(m => m.TmdbId == details.Id, ct);
 
         if (existingMovie is null)
@@ -348,12 +348,12 @@ public class MovieService : IMovieService
                 _db.Genres.Add(genre);
             }
 
-            var alreadyLinked = existingMovie.MovieGenres.Any(mg => mg.GenreId == genre.Id);
+            var alreadyLinked = existingMovie.MediaGenres.Any(mg => mg.GenreId == genre.Id);
 
             if (!alreadyLinked)
             {
-                _db.MovieGenres.Add(
-                    new MovieGenre { MovieId = existingMovie.Id, GenreId = genre.Id }
+                _db.MediaGenres.Add(
+                    new MediaGenre { MediaId = existingMovie.Id, GenreId = genre.Id }
                 );
             }
         }
@@ -376,19 +376,19 @@ public class MovieService : IMovieService
         if (_currentUser.IsAuthenticated && guidIds.Count > 0)
         {
             var userMovies = await _db
-                .UserMovies.Where(um =>
-                    um.UserId == _currentUser.UserId && guidIds.Contains(um.MovieId)
+                .UserMedias.Where(um =>
+                    um.UserId == _currentUser.UserId && guidIds.Contains(um.MediaId)
                 )
                 .ToListAsync(ct);
 
             var favLookup = userMovies
                 .Where(um => um.IsFavorite)
-                .Select(um => um.MovieId)
+                .Select(um => um.MediaId)
                 .ToHashSet();
 
             var watchlistLookup = userMovies
                 .Where(um => um.IsInWatchlist)
-                .Select(um => um.MovieId)
+                .Select(um => um.MediaId)
                 .ToHashSet();
 
             var currentUserId = _currentUser.UserId;
@@ -396,7 +396,7 @@ public class MovieService : IMovieService
             Dictionary<Guid, int> watchedLookup = [];
             watchedLookup = await _db
                 .WatchSessions.Where(ws =>
-                    guidIds.Contains(ws.MovieId)
+                    guidIds.Contains(ws.MediaId)
                     && (
                         (ws.CreatedByUserId == currentUserId && ws.GroupId == null)
                         || (
@@ -405,9 +405,9 @@ public class MovieService : IMovieService
                         )
                     )
                 )
-                .GroupBy(ws => ws.MovieId)
-                .Select(g => new { MovieId = g.Key, Count = g.Count() })
-                .ToDictionaryAsync(g => g.MovieId, g => g.Count, ct);
+                .GroupBy(ws => ws.MediaId)
+                .Select(g => new { MediaId = g.Key, Count = g.Count() })
+                .ToDictionaryAsync(g => g.MediaId, g => g.Count, ct);
 
             _logger.LogCritical("watched lookup {@WatchedLookup}", watchedLookup);
 
@@ -435,8 +435,8 @@ public class MovieService : IMovieService
 
         if (_currentUser.IsAuthenticated)
         {
-            var userMovie = await _db.UserMovies.FirstOrDefaultAsync(
-                um => um.UserId == _currentUser.UserId && um.MovieId == movie.Id,
+            var userMovie = await _db.UserMedias.FirstOrDefaultAsync(
+                um => um.UserId == _currentUser.UserId && um.MediaId == movie.Id,
                 ct
             );
 
@@ -454,7 +454,7 @@ public class MovieService : IMovieService
                 (ws.CreatedByUserId == currentUserId && ws.Group == null)
                 || (
                     ws.Group != null
-                    && ws.MovieId == movie.Id
+                    && ws.MediaId == movie.Id
                     && ws.Group.UserGroups.Any(ug => ug.UserId == currentUserId)
                 ),
             ct

@@ -31,15 +31,15 @@ public class WatchSessionService : IWatchSessionService
         Guid? groupId
     )
     {
-        var movie = await _db.Movies.FirstOrDefaultAsync(m => m.Id == request.MovieId);
-        if (movie is null)
+        var media = await _db.Media.FirstOrDefaultAsync(m => m.Id == request.MovieId);
+        if (media is null)
             throw new NotFoundException("Movie not found.");
 
         var session = new WatchSession
         {
             Id = Guid.NewGuid(),
             GroupId = groupId,
-            MovieId = request.MovieId,
+            MediaId = request.MovieId,
             WatchedAt = request.WatchedAt,
             Location = request.Location,
             Notes = request.Notes,
@@ -64,9 +64,9 @@ public class WatchSessionService : IWatchSessionService
         return new WatchSessionResponseDto
         {
             Id = session.Id,
-            MovieId = movie.Id,
-            MovieTitle = movie.Title,
-            MoviePosterUrl = movie.PosterUrl,
+            MovieId = media.Id,
+            MovieTitle = media.Title,
+            MoviePosterUrl = media.PosterUrl,
             WatchedAt = session.WatchedAt,
             Location = session.Location,
             Notes = session.Notes,
@@ -87,7 +87,7 @@ public class WatchSessionService : IWatchSessionService
             throw new ForbiddenException("You are not part of the group");
 
         var sessionsQuery = _db
-            .WatchSessions.Include(ws => ws.Movie)
+            .WatchSessions.Include(ws => ws.Media)
             .Include(ws => ws.CreatedByUser)
             .Include(ws => ws.Ratings)
             .AsQueryable();
@@ -103,7 +103,7 @@ public class WatchSessionService : IWatchSessionService
             );
 
         if (query.MovieId.HasValue)
-            sessionsQuery = sessionsQuery.Where(ws => ws.MovieId == query.MovieId.Value);
+            sessionsQuery = sessionsQuery.Where(ws => ws.MediaId == query.MovieId.Value);
 
         var totalCount = await sessionsQuery.CountAsync();
 
@@ -117,9 +117,9 @@ public class WatchSessionService : IWatchSessionService
             .Select(s => new WatchSessionListItemDto
             {
                 Id = s.Id,
-                MovieId = s.MovieId,
-                MovieTitle = s.Movie.Title,
-                MoviePosterUrl = s.Movie.PosterUrl,
+                MovieId = s.MediaId,
+                MovieTitle = s.Media.Title,
+                MoviePosterUrl = s.Media.PosterUrl,
                 WatchedAt = s.WatchedAt,
                 Location = s.Location,
                 Notes = s.Notes,
@@ -143,7 +143,7 @@ public class WatchSessionService : IWatchSessionService
     public async Task<WatchSessionResponseDto> GetByIdAsync(Guid id)
     {
         var session = await _db
-            .WatchSessions.Include(ws => ws.Movie)
+            .WatchSessions.Include(ws => ws.Media)
             .Include(ws => ws.CreatedByUser)
             .Include(ws => ws.Ratings)
                 .ThenInclude(r => r.User)
@@ -162,7 +162,7 @@ public class WatchSessionService : IWatchSessionService
     )
     {
         var session = await _db
-            .WatchSessions.Include(ws => ws.Movie)
+            .WatchSessions.Include(ws => ws.Media)
             .Include(ws => ws.CreatedByUser)
             .FirstOrDefaultAsync(ws => ws.Id == id);
 
@@ -194,9 +194,9 @@ public class WatchSessionService : IWatchSessionService
         return new WatchSessionResponseDto
         {
             Id = session.Id,
-            MovieId = session.MovieId,
-            MovieTitle = session.Movie.Title,
-            MoviePosterUrl = session.Movie.PosterUrl,
+            MovieId = session.MediaId,
+            MovieTitle = session.Media.Title,
+            MoviePosterUrl = session.Media.PosterUrl,
             WatchedAt = session.WatchedAt,
             Location = session.Location,
             Notes = session.Notes,

@@ -27,7 +27,7 @@ public class RatingService : IRatingService
         var session = await _db
             .WatchSessions.Include(ws => ws.Group)
                 .ThenInclude(g => g!.UserGroups)
-            .Include(ws => ws.Movie)
+            .Include(ws => ws.Media)
             .FirstOrDefaultAsync(ws => ws.Id == watchSessionId);
 
         if (session is null)

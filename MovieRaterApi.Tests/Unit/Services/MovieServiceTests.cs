@@ -129,11 +129,11 @@ public class MovieServiceTests
                 Title = "Fight Club",
             }
         );
-        db.UserMovies.Add(
-            new UserMovie
+        db.UserMedias.Add(
+            new UserMedia
             {
                 UserId = userId,
-                MovieId = movieId,
+                MediaId = movieId,
                 IsFavorite = true,
                 IsInWatchlist = false,
             }
@@ -143,7 +143,7 @@ public class MovieServiceTests
             {
                 Id = Guid.NewGuid(),
                 GroupId = _groupId,
-                MovieId = movieId,
+                MediaId = movieId,
                 WatchedAt = DateTime.UtcNow,
                 CreatedByUserId = userId,
             }
@@ -526,7 +526,7 @@ public class MovieServiceTests
 
         db.Movies.Should().Contain(m => m.TmdbId == 550 && m.Title == "Fight Club");
         db.Genres.Should().Contain(g => g.TmdbId == 18 && g.Name == "Drama");
-        db.MovieGenres.Should().Contain(mg => mg.Movie.TmdbId == 550 && mg.Genre.TmdbId == 18);
+        db.MediaGenres.Should().Contain(mg => mg.Media.TmdbId == 550 && mg.Genre.TmdbId == 18);
     }
 
     [Fact]
@@ -552,7 +552,7 @@ public class MovieServiceTests
                 Name = "Old Genre",
             }
         );
-        db.MovieGenres.Add(new MovieGenre { MovieId = movieId, GenreId = genreId });
+        db.MediaGenres.Add(new MediaGenre { MediaId = movieId, GenreId = genreId });
         db.SaveChanges();
 
         var svc = new MovieService(
@@ -619,7 +619,7 @@ public class MovieServiceTests
         updated.AverageTmdbRating.Should().Be(8.433);
 
         db.Genres.Should().Contain(g => g.TmdbId == 53 && g.Name == "Thriller");
-        db.MovieGenres.Should().HaveCount(2);
+        db.MediaGenres.Should().HaveCount(2);
     }
 
     [Fact]
@@ -680,7 +680,7 @@ public class MovieServiceTests
         await svc.GetMovieDetailsAsync(550, null);
         await svc.GetMovieDetailsAsync(550, null);
 
-        db.MovieGenres.Where(mg => mg.Movie.TmdbId == 550).Should().HaveCount(1);
+        db.MediaGenres.Where(mg => mg.Media.TmdbId == 550).Should().HaveCount(1);
     }
 
     [Fact]
@@ -841,11 +841,11 @@ public class MovieServiceTests
                 Title = "Fight Club",
             }
         );
-        db.UserMovies.Add(
-            new UserMovie
+        db.UserMedias.Add(
+            new UserMedia
             {
                 UserId = userId,
-                MovieId = movieId,
+                MediaId = movieId,
                 IsFavorite = true,
                 IsInWatchlist = false,
             }
@@ -856,14 +856,14 @@ public class MovieServiceTests
                 Id = Guid.NewGuid(),
                 GroupId = _groupId,
                 CreatedByUserId = userId,
-                MovieId = movieId,
+                MediaId = movieId,
                 WatchedAt = DateTime.UtcNow,
             },
             new WatchSession
             {
                 Id = Guid.NewGuid(),
                 CreatedByUserId = userId,
-                MovieId = movieId,
+                MediaId = movieId,
                 WatchedAt = DateTime.UtcNow,
             }
         );
