@@ -137,6 +137,58 @@ public class TmdbClient : ITmdbClient
         return await SendAsync<TmdbPagedResponse<TmdbSearchMovieItem>>(url, ct);
     }
 
+    public async Task<TmdbPagedResponse<TmdbSearchTvItem>> SearchTvShowsAsync(
+        TmdbSearchTvQuery query,
+        CancellationToken ct = default
+    )
+    {
+        ApplyDefaultLanguage(query);
+        var url = $"search/tv{BuildQueryString(query)}";
+        return await SendAsync<TmdbPagedResponse<TmdbSearchTvItem>>(url, ct);
+    }
+
+    public async Task<TmdbTvShowDetails> GetTvShowDetailsAsync(
+        TmdbTvDetailsQuery query,
+        CancellationToken ct = default
+    )
+    {
+        ApplyDefaultLanguage(query);
+        var url = $"tv/{query.SeriesId}{BuildQueryString(query)}";
+        return await SendAsync<TmdbTvShowDetails>(url, ct);
+    }
+
+    public async Task<TmdbTvSeasonDetails> GetTvSeasonAsync(
+        TmdbTvSeasonQuery query,
+        CancellationToken ct = default
+    )
+    {
+        ApplyDefaultLanguage(query);
+        var url = $"tv/{query.SeriesId}/season/{query.SeasonNumber}{BuildQueryString(query)}";
+        return await SendAsync<TmdbTvSeasonDetails>(url, ct);
+    }
+
+    public async Task<TmdbTvEpisodeDetails> GetTvEpisodeAsync(
+        TmdbTvEpisodeQuery query,
+        CancellationToken ct = default
+    )
+    {
+        ApplyDefaultLanguage(query);
+        var url =
+            $"tv/{query.SeriesId}/season/{query.SeasonNumber}/episode/{query.EpisodeNumber}{BuildQueryString(query)}";
+        return await SendAsync<TmdbTvEpisodeDetails>(url, ct);
+    }
+
+    public async Task<TmdbGenreListResponse> GetTvGenresAsync(
+        TmdbGenreListQuery? query = null,
+        CancellationToken ct = default
+    )
+    {
+        query ??= new TmdbGenreListQuery();
+        ApplyDefaultLanguage(query);
+        var url = $"genre/tv/list{BuildQueryString(query)}";
+        return await SendAsync<TmdbGenreListResponse>(url, ct);
+    }
+
     private async Task<TResponse> SendAsync<TResponse>(string relativeUrl, CancellationToken ct)
     {
         _logger.LogDebug("Requesting TMDB endpoint: {Url}", relativeUrl);
@@ -238,6 +290,30 @@ public class TmdbClient : ITmdbClient
     }
 
     private void ApplyDefaultLanguage(TmdbMovieListQuery query)
+    {
+        if (string.IsNullOrWhiteSpace(query.Language))
+            query.Language = _options.DefaultLanguage;
+    }
+
+    private void ApplyDefaultLanguage(TmdbSearchTvQuery query)
+    {
+        if (string.IsNullOrWhiteSpace(query.Language))
+            query.Language = _options.DefaultLanguage;
+    }
+
+    private void ApplyDefaultLanguage(TmdbTvDetailsQuery query)
+    {
+        if (string.IsNullOrWhiteSpace(query.Language))
+            query.Language = _options.DefaultLanguage;
+    }
+
+    private void ApplyDefaultLanguage(TmdbTvSeasonQuery query)
+    {
+        if (string.IsNullOrWhiteSpace(query.Language))
+            query.Language = _options.DefaultLanguage;
+    }
+
+    private void ApplyDefaultLanguage(TmdbTvEpisodeQuery query)
     {
         if (string.IsNullOrWhiteSpace(query.Language))
             query.Language = _options.DefaultLanguage;

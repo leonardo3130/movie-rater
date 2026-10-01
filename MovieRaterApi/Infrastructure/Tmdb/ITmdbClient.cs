@@ -56,4 +56,29 @@ public interface ITmdbClient
         TmdbMovieListQuery query,
         CancellationToken ct = default
     );
+
+    Task<TmdbPagedResponse<TmdbSearchTvItem>> SearchTvShowsAsync(
+        TmdbSearchTvQuery query,
+        CancellationToken ct = default
+    );
+
+    Task<TmdbTvShowDetails> GetTvShowDetailsAsync(
+        TmdbTvDetailsQuery query,
+        CancellationToken ct = default
+    );
+
+    Task<TmdbTvSeasonDetails> GetTvSeasonAsync(
+        TmdbTvSeasonQuery query,
+        CancellationToken ct = default
+    );
+
+    Task<TmdbTvEpisodeDetails> GetTvEpisodeAsync(
+        TmdbTvEpisodeQuery query,
+        CancellationToken ct = default
+    );
+
+    Task<TmdbGenreListResponse> GetTvGenresAsync(
+        TmdbGenreListQuery? query = null,
+        CancellationToken ct = default
+    );
 }

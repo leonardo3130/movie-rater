@@ -376,6 +376,239 @@ public class TmdbClientTests
         _capturedRequestUri.Query.Should().Contain("include_adult=true");
     }
 
+    [Fact]
+    public async Task SearchTvShowsAsync_ShouldSendCorrectUrl()
+    {
+        var query = new TmdbSearchTvQuery
+        {
+            Query = "breaking bad",
+            Page = 1,
+            IncludeAdult = false,
+            Language = "en-US",
+        };
+
+        var responseJson = JsonSerializer.Serialize(
+            new TmdbPagedResponse<TmdbSearchTvItem>
+            {
+                Page = 1,
+                TotalPages = 1,
+                TotalResults = 1,
+                Results =
+                [
+                    new TmdbSearchTvItem
+                    {
+                        Id = 1396,
+                        Name = "Breaking Bad",
+                        Overview = "A chemistry teacher turns to crime.",
+                        FirstAirDate = "2008-01-20",
+                        VoteAverage = 8.879,
+                        VoteCount = 11536,
+                        GenreIds = [18, 80],
+                    },
+                ],
+            }
+        );
+
+        SetupHandler(responseJson);
+
+        var result = await _sut.SearchTvShowsAsync(query);
+
+        result.Should().NotBeNull();
+        result.Results.Should().HaveCount(1);
+        result.Results[0].Name.Should().Be("Breaking Bad");
+        result.Results[0].Id.Should().Be(1396);
+        _capturedRequestUri!.AbsolutePath.Should().Be("/3/search/tv");
+        _capturedRequestUri.Query.Should().Contain("query=breaking%20bad");
+        _capturedRequestUri.Query.Should().Contain("page=1");
+        _capturedRequestUri.Query.Should().Contain("include_adult=false");
+        _capturedRequestUri.Query.Should().Contain("language=en-US");
+    }
+
+    [Fact]
+    public async Task SearchTvShowsAsync_ShouldApplyDefaultLanguage_WhenNull()
+    {
+        var query = new TmdbSearchTvQuery { Query = "test", Language = null };
+
+        var responseJson = JsonSerializer.Serialize(
+            new TmdbPagedResponse<TmdbSearchTvItem>
+            {
+                Page = 1,
+                TotalPages = 0,
+                TotalResults = 0,
+                Results = [],
+            }
+        );
+
+        SetupHandler(responseJson);
+
+        var result = await _sut.SearchTvShowsAsync(query);
+
+        result.Should().NotBeNull();
+        _capturedRequestUri!.Query.Should().Contain("language=en-US");
+    }
+
+    [Fact]
+    public async Task GetTvShowDetailsAsync_ShouldSendCorrectUrl()
+    {
+        var query = new TmdbTvDetailsQuery { SeriesId = 1396, Language = "en-US" };
+
+        var responseJson = JsonSerializer.Serialize(
+            new TmdbTvShowDetails
+            {
+                Id = 1396,
+                Name = "Breaking Bad",
+                NumberOfSeasons = 5,
+                NumberOfEpisodes = 62,
+                Status = "Ended",
+                Type = "Scripted",
+                VoteAverage = 8.879,
+                Seasons =
+                [
+                    new TmdbTvSeasonSummary
+                    {
+                        Id = 3624,
+                        Name = "Season 1",
+                        SeasonNumber = 1,
+                        EpisodeCount = 7,
+                    },
+                ],
+                Genres = [new TmdbGenre { Id = 18, Name = "Drama" }],
+            }
+        );
+
+        SetupHandler(responseJson);
+
+        var result = await _sut.GetTvShowDetailsAsync(query);
+
+        result.Should().NotBeNull();
+        result.Name.Should().Be("Breaking Bad");
+        result.NumberOfSeasons.Should().Be(5);
+        result.Seasons.Should().HaveCount(1);
+        result.Seasons[0].SeasonNumber.Should().Be(1);
+        _capturedRequestUri!.AbsolutePath.Should().Be("/3/tv/1396");
+        _capturedRequestUri.Query.Should().Contain("language=en-US");
+    }
+
+    [Fact]
+    public async Task GetTvShowDetailsAsync_ShouldIncludeAppendToResponse_WhenProvided()
+    {
+        var query = new TmdbTvDetailsQuery
+        {
+            SeriesId = 1396,
+            Language = "en-US",
+            AppendToResponse = "credits,videos",
+        };
+
+        var responseJson = JsonSerializer.Serialize(
+            new TmdbTvShowDetails { Id = 1396, Name = "Breaking Bad" }
+        );
+
+        SetupHandler(responseJson);
+
+        var result = await _sut.GetTvShowDetailsAsync(query);
+
+        result.Should().NotBeNull();
+        _capturedRequestUri!.Query.Should().Contain("append_to_response=credits%2Cvideos");
+    }
+
+    [Fact]
+    public async Task GetTvSeasonAsync_ShouldSendCorrectUrl()
+    {
+        var query = new TmdbTvSeasonQuery { SeriesId = 1396, SeasonNumber = 1, Language = "en-US" };
+
+        var responseJson = JsonSerializer.Serialize(
+            new TmdbTvSeasonDetails
+            {
+                Id = 3624,
+                Name = "Season 1",
+                SeasonNumber = 1,
+                Episodes =
+                [
+                    new TmdbTvEpisodeSummary
+                    {
+                        Id = 62085,
+                        Name = "Pilot",
+                        EpisodeNumber = 1,
+                        SeasonNumber = 1,
+                        Runtime = 58,
+                        StillPath = "/pilot-still.jpg",
+                    },
+                ],
+            }
+        );
+
+        SetupHandler(responseJson);
+
+        var result = await _sut.GetTvSeasonAsync(query);
+
+        result.Should().NotBeNull();
+        result.Name.Should().Be("Season 1");
+        result.Episodes.Should().HaveCount(1);
+        result.Episodes[0].Name.Should().Be("Pilot");
+        result.Episodes[0].Runtime.Should().Be(58);
+        _capturedRequestUri!.AbsolutePath.Should().Be("/3/tv/1396/season/1");
+        _capturedRequestUri.Query.Should().Contain("language=en-US");
+    }
+
+    [Fact]
+    public async Task GetTvEpisodeAsync_ShouldSendCorrectUrl()
+    {
+        var query = new TmdbTvEpisodeQuery
+        {
+            SeriesId = 1396,
+            SeasonNumber = 1,
+            EpisodeNumber = 1,
+            Language = "en-US",
+        };
+
+        var responseJson = JsonSerializer.Serialize(
+            new TmdbTvEpisodeDetails
+            {
+                Id = 62085,
+                Name = "Pilot",
+                EpisodeNumber = 1,
+                SeasonNumber = 1,
+                Runtime = 58,
+                StillPath = "/pilot-still.jpg",
+            }
+        );
+
+        SetupHandler(responseJson);
+
+        var result = await _sut.GetTvEpisodeAsync(query);
+
+        result.Should().NotBeNull();
+        result.Name.Should().Be("Pilot");
+        result.EpisodeNumber.Should().Be(1);
+        result.Runtime.Should().Be(58);
+        _capturedRequestUri!.AbsolutePath.Should().Be("/3/tv/1396/season/1/episode/1");
+        _capturedRequestUri.Query.Should().Contain("language=en-US");
+    }
+
+    [Fact]
+    public async Task GetTvGenresAsync_ShouldSendCorrectUrl()
+    {
+        var responseJson = JsonSerializer.Serialize(
+            new TmdbGenreListResponse
+            {
+                Genres =
+                [
+                    new TmdbGenre { Id = 10759, Name = "Action & Adventure" },
+                    new TmdbGenre { Id = 18, Name = "Drama" },
+                ],
+            }
+        );
+
+        SetupHandler(responseJson);
+
+        var result = await _sut.GetTvGenresAsync();
+
+        result.Should().NotBeNull();
+        result.Genres.Should().HaveCount(2);
+        result.Genres[0].Name.Should().Be("Action & Adventure");
+        _capturedRequestUri!.AbsolutePath.Should().Be("/3/genre/tv/list");
+    }
+
     private void SetupHandler(string responseJson)
     {
         _handlerMock
