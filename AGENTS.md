@@ -417,10 +417,15 @@ watched seasons/episodes up to their series.
 
 ## Watch Sessions
 
-- Mark movie as watched
+- Mark a movie or episode as watched
 - Watch date
 - Location
 - Notes
+
+Sessions accept only `Movie` and `TvEpisode` media (`MediaType` is validated on
+create; seasons and series are reserved for a later phase). Responses carry
+`MediaType` plus `SeriesTitle` / `SeasonNumber` / `EpisodeNumber` when the
+session refers to a TV episode.
 
 ---
 
