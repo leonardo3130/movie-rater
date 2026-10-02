@@ -211,6 +211,51 @@ public class WatchSessionsIntegrationTests : IAsyncLifetime
     }
 
     [Fact]
+    public async Task CreateEpisodeWatchSession_ShouldReturn201_WithTvInfo()
+    {
+        var (token, _) = await SeedUserAndGroupAsync("wsep", "wsep@test.com");
+        var (_, _, episodeId) = await SeedTvAsync(2001, "Breaking Bad");
+        _client.DefaultRequestHeaders.Authorization =
+            new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+
+        var request = new CreateWatchSessionRequestDto
+        {
+            MediaId = episodeId,
+            WatchedAt = new DateTime(2026, 7, 16, 20, 0, 0, DateTimeKind.Utc),
+        };
+
+        var response = await _client.PostAsJsonAsync("/api/watch-sessions", request);
+        response.StatusCode.Should().Be(HttpStatusCode.Created);
+
+        var result = await response.Content.ReadFromJsonAsync<WatchSessionResponseDto>();
+        result!.MediaId.Should().Be(episodeId);
+        result.Title.Should().Be("Fly");
+        result.MediaType.Should().Be(MediaType.TvEpisode);
+        result.SeriesTitle.Should().Be("Breaking Bad");
+        result.SeasonNumber.Should().Be(1);
+        result.EpisodeNumber.Should().Be(3);
+    }
+
+    [Fact]
+    public async Task CreateSeriesWatchSession_ShouldReturn400()
+    {
+        var (token, _) = await SeedUserAndGroupAsync("wsseries", "wsseries@test.com");
+        var (seriesId, _, _) = await SeedTvAsync(2002, "The Office");
+        _client.DefaultRequestHeaders.Authorization =
+            new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+
+        var request = new CreateWatchSessionRequestDto
+        {
+            MediaId = seriesId,
+            WatchedAt = DateTime.UtcNow,
+        };
+
+        var response = await _client.PostAsJsonAsync("/api/watch-sessions", request);
+
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+    }
+
+    [Fact]
     public async Task Heatmap_ShouldReturn200()
     {
         var (token, userId) = await SeedUserAndGroupAsync("wsheat", "wsheat@test.com");
@@ -334,5 +379,54 @@ public class WatchSessionsIntegrationTests : IAsyncLifetime
         _db.Movies.Add(movie);
         await _db.SaveChangesAsync();
         return movie.Id;
+    }
+
+    private async Task<(Guid seriesId, Guid seasonId, Guid episodeId)> SeedTvAsync(
+        int seriesTmdbId,
+        string seriesTitle
+    )
+    {
+        var seriesId = Guid.NewGuid();
+        var seasonId = Guid.NewGuid();
+        var episodeId = Guid.NewGuid();
+
+        _db.TvSeries.Add(
+            new TvSeries
+            {
+                Id = seriesId,
+                TmdbId = seriesTmdbId,
+                Title = seriesTitle,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow,
+            }
+        );
+        _db.TvSeasons.Add(
+            new TvSeason
+            {
+                Id = seasonId,
+                SeriesId = seriesId,
+                TmdbId = seriesTmdbId * 10 + 1,
+                SeasonNumber = 1,
+                Title = "Season 1",
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow,
+            }
+        );
+        _db.TvEpisodes.Add(
+            new TvEpisode
+            {
+                Id = episodeId,
+                SeasonId = seasonId,
+                TmdbId = seriesTmdbId * 10 + 2,
+                SeasonNumber = 1,
+                EpisodeNumber = 3,
+                Title = "Fly",
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow,
+            }
+        );
+        await _db.SaveChangesAsync();
+
+        return (seriesId, seasonId, episodeId);
     }
 }
