@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using MovieRaterApi.Data;
+using MovieRaterApi.Data.Entities;
 using MovieRaterApi.Features.Dashboard.DTOs;
 using MovieRaterApi.Features.Dashboard.Interfaces;
 
@@ -120,22 +121,30 @@ public class DashboardService : IDashboardService
 
     private async Task<List<GenreStatDto>> GetFavoriteGenresAsync(Guid userId, Guid? groupId)
     {
-        var genreStats = await _db
+        var ratings = await _db
             .Ratings.Where(r =>
                 groupId != null ? r.WatchSession.GroupId == groupId : r.UserId == userId
             )
-            .Join(
-                _db.MediaGenres,
-                r => r.WatchSession.MediaId,
-                mg => mg.MediaId,
-                (r, mg) => new { r.RatingValue, mg.GenreId }
+            .Select(r => new { r.RatingValue, MediaId = r.WatchSession.MediaId })
+            .ToListAsync();
+
+        var rootMap = await BuildRootMediaMapAsync(ratings.Select(r => r.MediaId).ToList());
+        var genresByRoot = await GetGenresByRootMediaAsync(rootMap.Values.ToList());
+
+        var ratingGenres = new List<(string GenreName, int RatingValue)>();
+        foreach (var rating in ratings)
+        {
+            if (
+                !rootMap.TryGetValue(rating.MediaId, out var root)
+                || !genresByRoot.TryGetValue(root, out var names)
             )
-            .Join(
-                _db.Genres,
-                x => x.GenreId,
-                g => g.Id,
-                (x, g) => new { x.RatingValue, GenreName = g.Name }
-            )
+                continue;
+
+            foreach (var name in names)
+                ratingGenres.Add((name, rating.RatingValue));
+        }
+
+        return ratingGenres
             .GroupBy(x => x.GenreName)
             .Select(g => new GenreStatDto
             {
@@ -145,19 +154,35 @@ public class DashboardService : IDashboardService
             })
             .OrderByDescending(g => g.AverageRating)
             .Take(5)
-            .ToListAsync();
-
-        return genreStats;
+            .ToList();
     }
 
     private async Task<List<GenreStatDto>> GetMostWatchedGenresAsync(Guid userId, Guid? groupId)
     {
-        var genreStats = await _db
+        var mediaIds = await _db
             .WatchSessions.Where(ws =>
                 groupId != null ? ws.GroupId == groupId : ws.CreatedByUserId == userId
             )
-            .SelectMany(ws => ws.Media.MediaGenres)
-            .GroupBy(mg => mg.Genre.Name)
+            .Select(ws => ws.MediaId)
+            .ToListAsync();
+
+        var rootMap = await BuildRootMediaMapAsync(mediaIds);
+        var genresByRoot = await GetGenresByRootMediaAsync(rootMap.Values.ToList());
+
+        var watchedGenreNames = new List<string>();
+        foreach (var mediaId in mediaIds)
+        {
+            if (
+                !rootMap.TryGetValue(mediaId, out var root)
+                || !genresByRoot.TryGetValue(root, out var names)
+            )
+                continue;
+
+            watchedGenreNames.AddRange(names);
+        }
+
+        return watchedGenreNames
+            .GroupBy(name => name)
             .Select(g => new GenreStatDto
             {
                 GenreName = g.Key,
@@ -166,9 +191,93 @@ public class DashboardService : IDashboardService
             })
             .OrderByDescending(g => g.Count)
             .Take(5)
+            .ToList();
+    }
+
+    private async Task<Dictionary<Guid, Guid>> BuildRootMediaMapAsync(List<Guid> mediaIds)
+    {
+        var distinct = mediaIds.Distinct().ToList();
+        if (distinct.Count == 0)
+            return new Dictionary<Guid, Guid>();
+
+        var media = await _db
+            .Media.Where(m => distinct.Contains(m.Id))
+            .Select(m => new { m.Id, m.MediaType })
             .ToListAsync();
 
-        return genreStats;
+        var seasonIds = media
+            .Where(m => m.MediaType == MediaType.TvSeason)
+            .Select(m => m.Id)
+            .ToList();
+
+        var episodeIds = media
+            .Where(m => m.MediaType == MediaType.TvEpisode)
+            .Select(m => m.Id)
+            .ToList();
+
+        var seriesBySeasonId = new Dictionary<Guid, Guid>();
+        if (seasonIds.Count > 0)
+        {
+            seriesBySeasonId = await _db
+                .TvSeasons.Where(s => seasonIds.Contains(s.Id))
+                .Select(s => new { s.Id, s.SeriesId })
+                .ToDictionaryAsync(s => s.Id, s => s.SeriesId);
+        }
+
+        var seasonByEpisodeId = new Dictionary<Guid, Guid>();
+        if (episodeIds.Count > 0)
+        {
+            seasonByEpisodeId = await _db
+                .TvEpisodes.Where(e => episodeIds.Contains(e.Id))
+                .Select(e => new { e.Id, e.SeasonId })
+                .ToDictionaryAsync(e => e.Id, e => e.SeasonId);
+        }
+
+        var seasonIdsToResolve = seasonIds
+            .Concat(seasonByEpisodeId.Values)
+            .Distinct()
+            .ToList();
+        if (seasonIdsToResolve.Count > 0)
+        {
+            seriesBySeasonId = await _db
+                .TvSeasons.Where(s => seasonIdsToResolve.Contains(s.Id))
+                .Select(s => new { s.Id, s.SeriesId })
+                .ToDictionaryAsync(s => s.Id, s => s.SeriesId);
+        }
+
+        var map = new Dictionary<Guid, Guid>();
+        foreach (var m in media)
+        {
+            var root = m.MediaType switch
+            {
+                MediaType.Movie or MediaType.TvSeries => m.Id,
+                MediaType.TvSeason => seriesBySeasonId.GetValueOrDefault(m.Id, m.Id),
+                _ => seriesBySeasonId.GetValueOrDefault(
+                    seasonByEpisodeId.GetValueOrDefault(m.Id, Guid.Empty),
+                    m.Id
+                ),
+            };
+
+            map[m.Id] = root;
+        }
+
+        return map;
+    }
+
+    private async Task<Dictionary<Guid, string[]>> GetGenresByRootMediaAsync(
+        List<Guid> rootIds
+    )
+    {
+        var distinct = rootIds.Distinct().ToList();
+        if (distinct.Count == 0)
+            return new Dictionary<Guid, string[]>();
+
+        var rows = await _db
+            .MediaGenres.Where(mg => distinct.Contains(mg.MediaId))
+            .Select(mg => new { mg.MediaId, GenreName = mg.Genre.Name })
+            .ToListAsync();
+
+        return rows.GroupBy(x => x.MediaId).ToDictionary(g => g.Key, g => g.Select(x => x.GenreName).ToArray());
     }
 
     // TODO:: add user infos for the 2 involed in the boggest disagreement

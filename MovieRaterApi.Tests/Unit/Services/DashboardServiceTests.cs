@@ -211,6 +211,60 @@ public class DashboardServiceTests
         result.LongestStreak.Should().Be(3);
     }
 
+    [Fact]
+    public async Task GetDashboardAsync_CountsSeriesGenres_WhenWatchingEpisode()
+    {
+        var ids = SeedGroupWithUsers(2, "member");
+        var groupId = ids[0];
+        var userId = ids[1];
+        var seriesId = SeedSeries(100, "Breaking Bad", "Drama");
+        var seasonId = SeedSeason(seriesId, 1);
+        var episodeId = SeedEpisode(seasonId, 1, 1);
+        SeedSession(groupId, episodeId, userId, DateTime.UtcNow);
+
+        var result = await _sut.GetDashboardAsync(userId, groupId);
+
+        result.MostWatchedGenres.Should().ContainSingle(g => g.GenreName == "Drama");
+        result.MostWatchedGenres.Single(g => g.GenreName == "Drama").Count.Should().Be(1);
+    }
+
+    [Fact]
+    public async Task GetDashboardAsync_CountsSeriesGenres_WhenWatchingSeason()
+    {
+        var ids = SeedGroupWithUsers(2, "member");
+        var groupId = ids[0];
+        var userId = ids[1];
+        var seriesId = SeedSeries(101, "The Office", "Comedy");
+        var seasonId = SeedSeason(seriesId, 1);
+        SeedSession(groupId, seasonId, userId, DateTime.UtcNow);
+
+        var result = await _sut.GetDashboardAsync(userId, groupId);
+
+        result.MostWatchedGenres.Should().ContainSingle(g => g.GenreName == "Comedy");
+        result.MostWatchedGenres.Single(g => g.GenreName == "Comedy").Count.Should().Be(1);
+    }
+
+    [Fact]
+    public async Task GetDashboardAsync_CountsSeriesGenresInFavoriteGenres_WhenRatingEpisode()
+    {
+        var ids = SeedGroupWithUsers(2, "member");
+        var groupId = ids[0];
+        var userId = ids[1];
+        var partnerId = ids[2];
+        var seriesId = SeedSeries(102, "Fargo", "Crime");
+        var seasonId = SeedSeason(seriesId, 1);
+        var episodeId = SeedEpisode(seasonId, 1, 1);
+        var sessionId = SeedSession(groupId, episodeId, userId, DateTime.UtcNow);
+        SeedRating(sessionId, userId, 9);
+        SeedRating(sessionId, partnerId, 7);
+
+        var result = await _sut.GetDashboardAsync(userId, groupId);
+
+        result.FavoriteGenres.Should().ContainSingle(g => g.GenreName == "Crime");
+        result.FavoriteGenres.Single(g => g.GenreName == "Crime").Count.Should().Be(2);
+        result.FavoriteGenres.Single(g => g.GenreName == "Crime").AverageRating.Should().Be(8.0);
+    }
+
     private static DateTime GetMondayOfWeek(DateTime date)
     {
         var diff = (7 + (date.DayOfWeek - DayOfWeek.Monday)) % 7;
@@ -277,6 +331,79 @@ public class DashboardServiceTests
                 Id = id,
                 TmdbId = tmdbId,
                 Title = title,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow,
+            }
+        );
+        _db.SaveChanges();
+        return id;
+    }
+
+    private static int _mediaTmdbCounter = -1000;
+
+    private Guid SeedSeries(int tmdbId, string name, params string[] genres)
+    {
+        var id = Guid.NewGuid();
+        _db.TvSeries.Add(
+            new TvSeries
+            {
+                Id = id,
+                TmdbId = tmdbId,
+                Title = name,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow,
+            }
+        );
+        foreach (var genreName in genres)
+        {
+            var genre = _db.Genres.FirstOrDefault(g => g.Name == genreName);
+            if (genre is null)
+            {
+                genre = new Genre
+                {
+                    Id = Guid.NewGuid(),
+                    TmdbId = _mediaTmdbCounter--,
+                    Name = genreName,
+                };
+                _db.Genres.Add(genre);
+            }
+            _db.MediaGenres.Add(new MediaGenre { MediaId = id, GenreId = genre.Id });
+        }
+        _db.SaveChanges();
+        return id;
+    }
+
+    private Guid SeedSeason(Guid seriesId, int seasonNumber)
+    {
+        var id = Guid.NewGuid();
+        _db.TvSeasons.Add(
+            new TvSeason
+            {
+                Id = id,
+                SeriesId = seriesId,
+                TmdbId = _mediaTmdbCounter--,
+                SeasonNumber = seasonNumber,
+                Title = $"Season {seasonNumber}",
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow,
+            }
+        );
+        _db.SaveChanges();
+        return id;
+    }
+
+    private Guid SeedEpisode(Guid seasonId, int seasonNumber, int episodeNumber)
+    {
+        var id = Guid.NewGuid();
+        _db.TvEpisodes.Add(
+            new TvEpisode
+            {
+                Id = id,
+                SeasonId = seasonId,
+                TmdbId = _mediaTmdbCounter--,
+                SeasonNumber = seasonNumber,
+                EpisodeNumber = episodeNumber,
+                Title = $"Episode {episodeNumber}",
                 CreatedAt = DateTime.UtcNow,
                 UpdatedAt = DateTime.UtcNow,
             }
