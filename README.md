@@ -1,6 +1,6 @@
 # Movie Rater API
 
-A production-quality full-stack application for couples to track movies, rate them, write reviews, and unlock achievements.
+A production-quality full-stack application for couples to track movies, rate them, and write reviews.
 
 ## Prerequisites
 

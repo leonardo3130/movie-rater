@@ -5,9 +5,8 @@
 **Working title:** Movie Rater
 
 A production-quality full-stack application that allows couples to track movies
-they've watched together, rate them independently, write reviews, unlock
-achievements, visualize statistics, and receive AI-generated summaries of their
-opinions.
+they've watched together, rate them independently, write reviews, and visualize
+statistics together.
 
 The goal is to build software that resembles what would be developed inside a
 professional engineering team rather than simply completing a portfolio project.
@@ -38,7 +37,6 @@ professional engineering team rather than simply completing a portfolio project.
 - JWT Authentication
 - FluentValidation
 - TMDB API
-- OpenAI API
 - Serilog
 
 ## Infrastructure
@@ -109,8 +107,8 @@ MovieService
 IRatingService
 RatingService
 
-IAchievementService
-AchievementService
+IDashboardService
+DashboardService
 ```
 
 This keeps the application easy to mock and unit test.
@@ -332,52 +330,6 @@ Future flags may include
 
 ---
 
-## Achievement
-
-```
-Id
-
-Name
-Description
-
-Icon
-
-Points
-```
-
----
-
-## UserAchievement
-
-Composite PK
-
-```
-UserId
-AchievementId
-
-UnlockedAt
-```
-
----
-
-## AiSummary
-
-```
-Id
-
-WatchSessionId
-
-Summary
-
-GeneratedAt
-```
-
-Generated only after both reviews exist.
-
-Only regenerated if one of the reviews changes.
-
----
-
 # Core Features
 
 ## Authentication
@@ -480,39 +432,6 @@ WatchSession.WatchedAt
 
 ---
 
-# Achievements
-
-Examples
-
-- First Movie Together
-- 10 Movies
-- 50 Movies
-- 100 Movies
-- Weekend Warrior
-- Horror Fan
-- Sci-Fi Lover
-- Romance Month
-- Movie Marathon
-- Anniversary Movie
-
-Achievements should be computed automatically.
-
----
-
-# AI Features
-
-After both users submit reviews, generate
-
-- similarities
-- disagreements
-- overall opinion
-
-Store the generated text.
-
-Never regenerate unless reviews change.
-
----
-
 # Development Guidelines
 
 ## General
@@ -569,10 +488,8 @@ Every **non-trivial method** must have unit tests.
 
 Examples
 
-- Achievement calculation
 - Dashboard statistics
 - Rating compatibility
-- AI prompt generation
 - Validation logic
 
 Mock every dependency.
@@ -590,9 +507,7 @@ Examples
 - Couple invitation
 - Rating a movie
 - Creating a watch session
-- Unlocking achievements
 - Dashboard statistics
-- AI summary generation
 
 Integration tests should execute the complete HTTP request pipeline whenever practical.
 
@@ -615,7 +530,6 @@ Examples
 - Registration
 - API errors
 - Exceptions
-- AI requests
 - External API failures
 
 Use structured logging.
@@ -687,9 +601,7 @@ Features
 ├── WatchSessions
 ├── Ratings
 ├── Dashboard
-├── Achievements
-├── UserMovie
-└── AI
+└── UserMovie
 ```
 
 Each feature should be self-contained.
@@ -806,7 +718,6 @@ Movie posters should be the primary visual element.
 
 - Streaming providers
 - Movie recommendations
-- AI recommendations
 - Timeline memories
 - Movie night photos
 - Collections
