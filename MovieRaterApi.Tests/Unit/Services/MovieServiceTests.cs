@@ -2,10 +2,12 @@ using FluentAssertions;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 using Moq;
+using MovieRaterApi.Data;
 using MovieRaterApi.Data.Entities;
 using MovieRaterApi.Features.Authentication.Infrastructure;
 using MovieRaterApi.Features.Movies.DTOs;
 using MovieRaterApi.Features.Movies.Services;
+using MovieRaterApi.Features.Shared.Services;
 using MovieRaterApi.Infrastructure.Tmdb;
 using MovieRaterApi.Infrastructure.Tmdb.Dtos.Requests;
 using MovieRaterApi.Infrastructure.Tmdb.Dtos.Responses;
@@ -44,15 +46,21 @@ public class MovieServiceTests
         _currentUserMock.Setup(u => u.IsAuthenticated).Returns(true);
         _currentUserMock.Setup(u => u.UserId).Returns(Guid.NewGuid());
 
-        _sut = new MovieService(
-            _tmdbMock.Object,
-            db,
-            _currentUserMock.Object,
-            _cache,
-            _loggerMock.Object
-        );
+        _sut = CreateMovieService(db);
 
         _groupId = Guid.NewGuid();
+    }
+
+    private MovieService CreateMovieService(ApplicationDbContext db)
+    {
+        var enrichmentLogger = new Mock<ILogger<MediaEnrichmentService>>();
+        var enrichment = new MediaEnrichmentService(
+            db,
+            _currentUserMock.Object,
+            enrichmentLogger.Object
+        );
+
+        return new MovieService(_tmdbMock.Object, db, _cache, _loggerMock.Object, enrichment);
     }
 
     [Fact]
@@ -160,13 +168,7 @@ public class MovieServiceTests
         );
         db.SaveChanges();
 
-        var svc = new MovieService(
-            _tmdbMock.Object,
-            db,
-            _currentUserMock.Object,
-            _cache,
-            _loggerMock.Object
-        );
+        var svc = CreateMovieService(db);
 
         _currentUserMock.Setup(u => u.UserId).Returns(userId);
 
@@ -469,13 +471,7 @@ public class MovieServiceTests
     public async Task GetMovieDetailsAsync_ShouldInsertMovieIntoDatabase()
     {
         var db = TestHelpers.CreateInMemoryDbContext();
-        var svc = new MovieService(
-            _tmdbMock.Object,
-            db,
-            _currentUserMock.Object,
-            _cache,
-            _loggerMock.Object
-        );
+        var svc = CreateMovieService(db);
 
         var tmdbDetails = new TmdbMovieDetails
         {
@@ -555,13 +551,7 @@ public class MovieServiceTests
         db.MediaGenres.Add(new MediaGenre { MediaId = movieId, GenreId = genreId });
         db.SaveChanges();
 
-        var svc = new MovieService(
-            _tmdbMock.Object,
-            db,
-            _currentUserMock.Object,
-            _cache,
-            _loggerMock.Object
-        );
+        var svc = CreateMovieService(db);
 
         var tmdbDetails = new TmdbMovieDetails
         {
@@ -626,13 +616,7 @@ public class MovieServiceTests
     public async Task GetMovieDetailsAsync_ShouldNotDuplicateGenreLinks()
     {
         var db = TestHelpers.CreateInMemoryDbContext();
-        var svc = new MovieService(
-            _tmdbMock.Object,
-            db,
-            _currentUserMock.Object,
-            _cache,
-            _loggerMock.Object
-        );
+        var svc = CreateMovieService(db);
 
         var tmdbDetails = new TmdbMovieDetails
         {
@@ -878,13 +862,7 @@ public class MovieServiceTests
         );
         db.SaveChanges();
 
-        var svc = new MovieService(
-            _tmdbMock.Object,
-            db,
-            _currentUserMock.Object,
-            _cache,
-            _loggerMock.Object
-        );
+        var svc = CreateMovieService(db);
 
         _currentUserMock.Setup(u => u.UserId).Returns(userId);
 

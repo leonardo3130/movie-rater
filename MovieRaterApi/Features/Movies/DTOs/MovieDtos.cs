@@ -1,3 +1,6 @@
+using MovieRaterApi.Data.Entities;
+using MovieRaterApi.Features.Shared.Interfaces;
+
 namespace MovieRaterApi.Features.Movies.DTOs;
 
 public class SearchMoviesRequestDto
@@ -56,10 +59,11 @@ public class PagedMoviesResponseDto
     public List<MovieSummaryDto> Results { get; set; } = [];
 }
 
-public class MovieSummaryDto
+public class MovieSummaryDto : IEnrichableMediaDto
 {
     public Guid Id { get; set; }
     public int TmdbId { get; set; }
+    public MediaType MediaType => MediaType.Movie;
     public string Title { get; set; } = string.Empty;
     public string? PosterUrl { get; set; }
     public string? BackdropUrl { get; set; }
@@ -73,10 +77,11 @@ public class MovieSummaryDto
     public int WatchedCount { get; set; }
 }
 
-public class MovieDetailsResponseDto
+public class MovieDetailsResponseDto : IEnrichableMediaDto
 {
     public Guid Id { get; set; }
     public int TmdbId { get; set; }
+    public MediaType MediaType => MediaType.Movie;
     public string Title { get; set; } = string.Empty;
     public string? PosterUrl { get; set; }
     public string? BackdropUrl { get; set; }

@@ -2,10 +2,10 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 using MovieRaterApi.Data;
 using MovieRaterApi.Data.Entities;
-using MovieRaterApi.Features.Authentication.Infrastructure;
 using MovieRaterApi.Features.Movies.DTOs;
 using MovieRaterApi.Features.Movies.Interfaces;
 using MovieRaterApi.Features.Movies.Mapping;
+using MovieRaterApi.Features.Shared.Interfaces;
 using MovieRaterApi.Infrastructure.Tmdb;
 using MovieRaterApi.Infrastructure.Tmdb.Dtos.Requests;
 using MovieRaterApi.Infrastructure.Tmdb.Dtos.Responses;
@@ -18,23 +18,23 @@ public class MovieService : IMovieService
 
     private readonly ITmdbClient _tmdb;
     private readonly ApplicationDbContext _db;
-    private readonly ICurrentUser _currentUser;
     private readonly IMemoryCache _cache;
     private readonly ILogger<MovieService> _logger;
+    private readonly IMediaEnrichmentService _mediaEnrichment;
 
     public MovieService(
         ITmdbClient tmdb,
         ApplicationDbContext db,
-        ICurrentUser currentUser,
         IMemoryCache cache,
-        ILogger<MovieService> logger
+        ILogger<MovieService> logger,
+        IMediaEnrichmentService mediaEnrichment
     )
     {
         _tmdb = tmdb;
         _db = db;
-        _currentUser = currentUser;
         _cache = cache;
         _logger = logger;
+        _mediaEnrichment = mediaEnrichment;
     }
 
     public async Task<PagedMoviesResponseDto> SearchMoviesAsync(
@@ -68,7 +68,7 @@ public class MovieService : IMovieService
             item => MovieMapper.BuildBackdropUrl(item.BackdropPath, config.SecureBaseUrl)
         );
 
-        await EnrichWithUserDataAsync(result.Results, ct);
+        await _mediaEnrichment.EnrichAsync(result.Results, ct);
 
         return result;
     }
@@ -108,7 +108,7 @@ public class MovieService : IMovieService
             item => MovieMapper.BuildBackdropUrl(item.BackdropPath, config.SecureBaseUrl)
         );
 
-        await EnrichWithUserDataAsync(result.Results, ct);
+        await _mediaEnrichment.EnrichAsync(result.Results, ct);
 
         return result;
     }
@@ -170,7 +170,7 @@ public class MovieService : IMovieService
 
         await UpsertMovieAsync(details, posterUrl, backdropUrl, ct);
 
-        await EnrichWithUserDataAsync(dto, ct);
+        await _mediaEnrichment.EnrichAsync(dto, ct);
 
         return dto;
     }
@@ -204,7 +204,7 @@ public class MovieService : IMovieService
             item => MovieMapper.BuildBackdropUrl(item.BackdropPath, config.SecureBaseUrl)
         );
 
-        await EnrichWithUserDataAsync(result.Results, ct);
+        await _mediaEnrichment.EnrichAsync(result.Results, ct);
 
         return result;
     }
@@ -255,7 +255,7 @@ public class MovieService : IMovieService
             item => MovieMapper.BuildBackdropUrl(item.BackdropPath, config.SecureBaseUrl)
         );
 
-        await EnrichWithUserDataAsync(result.Results, ct);
+        await _mediaEnrichment.EnrichAsync(result.Results, ct);
 
         return result;
     }
@@ -359,105 +359,5 @@ public class MovieService : IMovieService
         }
 
         await _db.SaveChangesAsync(ct);
-    }
-
-    private async Task EnrichWithUserDataAsync(List<MovieSummaryDto> results, CancellationToken ct)
-    {
-        if (results.Count == 0)
-            return;
-
-        var tmdbIds = results.Select(r => r.TmdbId).ToList();
-
-        var cachedMovies = await _db.Movies.Where(m => tmdbIds.Contains(m.TmdbId)).ToListAsync(ct);
-
-        var tmdbToGuid = cachedMovies.ToDictionary(m => m.TmdbId, m => m.Id);
-        var guidIds = tmdbToGuid.Values.ToList();
-
-        if (_currentUser.IsAuthenticated && guidIds.Count > 0)
-        {
-            var userMovies = await _db
-                .UserMedias.Where(um =>
-                    um.UserId == _currentUser.UserId && guidIds.Contains(um.MediaId)
-                )
-                .ToListAsync(ct);
-
-            var favLookup = userMovies
-                .Where(um => um.IsFavorite)
-                .Select(um => um.MediaId)
-                .ToHashSet();
-
-            var watchlistLookup = userMovies
-                .Where(um => um.IsInWatchlist)
-                .Select(um => um.MediaId)
-                .ToHashSet();
-
-            var currentUserId = _currentUser.UserId;
-
-            Dictionary<Guid, int> watchedLookup = [];
-            watchedLookup = await _db
-                .WatchSessions.Where(ws =>
-                    guidIds.Contains(ws.MediaId)
-                    && (
-                        (ws.CreatedByUserId == currentUserId && ws.GroupId == null)
-                        || (
-                            ws.Group != null
-                            && ws.Group.UserGroups.Any(ug => ug.UserId == currentUserId)
-                        )
-                    )
-                )
-                .GroupBy(ws => ws.MediaId)
-                .Select(g => new { MediaId = g.Key, Count = g.Count() })
-                .ToDictionaryAsync(g => g.MediaId, g => g.Count, ct);
-
-            _logger.LogCritical("watched lookup {@WatchedLookup}", watchedLookup);
-
-            foreach (var result in results)
-            {
-                if (tmdbToGuid.TryGetValue(result.TmdbId, out var guidId))
-                {
-                    result.Id = guidId;
-                    result.IsFavorite = favLookup.Contains(guidId);
-                    result.IsInWatchlist = watchlistLookup.Contains(guidId);
-                    result.WatchedCount = watchedLookup.GetValueOrDefault(guidId, 0);
-                }
-            }
-        }
-    }
-
-    private async Task EnrichWithUserDataAsync(MovieDetailsResponseDto dto, CancellationToken ct)
-    {
-        var movie = await _db.Movies.FirstOrDefaultAsync(m => m.TmdbId == dto.TmdbId, ct);
-
-        if (movie is null || !_currentUser.IsAuthenticated)
-            return;
-
-        dto.Id = movie.Id;
-
-        if (_currentUser.IsAuthenticated)
-        {
-            var userMovie = await _db.UserMedias.FirstOrDefaultAsync(
-                um => um.UserId == _currentUser.UserId && um.MediaId == movie.Id,
-                ct
-            );
-
-            if (userMovie is not null)
-            {
-                dto.IsFavorite = userMovie.IsFavorite;
-                dto.IsInWatchlist = userMovie.IsInWatchlist;
-            }
-        }
-
-        var currentUserId = _currentUser.UserId;
-
-        dto.WatchedCount = await _db.WatchSessions.CountAsync(
-            ws =>
-                (ws.CreatedByUserId == currentUserId && ws.Group == null)
-                || (
-                    ws.Group != null
-                    && ws.MediaId == movie.Id
-                    && ws.Group.UserGroups.Any(ug => ug.UserId == currentUserId)
-                ),
-            ct
-        );
     }
 }
