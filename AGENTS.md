@@ -400,6 +400,21 @@ Only regenerated if one of the reviews changes.
 
 ---
 
+## TV Shows
+
+- Search via TMDB (series)
+- View series details (seasons)
+- View season details (episodes)
+- View episode details
+- TV genres
+
+Series are cached with their genres. Seasons and episodes are cached when
+visited. `TvSeries.Runtime` is intentionally left unset (runtimes live per
+episode). Genres live only on the series row; Dashboard genre stats resolve
+watched seasons/episodes up to their series.
+
+---
+
 ## Watch Sessions
 
 - Mark movie as watched
@@ -663,6 +678,7 @@ Features
 │
 ├── Authentication
 ├── Movies
+├── TvShows
 ├── WatchSessions
 ├── Ratings
 ├── Dashboard
@@ -672,6 +688,10 @@ Features
 ```
 
 Each feature should be self-contained.
+
+Shared cross-feature helpers live under `Features/Shared` (for example
+`IMediaEnrichmentService`, which applies favorite / watchlist / watched-count
+data to any media DTO implementing `IEnrichableMediaDto`).
 
 Example:
 
