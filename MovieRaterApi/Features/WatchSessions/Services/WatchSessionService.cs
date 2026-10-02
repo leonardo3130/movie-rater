@@ -35,6 +35,9 @@ public class WatchSessionService : IWatchSessionService
         if (media is null)
             throw new NotFoundException("Media not found.");
 
+        if (media.MediaType is not MediaType.Movie and not MediaType.TvEpisode)
+            throw new BadRequestException("Watch sessions can only be created for movies or episodes.");
+
         var session = new WatchSession
         {
             Id = Guid.NewGuid(),

@@ -104,6 +104,46 @@ public class WatchSessionServiceTests
     }
 
     [Fact]
+    public async Task CreateAsync_Throws_WhenMediaIsSeries()
+    {
+        var seriesId = Guid.NewGuid();
+        SeedSeries(seriesId, 100, "Breaking Bad");
+
+        var request = new CreateWatchSessionRequestDto
+        {
+            MediaId = seriesId,
+            WatchedAt = DateTime.UtcNow,
+        };
+
+        await FluentActions
+            .Awaiting(() => _sut.CreateAsync(request, Guid.NewGuid(), Guid.NewGuid()))
+            .Should()
+            .ThrowAsync<BadRequestException>()
+            .WithMessage("Watch sessions can only be created for movies or episodes.");
+    }
+
+    [Fact]
+    public async Task CreateAsync_Throws_WhenMediaIsSeason()
+    {
+        var seriesId = Guid.NewGuid();
+        var seasonId = Guid.NewGuid();
+        SeedSeries(seriesId, 100, "Breaking Bad");
+        SeedSeason(seasonId, seriesId, 3578, 1);
+
+        var request = new CreateWatchSessionRequestDto
+        {
+            MediaId = seasonId,
+            WatchedAt = DateTime.UtcNow,
+        };
+
+        await FluentActions
+            .Awaiting(() => _sut.CreateAsync(request, Guid.NewGuid(), Guid.NewGuid()))
+            .Should()
+            .ThrowAsync<BadRequestException>()
+            .WithMessage("Watch sessions can only be created for movies or episodes.");
+    }
+
+    [Fact]
     public async Task GetAllAsync_ReturnsTvInfo_ForEpisodeSessions()
     {
         var userId = _currentUserMock.Object.UserId;
