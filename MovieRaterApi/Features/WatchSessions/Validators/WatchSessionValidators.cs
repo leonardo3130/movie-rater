@@ -7,7 +7,7 @@ public class CreateWatchSessionRequestValidator : AbstractValidator<CreateWatchS
 {
     public CreateWatchSessionRequestValidator()
     {
-        RuleFor(x => x.MovieId).NotEmpty();
+        RuleFor(x => x.MediaId).NotEmpty();
         RuleFor(x => x.WatchedAt).NotEmpty();
         RuleFor(x => x.Location).MaximumLength(200).When(x => x.Location is not null);
         RuleFor(x => x.Notes).MaximumLength(2000).When(x => x.Notes is not null);

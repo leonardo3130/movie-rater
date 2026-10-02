@@ -12,17 +12,17 @@ public class CreateWatchSessionRequestValidatorTests
     public void ShouldHaveError_WhenMovieIdIsEmpty()
     {
         var result = _sut.TestValidate(
-            new CreateWatchSessionRequestDto { MovieId = Guid.Empty, WatchedAt = DateTime.UtcNow }
+            new CreateWatchSessionRequestDto { MediaId = Guid.Empty, WatchedAt = DateTime.UtcNow }
         );
 
-        result.ShouldHaveValidationErrorFor(x => x.MovieId);
+        result.ShouldHaveValidationErrorFor(x => x.MediaId);
     }
 
     [Fact]
     public void ShouldHaveError_WhenWatchedAtIsDefault()
     {
         var result = _sut.TestValidate(
-            new CreateWatchSessionRequestDto { MovieId = Guid.NewGuid(), WatchedAt = default }
+            new CreateWatchSessionRequestDto { MediaId = Guid.NewGuid(), WatchedAt = default }
         );
 
         result.ShouldHaveValidationErrorFor(x => x.WatchedAt);
@@ -34,7 +34,7 @@ public class CreateWatchSessionRequestValidatorTests
         var result = _sut.TestValidate(
             new CreateWatchSessionRequestDto
             {
-                MovieId = Guid.NewGuid(),
+                MediaId = Guid.NewGuid(),
                 WatchedAt = DateTime.UtcNow,
                 Location = new string('x', 201),
             }
@@ -49,7 +49,7 @@ public class CreateWatchSessionRequestValidatorTests
         var result = _sut.TestValidate(
             new CreateWatchSessionRequestDto
             {
-                MovieId = Guid.NewGuid(),
+                MediaId = Guid.NewGuid(),
                 WatchedAt = DateTime.UtcNow,
                 Notes = new string('x', 2001),
             }
@@ -64,7 +64,7 @@ public class CreateWatchSessionRequestValidatorTests
         var result = _sut.TestValidate(
             new CreateWatchSessionRequestDto
             {
-                MovieId = Guid.NewGuid(),
+                MediaId = Guid.NewGuid(),
                 WatchedAt = DateTime.UtcNow,
                 Location = "Home",
                 Notes = "Great movie!",

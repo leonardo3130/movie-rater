@@ -287,7 +287,7 @@ public class RatingsIntegrationTests : IAsyncLifetime
 
         var createSessionRequest = new CreateWatchSessionRequestDto
         {
-            MovieId = movieId,
+            MediaId = movieId,
             WatchedAt = DateTime.UtcNow,
         };
         var createResponse = await _client.PostAsJsonAsync(

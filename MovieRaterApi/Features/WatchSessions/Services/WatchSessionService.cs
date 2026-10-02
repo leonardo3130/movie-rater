@@ -31,15 +31,15 @@ public class WatchSessionService : IWatchSessionService
         Guid? groupId
     )
     {
-        var media = await _db.Media.FirstOrDefaultAsync(m => m.Id == request.MovieId);
+        var media = await _db.Media.FirstOrDefaultAsync(m => m.Id == request.MediaId);
         if (media is null)
-            throw new NotFoundException("Movie not found.");
+            throw new NotFoundException("Media not found.");
 
         var session = new WatchSession
         {
             Id = Guid.NewGuid(),
             GroupId = groupId,
-            MediaId = request.MovieId,
+            MediaId = request.MediaId,
             WatchedAt = request.WatchedAt,
             Location = request.Location,
             Notes = request.Notes,
@@ -47,34 +47,22 @@ public class WatchSessionService : IWatchSessionService
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow,
         };
+        session.Media = media;
 
         _db.WatchSessions.Add(session);
         await _db.SaveChangesAsync();
 
         _logger.LogInformation(
-            "Watch session {SessionId} created by user {UserId} for movie {MovieId} in group {GroupId}",
+            "Watch session {SessionId} created by user {UserId} for media {MediaId} in group {GroupId}",
             session.Id,
             userId,
-            request.MovieId,
+            request.MediaId,
             groupId
         );
 
-        var creator = await _db.Users.FirstAsync(u => u.Id == userId);
+        session.CreatedByUser = await _db.Users.FirstAsync(u => u.Id == userId);
 
-        return new WatchSessionResponseDto
-        {
-            Id = session.Id,
-            MovieId = media.Id,
-            MovieTitle = media.Title,
-            MoviePosterUrl = media.PosterUrl,
-            WatchedAt = session.WatchedAt,
-            Location = session.Location,
-            Notes = session.Notes,
-            CreatedByUserId = userId,
-            CreatedByUsername = creator.Username,
-            CreatedAt = session.CreatedAt,
-            Ratings = [],
-        };
+        return await ToResponseDtoAsync(session);
     }
 
     public async Task<WatchSessionListResponseDto> GetAllAsync(WatchSessionQueryDto query)
@@ -102,8 +90,8 @@ public class WatchSessionService : IWatchSessionService
                 || (ws.GroupId != null && userGroupsIds.Contains(ws.GroupId.Value))
             );
 
-        if (query.MovieId.HasValue)
-            sessionsQuery = sessionsQuery.Where(ws => ws.MediaId == query.MovieId.Value);
+        if (query.MediaId.HasValue)
+            sessionsQuery = sessionsQuery.Where(ws => ws.MediaId == query.MediaId.Value);
 
         var totalCount = await sessionsQuery.CountAsync();
 
@@ -113,21 +101,33 @@ public class WatchSessionService : IWatchSessionService
             .Take(query.PageSize)
             .ToListAsync();
 
+        var tvInfo = await BuildTvDisplayAsync(sessions);
+
         var items = sessions
-            .Select(s => new WatchSessionListItemDto
+            .Select(s =>
             {
-                Id = s.Id,
-                MovieId = s.MediaId,
-                MovieTitle = s.Media.Title,
-                MoviePosterUrl = s.Media.PosterUrl,
-                WatchedAt = s.WatchedAt,
-                Location = s.Location,
-                Notes = s.Notes,
-                CreatedByUserId = s.CreatedByUserId,
-                CreatedByUsername = s.CreatedByUser.Username,
-                CreatedAt = s.CreatedAt,
-                RatingCount = s.Ratings.Count,
-                GroupId = s.GroupId,
+                var dto = new WatchSessionListItemDto
+                {
+                    Id = s.Id,
+                    MediaId = s.MediaId,
+                    Title = s.Media.Title,
+                    PosterUrl = s.Media.PosterUrl,
+                    MediaType = s.Media.MediaType,
+                    SeasonNumber = null,
+                    EpisodeNumber = null,
+                    WatchedAt = s.WatchedAt,
+                    Location = s.Location,
+                    Notes = s.Notes,
+                    CreatedByUserId = s.CreatedByUserId,
+                    CreatedByUsername = s.CreatedByUser.Username,
+                    CreatedAt = s.CreatedAt,
+                    RatingCount = s.Ratings.Count,
+                    GroupId = s.GroupId,
+                };
+
+                ApplyTvInfo(dto, s, tvInfo);
+
+                return dto;
             })
             .ToList();
 
@@ -152,7 +152,7 @@ public class WatchSessionService : IWatchSessionService
         if (session is null)
             throw new NotFoundException("Watch session not found.");
 
-        return ToResponseDto(session);
+        return await ToResponseDtoAsync(session);
     }
 
     public async Task<WatchSessionResponseDto> UpdateAsync(
@@ -186,17 +186,20 @@ public class WatchSessionService : IWatchSessionService
             request.WatchedAt
         );
 
-        return ToResponseDto(session);
+        return await ToResponseDtoAsync(session);
     }
 
-    private static WatchSessionResponseDto ToResponseDto(WatchSession session)
+    private async Task<WatchSessionResponseDto> ToResponseDtoAsync(WatchSession session)
     {
-        return new WatchSessionResponseDto
+        var tvInfo = await BuildTvDisplayAsync([session]);
+
+        var dto = new WatchSessionResponseDto
         {
             Id = session.Id,
-            MovieId = session.MediaId,
-            MovieTitle = session.Media.Title,
-            MoviePosterUrl = session.Media.PosterUrl,
+            MediaId = session.MediaId,
+            Title = session.Media.Title,
+            PosterUrl = session.Media.PosterUrl,
+            MediaType = session.Media.MediaType,
             WatchedAt = session.WatchedAt,
             Location = session.Location,
             Notes = session.Notes,
@@ -214,6 +217,92 @@ public class WatchSessionService : IWatchSessionService
                 })
                 .ToList(),
         };
+
+        ApplyTvInfo(dto, session, tvInfo);
+
+        return dto;
+    }
+
+    private static void ApplyTvInfo(
+        WatchSessionListItemDto dto,
+        WatchSession session,
+        Dictionary<Guid, TvDisplayInfo> tvInfo
+    )
+    {
+        if (session.Media is TvEpisode episode)
+        {
+            var info = tvInfo[episode.Id];
+            dto.SeriesTitle = info.SeriesTitle;
+            dto.SeasonNumber = info.SeasonNumber;
+            dto.EpisodeNumber = info.EpisodeNumber;
+        }
+    }
+
+    private static void ApplyTvInfo(
+        WatchSessionResponseDto dto,
+        WatchSession session,
+        Dictionary<Guid, TvDisplayInfo> tvInfo
+    )
+    {
+        if (session.Media is TvEpisode episode)
+        {
+            var info = tvInfo[episode.Id];
+            dto.SeriesTitle = info.SeriesTitle;
+            dto.SeasonNumber = info.SeasonNumber;
+            dto.EpisodeNumber = info.EpisodeNumber;
+        }
+    }
+
+    private async Task<Dictionary<Guid, TvDisplayInfo>> BuildTvDisplayAsync(
+        List<WatchSession> sessions,
+        CancellationToken ct = default
+    )
+    {
+        var display = new Dictionary<Guid, TvDisplayInfo>();
+
+        var episodes = sessions
+            .Where(s => s.Media is TvEpisode)
+            .Select(s => (TvEpisode)s.Media)
+            .GroupBy(e => e.Id)
+            .Select(g => g.First())
+            .ToList();
+
+        if (episodes.Count == 0)
+            return display;
+
+        var seasonIds = episodes.Select(e => e.SeasonId).Distinct().ToList();
+
+        var seriesBySeasonId = new Dictionary<Guid, Guid>();
+        if (seasonIds.Count > 0)
+        {
+            seriesBySeasonId = await _db
+                .TvSeasons.Where(s => seasonIds.Contains(s.Id))
+                .Select(s => new { s.Id, s.SeriesId })
+                .ToDictionaryAsync(s => s.Id, s => s.SeriesId, ct);
+        }
+
+        var seriesIds = seriesBySeasonId.Values.Distinct().ToList();
+
+        var titlesBySeriesId = new Dictionary<Guid, string>();
+        if (seriesIds.Count > 0)
+        {
+            titlesBySeriesId = await _db
+                .TvSeries.Where(s => seriesIds.Contains(s.Id))
+                .Select(s => new { s.Id, s.Title })
+                .ToDictionaryAsync(s => s.Id, s => s.Title, ct);
+        }
+
+        foreach (var episode in episodes)
+        {
+            var seriesId = seriesBySeasonId.GetValueOrDefault(episode.SeasonId, Guid.Empty);
+            display[episode.Id] = new TvDisplayInfo(
+                titlesBySeriesId.GetValueOrDefault(seriesId, ""),
+                episode.SeasonNumber,
+                episode.EpisodeNumber
+            );
+        }
+
+        return display;
     }
 
     public async Task DeleteAsync(Guid id, Guid userId)
@@ -262,4 +351,10 @@ public class WatchSessionService : IWatchSessionService
 
         return new HeatmapResponseDto { DailyCounts = dailyCounts };
     }
+
+    private sealed record TvDisplayInfo(
+        string SeriesTitle,
+        int? SeasonNumber,
+        int? EpisodeNumber
+    );
 }

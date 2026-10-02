@@ -1,8 +1,10 @@
+using MovieRaterApi.Data.Entities;
+
 namespace MovieRaterApi.Features.WatchSessions.DTOs;
 
 public class CreateWatchSessionRequestDto
 {
-    public Guid MovieId { get; set; }
+    public Guid MediaId { get; set; }
     public Guid? GroupId { get; set; }
     public DateTime WatchedAt { get; set; }
     public string? Location { get; set; }
@@ -19,10 +21,14 @@ public class UpdateWatchSessionRequestDto
 public class WatchSessionListItemDto
 {
     public Guid Id { get; set; }
-    public Guid MovieId { get; set; }
+    public Guid MediaId { get; set; }
     public Guid? GroupId { get; set; }
-    public string MovieTitle { get; set; } = string.Empty;
-    public string? MoviePosterUrl { get; set; }
+    public string Title { get; set; } = string.Empty;
+    public string? PosterUrl { get; set; }
+    public MediaType MediaType { get; set; }
+    public string? SeriesTitle { get; set; }
+    public int? SeasonNumber { get; set; }
+    public int? EpisodeNumber { get; set; }
     public DateTime WatchedAt { get; set; }
     public string? Location { get; set; }
     public string? Notes { get; set; }
@@ -42,7 +48,7 @@ public class WatchSessionListResponseDto
 
 public class WatchSessionQueryDto
 {
-    public Guid? MovieId { get; set; }
+    public Guid? MediaId { get; set; }
     public Guid? GroupId { get; set; }
     public int Page { get; set; } = 1;
     public int PageSize { get; set; } = 20;
@@ -51,9 +57,13 @@ public class WatchSessionQueryDto
 public class WatchSessionResponseDto
 {
     public Guid Id { get; set; }
-    public Guid MovieId { get; set; }
-    public string MovieTitle { get; set; } = string.Empty;
-    public string? MoviePosterUrl { get; set; }
+    public Guid MediaId { get; set; }
+    public string Title { get; set; } = string.Empty;
+    public string? PosterUrl { get; set; }
+    public MediaType MediaType { get; set; }
+    public string? SeriesTitle { get; set; }
+    public int? SeasonNumber { get; set; }
+    public int? EpisodeNumber { get; set; }
     public DateTime WatchedAt { get; set; }
     public string? Location { get; set; }
     public string? Notes { get; set; }

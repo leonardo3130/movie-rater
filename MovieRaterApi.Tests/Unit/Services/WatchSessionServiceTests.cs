@@ -38,7 +38,7 @@ public class WatchSessionServiceTests
 
         var request = new CreateWatchSessionRequestDto
         {
-            MovieId = movieId,
+            MediaId = movieId,
             WatchedAt = new DateTime(2026, 1, 15, 20, 0, 0, DateTimeKind.Utc),
             Location = "Home",
             Notes = "Great movie!",
@@ -46,8 +46,12 @@ public class WatchSessionServiceTests
 
         var result = await _sut.CreateAsync(request, userId, groupId);
 
-        result.MovieId.Should().Be(movieId);
-        result.MovieTitle.Should().Be("Inception");
+        result.MediaId.Should().Be(movieId);
+        result.Title.Should().Be("Inception");
+        result.MediaType.Should().Be(MediaType.Movie);
+        result.SeriesTitle.Should().BeNull();
+        result.SeasonNumber.Should().BeNull();
+        result.EpisodeNumber.Should().BeNull();
         result.Location.Should().Be("Home");
         result.Notes.Should().Be("Great movie!");
         result.CreatedByUserId.Should().Be(userId);
@@ -55,11 +59,11 @@ public class WatchSessionServiceTests
     }
 
     [Fact]
-    public async Task CreateAsync_Throws_WhenMovieNotFound()
+    public async Task CreateAsync_Throws_WhenMediaNotFound()
     {
         var request = new CreateWatchSessionRequestDto
         {
-            MovieId = Guid.NewGuid(),
+            MediaId = Guid.NewGuid(),
             WatchedAt = DateTime.UtcNow,
         };
 
@@ -67,7 +71,80 @@ public class WatchSessionServiceTests
             .Awaiting(() => _sut.CreateAsync(request, Guid.NewGuid(), Guid.NewGuid()))
             .Should()
             .ThrowAsync<NotFoundException>()
-            .WithMessage("Movie not found.");
+            .WithMessage("Media not found.");
+    }
+
+    [Fact]
+    public async Task CreateAsync_ReturnsEpisodeSession_WithTvInfo()
+    {
+        var ids = SeedGroupWithUsers(3, "member");
+        var userId = ids[1];
+        var groupId = ids[0];
+        var seriesId = Guid.NewGuid();
+        var seasonId = Guid.NewGuid();
+        var episodeId = Guid.NewGuid();
+        SeedSeries(seriesId, 100, "Breaking Bad");
+        SeedSeason(seasonId, seriesId, 3578, 5);
+        SeedEpisode(episodeId, seasonId, 62085, 5, 3, "Fly");
+
+        var request = new CreateWatchSessionRequestDto
+        {
+            MediaId = episodeId,
+            WatchedAt = DateTime.UtcNow,
+        };
+
+        var result = await _sut.CreateAsync(request, userId, groupId);
+
+        result.MediaId.Should().Be(episodeId);
+        result.Title.Should().Be("Fly");
+        result.MediaType.Should().Be(MediaType.TvEpisode);
+        result.SeriesTitle.Should().Be("Breaking Bad");
+        result.SeasonNumber.Should().Be(5);
+        result.EpisodeNumber.Should().Be(3);
+    }
+
+    [Fact]
+    public async Task GetAllAsync_ReturnsTvInfo_ForEpisodeSessions()
+    {
+        var userId = _currentUserMock.Object.UserId;
+        var groupId = Guid.NewGuid();
+        SeedUser(userId, "Leo");
+        SeedGroup(groupId);
+        SeedUserGroup(groupId, userId);
+
+        var seriesId = Guid.NewGuid();
+        var seasonId = Guid.NewGuid();
+        var episodeId = Guid.NewGuid();
+        SeedSeries(seriesId, 100, "Breaking Bad");
+        SeedSeason(seasonId, seriesId, 3578, 1);
+        SeedEpisode(episodeId, seasonId, 62085, 1, 4, "Cancer Man");
+
+        _db.WatchSessions.Add(
+            new WatchSession
+            {
+                Id = Guid.NewGuid(),
+                GroupId = groupId,
+                MediaId = episodeId,
+                WatchedAt = DateTime.UtcNow,
+                CreatedByUserId = userId,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow,
+            }
+        );
+        _db.SaveChanges();
+
+        var query = new WatchSessionQueryDto { Page = 1, PageSize = 20, GroupId = groupId };
+
+        var result = await _sut.GetAllAsync(query);
+
+        result.TotalCount.Should().Be(1);
+        var item = result.Items.Single();
+        item.MediaId.Should().Be(episodeId);
+        item.MediaType.Should().Be(MediaType.TvEpisode);
+        item.Title.Should().Be("Cancer Man");
+        item.SeriesTitle.Should().Be("Breaking Bad");
+        item.SeasonNumber.Should().Be(1);
+        item.EpisodeNumber.Should().Be(4);
     }
 
     [Fact]
@@ -185,7 +262,7 @@ public class WatchSessionServiceTests
 
         var result = await _sut.GetByIdAsync(sessionId);
 
-        result.MovieTitle.Should().Be("Inception");
+        result.Title.Should().Be("Inception");
         result.Ratings.Should().HaveCount(2);
     }
 
@@ -405,6 +482,63 @@ public class WatchSessionServiceTests
             {
                 Id = movieId,
                 TmdbId = tmdbId,
+                Title = title,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow,
+            }
+        );
+        _db.SaveChanges();
+    }
+
+    private void SeedSeries(Guid seriesId, int tmdbId, string title)
+    {
+        _db.TvSeries.Add(
+            new TvSeries
+            {
+                Id = seriesId,
+                TmdbId = tmdbId,
+                Title = title,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow,
+            }
+        );
+        _db.SaveChanges();
+    }
+
+    private void SeedSeason(Guid seasonId, Guid seriesId, int tmdbId, int seasonNumber)
+    {
+        _db.TvSeasons.Add(
+            new TvSeason
+            {
+                Id = seasonId,
+                SeriesId = seriesId,
+                TmdbId = tmdbId,
+                SeasonNumber = seasonNumber,
+                Title = $"Season {seasonNumber}",
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow,
+            }
+        );
+        _db.SaveChanges();
+    }
+
+    private void SeedEpisode(
+        Guid episodeId,
+        Guid seasonId,
+        int tmdbId,
+        int seasonNumber,
+        int episodeNumber,
+        string title
+    )
+    {
+        _db.TvEpisodes.Add(
+            new TvEpisode
+            {
+                Id = episodeId,
+                SeasonId = seasonId,
+                TmdbId = tmdbId,
+                SeasonNumber = seasonNumber,
+                EpisodeNumber = episodeNumber,
                 Title = title,
                 CreatedAt = DateTime.UtcNow,
                 UpdatedAt = DateTime.UtcNow,

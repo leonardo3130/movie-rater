@@ -95,7 +95,7 @@ public class WatchSessionsIntegrationTests : IAsyncLifetime
 
         var request = new CreateWatchSessionRequestDto
         {
-            MovieId = movieId,
+            MediaId = movieId,
             WatchedAt = new DateTime(2026, 7, 15, 20, 0, 0, DateTimeKind.Utc),
             Location = "Home",
             Notes = "Amazing movie!",
@@ -106,8 +106,8 @@ public class WatchSessionsIntegrationTests : IAsyncLifetime
 
         var result = await response.Content.ReadFromJsonAsync<WatchSessionResponseDto>();
         result.Should().NotBeNull();
-        result!.MovieId.Should().Be(movieId);
-        result.MovieTitle.Should().Be("Inception");
+        result!.MediaId.Should().Be(movieId);
+        result.Title.Should().Be("Inception");
         result.Location.Should().Be("Home");
         result.Notes.Should().Be("Amazing movie!");
         result.CreatedByUserId.Should().Be(userId);
@@ -139,7 +139,7 @@ public class WatchSessionsIntegrationTests : IAsyncLifetime
 
         var createRequest = new CreateWatchSessionRequestDto
         {
-            MovieId = movieId,
+            MediaId = movieId,
             WatchedAt = new DateTime(2026, 7, 20, 20, 0, 0, DateTimeKind.Utc),
         };
         var createResponse = await _client.PostAsJsonAsync("/api/watch-sessions", createRequest);
@@ -149,7 +149,7 @@ public class WatchSessionsIntegrationTests : IAsyncLifetime
         response.StatusCode.Should().Be(HttpStatusCode.OK);
 
         var result = await response.Content.ReadFromJsonAsync<WatchSessionResponseDto>();
-        result!.MovieTitle.Should().Be("The Matrix");
+        result!.Title.Should().Be("The Matrix");
     }
 
     [Fact]
@@ -162,7 +162,7 @@ public class WatchSessionsIntegrationTests : IAsyncLifetime
 
         var createRequest = new CreateWatchSessionRequestDto
         {
-            MovieId = movieId,
+            MediaId = movieId,
             WatchedAt = new DateTime(2026, 7, 25, 20, 0, 0, DateTimeKind.Utc),
             Location = "Home",
             Notes = "First watch",
@@ -200,7 +200,7 @@ public class WatchSessionsIntegrationTests : IAsyncLifetime
 
         var createRequest = new CreateWatchSessionRequestDto
         {
-            MovieId = movieId,
+            MediaId = movieId,
             WatchedAt = new DateTime(2026, 7, 25, 20, 0, 0, DateTimeKind.Utc),
         };
         var createResponse = await _client.PostAsJsonAsync("/api/watch-sessions", createRequest);
