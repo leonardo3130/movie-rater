@@ -16,5 +16,4 @@ public class WatchSession
     public Media Media { get; set; } = null!;
     public User CreatedByUser { get; set; } = null!;
     public ICollection<Rating> Ratings { get; set; } = new List<Rating>();
-    public AiSummary? AiSummary { get; set; }
 }

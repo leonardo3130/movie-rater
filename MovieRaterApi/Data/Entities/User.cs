@@ -13,8 +13,6 @@ public class User
     public ICollection<Rating> Ratings { get; set; } = new List<Rating>();
     public ICollection<UserMedia> UserMedias { get; set; } = new List<UserMedia>();
     public ICollection<UserGroup> UserGroups { get; set; } = new List<UserGroup>();
-    public ICollection<UserAchievement> UserAchievements { get; set; } =
-        new List<UserAchievement>();
     public ICollection<WatchSession> CreatedWatchSessions { get; set; } = new List<WatchSession>();
     public ICollection<MovieList> MovieLists { get; set; } = new List<MovieList>();
 }

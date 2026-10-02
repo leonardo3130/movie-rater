@@ -21,9 +21,6 @@ public class ApplicationDbContext : DbContext
     public DbSet<WatchSession> WatchSessions => Set<WatchSession>();
     public DbSet<Rating> Ratings => Set<Rating>();
     public DbSet<UserMedia> UserMedias => Set<UserMedia>();
-    public DbSet<Achievement> Achievements => Set<Achievement>();
-    public DbSet<UserAchievement> UserAchievements => Set<UserAchievement>();
-    public DbSet<AiSummary> AiSummaries => Set<AiSummary>();
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
     public DbSet<Invitation> Invitations => Set<Invitation>();
     public DbSet<PasswordResetToken> PasswordResetTokens => Set<PasswordResetToken>();
@@ -179,40 +176,6 @@ public class ApplicationDbContext : DbContext
                 .HasOne(e => e.Media)
                 .WithMany(m => m.UserMedias)
                 .HasForeignKey(e => e.MediaId)
-                .OnDelete(DeleteBehavior.Cascade);
-        });
-
-        modelBuilder.Entity<Achievement>(entity =>
-        {
-            entity.HasKey(e => e.Id);
-            entity.Property(e => e.Name).IsRequired().HasMaxLength(200);
-            entity.Property(e => e.Description).IsRequired().HasMaxLength(1000);
-            entity.Property(e => e.Icon).IsRequired().HasMaxLength(200);
-        });
-
-        modelBuilder.Entity<UserAchievement>(entity =>
-        {
-            entity.HasKey(e => new { e.UserId, e.AchievementId });
-            entity
-                .HasOne(e => e.User)
-                .WithMany(u => u.UserAchievements)
-                .HasForeignKey(e => e.UserId)
-                .OnDelete(DeleteBehavior.Cascade);
-            entity
-                .HasOne(e => e.Achievement)
-                .WithMany(a => a.UserAchievements)
-                .HasForeignKey(e => e.AchievementId)
-                .OnDelete(DeleteBehavior.Cascade);
-        });
-
-        modelBuilder.Entity<AiSummary>(entity =>
-        {
-            entity.HasKey(e => e.Id);
-            entity.Property(e => e.Summary).IsRequired();
-            entity
-                .HasOne(e => e.WatchSession)
-                .WithOne(ws => ws.AiSummary)
-                .HasForeignKey<AiSummary>(e => e.WatchSessionId)
                 .OnDelete(DeleteBehavior.Cascade);
         });
 
