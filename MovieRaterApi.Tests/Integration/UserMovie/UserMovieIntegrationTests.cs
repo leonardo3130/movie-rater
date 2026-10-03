@@ -215,6 +215,8 @@ public class UserMovieIntegrationTests : IAsyncLifetime
 
         var favoritesResponse = await _client.GetAsync("/api/user-movies?favoritesOnly=true");
         favoritesResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        var favoritesBody = await favoritesResponse.Content.ReadAsStringAsync();
+        favoritesBody.Should().Contain("\"mediaType\":\"TvEpisode\"");
         var favorites = await favoritesResponse.Content.ReadFromJsonAsync<PagedUserMoviesResponseDto>();
         var episodeItem = favorites!.Results.Single(r => r.Id == episodeId);
         episodeItem.MediaType.Should().Be(MediaType.TvEpisode);

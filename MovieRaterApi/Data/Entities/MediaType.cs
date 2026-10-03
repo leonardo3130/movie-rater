@@ -1,5 +1,8 @@
+using System.Text.Json.Serialization;
+
 namespace MovieRaterApi.Data.Entities;
 
+[JsonConverter(typeof(JsonStringEnumConverter))]
 public enum MediaType
 {
     Movie = 0,
