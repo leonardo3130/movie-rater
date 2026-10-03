@@ -147,6 +147,16 @@ public class TmdbClient : ITmdbClient
         return await SendAsync<TmdbPagedResponse<TmdbSearchTvItem>>(url, ct);
     }
 
+    public async Task<TmdbPagedResponse<TmdbSearchTvItem>> GetDiscoverTvShowsAsync(
+        TmdbDiscoverTvQuery query,
+        CancellationToken ct = default
+    )
+    {
+        ApplyDefaultLanguage(query);
+        var url = $"discover/tv{BuildQueryString(query)}";
+        return await SendAsync<TmdbPagedResponse<TmdbSearchTvItem>>(url, ct);
+    }
+
     public async Task<TmdbTvShowDetails> GetTvShowDetailsAsync(
         TmdbTvDetailsQuery query,
         CancellationToken ct = default
@@ -284,6 +294,12 @@ public class TmdbClient : ITmdbClient
     }
 
     private void ApplyDefaultLanguage(TmdbDiscoverMovieQuery query)
+    {
+        if (string.IsNullOrWhiteSpace(query.Language))
+            query.Language = _options.DefaultLanguage;
+    }
+
+    private void ApplyDefaultLanguage(TmdbDiscoverTvQuery query)
     {
         if (string.IsNullOrWhiteSpace(query.Language))
             query.Language = _options.DefaultLanguage;

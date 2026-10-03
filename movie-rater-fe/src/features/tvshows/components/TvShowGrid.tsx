@@ -10,9 +10,10 @@ interface TvShowGridProps {
   shows: TvShowSummaryDto[] | undefined
   isLoading: boolean
   totalPages?: number
+  emptyMessage?: string
 }
 
-export function TvShowGrid({ shows, isLoading, totalPages }: TvShowGridProps) {
+export function TvShowGrid({ shows, isLoading, totalPages, emptyMessage }: TvShowGridProps) {
   const page = useTvStore((s) => s.page)
   const setPage = useTvStore((s) => s.setPage)
 
@@ -20,7 +21,7 @@ export function TvShowGrid({ shows, isLoading, totalPages }: TvShowGridProps) {
     return (
       <div className="flex flex-col items-center justify-center py-20 text-muted-foreground">
         <SearchX className="size-12 mb-3" />
-        <p className="text-sm">No TV shows match your search</p>
+        <p className="text-sm">{emptyMessage ?? 'No TV shows match your search'}</p>
       </div>
     )
   }

@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import {
   searchTvShows,
+  discoverTvShows,
   getTvGenres,
   getTvShowDetails,
   getTvSeason,
@@ -12,6 +13,14 @@ export function useSearchTv(query: string, page: number) {
     queryKey: ['tv', 'search', query, page],
     queryFn: () => searchTvShows({ query, page }),
     enabled: query.trim().length > 0,
+  })
+}
+
+export function useDiscoverTv(genreIds: string | null, page: number) {
+  return useQuery({
+    queryKey: ['tv', 'discover', genreIds, page],
+    queryFn: () => discoverTvShows({ genreIds: genreIds ?? undefined, page }),
+    enabled: genreIds !== null,
   })
 }
 

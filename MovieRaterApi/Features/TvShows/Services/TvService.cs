@@ -75,6 +75,45 @@ public class TvService : ITvService
         return result;
     }
 
+    public async Task<PagedTvShowsResponseDto> DiscoverTvShowsAsync(
+        DiscoverTvShowsRequestDto request,
+        CancellationToken ct = default
+    )
+    {
+        var query = new TmdbDiscoverTvQuery
+        {
+            Page = request.Page,
+            FirstAirDateYear = request.FirstAirDateYear,
+            FirstAirDateGte = request.FirstAirDateGte,
+            FirstAirDateLte = request.FirstAirDateLte,
+            SortBy = request.SortBy ?? "popularity.desc",
+            VoteAverageGte = request.VoteAverageGte,
+            IncludeAdult = request.IncludeAdult,
+            Language = request.Language,
+            WithGenres = request.GenreIds,
+        };
+
+        _logger.LogInformation(
+            "Discovering TV shows: sortBy={SortBy}, page={Page}, genres={Genres}",
+            query.SortBy,
+            query.Page,
+            query.WithGenres
+        );
+
+        var response = await _tmdb.GetDiscoverTvShowsAsync(query, ct);
+        var config = await GetImageConfigAsync(ct);
+
+        var result = TvShowMapper.ToPagedResult(
+            response,
+            item => MovieMapper.BuildPosterUrl(item.PosterPath, config.SecureBaseUrl),
+            item => MovieMapper.BuildBackdropUrl(item.BackdropPath, config.SecureBaseUrl)
+        );
+
+        await _mediaEnrichment.EnrichAsync(result.Results, ct);
+
+        return result;
+    }
+
     public async Task<TvShowDetailsResponseDto> GetTvShowDetailsAsync(
         int tmdbId,
         string? language,

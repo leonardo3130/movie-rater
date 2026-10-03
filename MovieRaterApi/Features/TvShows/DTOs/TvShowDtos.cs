@@ -15,6 +15,19 @@ public class SearchTvShowsRequestDto
     public string? Language { get; set; }
 }
 
+public class DiscoverTvShowsRequestDto
+{
+    public int? Page { get; set; }
+    public string? GenreIds { get; set; }
+    public string? FirstAirDateYear { get; set; }
+    public string? FirstAirDateGte { get; set; }
+    public string? FirstAirDateLte { get; set; }
+    public string? SortBy { get; set; }
+    public double? VoteAverageGte { get; set; }
+    public bool? IncludeAdult { get; set; }
+    public string? Language { get; set; }
+}
+
 public class TvShowDetailsRequestDto
 {
     [FromRoute]

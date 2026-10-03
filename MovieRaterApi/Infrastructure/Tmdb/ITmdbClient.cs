@@ -62,6 +62,11 @@ public interface ITmdbClient
         CancellationToken ct = default
     );
 
+    Task<TmdbPagedResponse<TmdbSearchTvItem>> GetDiscoverTvShowsAsync(
+        TmdbDiscoverTvQuery query,
+        CancellationToken ct = default
+    );
+
     Task<TmdbTvShowDetails> GetTvShowDetailsAsync(
         TmdbTvDetailsQuery query,
         CancellationToken ct = default

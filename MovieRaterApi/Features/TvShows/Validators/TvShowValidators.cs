@@ -23,6 +23,38 @@ public class SearchTvShowsRequestValidator : AbstractValidator<SearchTvShowsRequ
     }
 }
 
+public class DiscoverTvShowsRequestValidator : AbstractValidator<DiscoverTvShowsRequestDto>
+{
+    private static readonly string[] AllowedSortBy =
+    [
+        "popularity.desc",
+        "popularity.asc",
+        "vote_average.desc",
+        "vote_average.asc",
+        "first_air_date.desc",
+        "first_air_date.asc",
+        "original_name.asc",
+        "original_name.desc",
+    ];
+
+    public DiscoverTvShowsRequestValidator()
+    {
+        RuleFor(x => x.Page).InclusiveBetween(1, 500).When(x => x.Page.HasValue);
+
+        RuleFor(x => x.FirstAirDateYear)
+            .Matches(@"^\d{4}$")
+            .WithMessage("FirstAirDateYear must be a four-digit year.")
+            .When(x => x.FirstAirDateYear is not null);
+
+        RuleFor(x => x.SortBy)
+            .Must(s => AllowedSortBy.Contains(s))
+            .WithMessage("SortBy must be one of: " + string.Join(", ", AllowedSortBy))
+            .When(x => x.SortBy is not null);
+
+        RuleFor(x => x.VoteAverageGte).InclusiveBetween(0, 10).When(x => x.VoteAverageGte.HasValue);
+    }
+}
+
 public class TvShowDetailsRequestValidator : AbstractValidator<TvShowDetailsRequestDto>
 {
     public TvShowDetailsRequestValidator()

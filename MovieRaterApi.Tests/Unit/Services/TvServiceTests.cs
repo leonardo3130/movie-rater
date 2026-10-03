@@ -600,4 +600,102 @@ public class TvServiceTests
         result.Results.Should().BeEmpty();
         result.TotalResults.Should().Be(0);
     }
+
+    [Fact]
+    public async Task DiscoverTvShowsAsync_ShouldCallTmdbAndMapResults()
+    {
+        var db = TestHelpers.CreateInMemoryDbContext();
+        var sut = CreateSut(db);
+
+        var tmdbResponse = new TmdbPagedResponse<TmdbSearchTvItem>
+        {
+            Page = 1,
+            TotalPages = 1,
+            TotalResults = 1,
+            Results =
+            [
+                new TmdbSearchTvItem
+                {
+                    Id = 94997,
+                    Name = "House of the Dragon",
+                    Overview = "A prequel to Game of Thrones.",
+                    FirstAirDate = "2022-08-21",
+                    PosterPath = "/poster.jpg",
+                    BackdropPath = "/backdrop.jpg",
+                    VoteAverage = 8.4,
+                    VoteCount = 5000,
+                    GenreIds = [10765],
+                },
+            ],
+        };
+
+        _tmdbMock
+            .Setup(t =>
+                t.GetDiscoverTvShowsAsync(
+                    It.Is<TmdbDiscoverTvQuery>(q => q.WithGenres == "10765"),
+                    It.IsAny<CancellationToken>()
+                )
+            )
+            .ReturnsAsync(tmdbResponse);
+
+        var request = new DiscoverTvShowsRequestDto { GenreIds = "10765", Page = 1 };
+
+        var result = await sut.DiscoverTvShowsAsync(request);
+
+        result.Page.Should().Be(1);
+        result.Results.Should().HaveCount(1);
+        var show = result.Results[0];
+        show.TmdbId.Should().Be(94997);
+        show.Title.Should().Be("House of the Dragon");
+        show.PosterUrl.Should().Be("https://image.tmdb.org/t/p/w342/poster.jpg");
+        show.FirstAirDate.Should().Be("2022-08-21");
+        show.GenreIds.Should().BeEquivalentTo([10765]);
+    }
+
+    [Fact]
+    public async Task DiscoverTvShowsAsync_ShouldPassFiltersToTmdb()
+    {
+        var db = TestHelpers.CreateInMemoryDbContext();
+        var sut = CreateSut(db);
+
+        _tmdbMock
+            .Setup(t =>
+                t.GetDiscoverTvShowsAsync(It.IsAny<TmdbDiscoverTvQuery>(), It.IsAny<CancellationToken>())
+            )
+            .ReturnsAsync(
+                new TmdbPagedResponse<TmdbSearchTvItem>
+                {
+                    Page = 1,
+                    TotalPages = 0,
+                    TotalResults = 0,
+                    Results = [],
+                }
+            );
+
+        var request = new DiscoverTvShowsRequestDto
+        {
+            GenreIds = "10765,10759",
+            Page = 2,
+            FirstAirDateYear = "2022",
+            SortBy = "vote_average.desc",
+            VoteAverageGte = 7.5,
+        };
+
+        await sut.DiscoverTvShowsAsync(request);
+
+        _tmdbMock.Verify(
+            t =>
+                t.GetDiscoverTvShowsAsync(
+                    It.Is<TmdbDiscoverTvQuery>(q =>
+                        q.WithGenres == "10765,10759"
+                        && q.Page == 2
+                        && q.FirstAirDateYear == "2022"
+                        && q.SortBy == "vote_average.desc"
+                        && q.VoteAverageGte == 7.5
+                    ),
+                    It.IsAny<CancellationToken>()
+                ),
+            Times.Once
+        );
+    }
 }

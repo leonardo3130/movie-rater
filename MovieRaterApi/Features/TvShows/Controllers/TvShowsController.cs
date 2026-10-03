@@ -38,6 +38,16 @@ public class TvShowsController : ControllerBase
         return Ok(result);
     }
 
+    [HttpGet("discover")]
+    public async Task<IActionResult> DiscoverTvShows(
+        [FromQuery] DiscoverTvShowsRequestDto request,
+        CancellationToken ct
+    )
+    {
+        var result = await _tvService.DiscoverTvShowsAsync(request, ct);
+        return Ok(result);
+    }
+
     [HttpGet("{tmdbId:int}")]
     public async Task<IActionResult> GetTvShowDetails(
         [FromQuery] TvShowDetailsRequestDto request,

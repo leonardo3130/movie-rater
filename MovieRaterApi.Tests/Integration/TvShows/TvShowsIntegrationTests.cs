@@ -150,6 +150,47 @@ public class TvShowsIntegrationTests : IAsyncLifetime
     }
 
     [Fact]
+    public async Task DiscoverTvShows_ShouldReturnMappedResults()
+    {
+        var token = await RegisterAndGetTokenAsync("tvdiscover", "tvdiscover@test.com");
+        _client.DefaultRequestHeaders.Authorization =
+            new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+
+        _tmdbMock
+            .Setup(t =>
+                t.GetDiscoverTvShowsAsync(
+                    It.Is<TmdbDiscoverTvQuery>(q => q.WithGenres == "10765"),
+                    It.IsAny<CancellationToken>()
+                )
+            )
+            .ReturnsAsync(
+                new TmdbPagedResponse<TmdbSearchTvItem>
+                {
+                    Page = 1,
+                    TotalPages = 1,
+                    TotalResults = 1,
+                    Results =
+                    [
+                        new TmdbSearchTvItem
+                        {
+                            Id = 94997,
+                            Name = "House of the Dragon",
+                            PosterPath = "/poster.jpg",
+                        },
+                    ],
+                }
+            );
+
+        var response = await _client.GetAsync("/api/tv/discover?genreIds=10765");
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var result = await response.Content.ReadFromJsonAsync<PagedTvShowsResponseDto>();
+        result!.Results.Should().HaveCount(1);
+        result.Results[0].Title.Should().Be("House of the Dragon");
+        result.Results[0].PosterUrl.Should().Be("https://image.tmdb.org/t/p/w342/poster.jpg");
+    }
+
+    [Fact]
     public async Task GetSeriesDetails_ShouldCacheSeriesInDatabase()
     {
         var token = await RegisterAndGetTokenAsync("tvsdetails", "tvsdetails@test.com");

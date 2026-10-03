@@ -10,6 +10,11 @@ public interface ITvService
         CancellationToken ct = default
     );
 
+    Task<PagedTvShowsResponseDto> DiscoverTvShowsAsync(
+        DiscoverTvShowsRequestDto request,
+        CancellationToken ct = default
+    );
+
     Task<TvShowDetailsResponseDto> GetTvShowDetailsAsync(
         int tmdbId,
         string? language,

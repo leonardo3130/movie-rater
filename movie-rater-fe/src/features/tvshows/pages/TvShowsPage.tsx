@@ -1,18 +1,25 @@
-import { Tv } from 'lucide-react'
+import { Tv, X } from 'lucide-react'
 import { Skeleton } from '@/components/ui/skeleton'
+import { Button } from '@/components/ui/button'
 import { TvSearchBar } from '../components/TvSearchBar'
 import { TvShowGrid } from '../components/TvShowGrid'
 import { useTvStore } from '../stores/tv-store'
-import { useSearchTv, useTvGenres } from '../hooks/use-tv'
+import { useDiscoverTv, useSearchTv, useTvGenres } from '../hooks/use-tv'
 
 export function TvShowsPage() {
   const searchQuery = useTvStore((s) => s.searchQuery)
-  const setSearchQuery = useTvStore((s) => s.setSearchQuery)
+  const browseGenre = useTvStore((s) => s.browseGenre)
+  const setBrowseGenre = useTvStore((s) => s.setBrowseGenre)
   const page = useTvStore((s) => s.page)
   const { data: results, isLoading: searchLoading } = useSearchTv(searchQuery, page)
+  const { data: discoverResults, isLoading: discoverLoading } = useDiscoverTv(
+    browseGenre ? String(browseGenre.tmdbId) : null,
+    page,
+  )
   const { data: genres, isLoading: genresLoading } = useTvGenres()
 
-  const searching = searchQuery.trim().length > 0
+  const browsing = browseGenre !== null
+  const searching = !browsing && searchQuery.trim().length > 0
 
   return (
     <div className="min-h-dvh bg-background">
@@ -21,7 +28,30 @@ export function TvShowsPage() {
           <TvSearchBar />
         </div>
 
-        {searching ? (
+        {browsing ? (
+          <div className="space-y-6">
+            <div className="flex items-center justify-between gap-3">
+              <h2 className="font-heading text-lg font-medium tracking-tight">
+                {browseGenre.name}
+              </h2>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setBrowseGenre(null)}
+                className="text-muted-foreground hover:text-foreground"
+              >
+                <X className="size-4" />
+                Clear genre
+              </Button>
+            </div>
+            <TvShowGrid
+              shows={discoverResults?.results}
+              isLoading={discoverLoading}
+              totalPages={discoverResults?.totalPages}
+              emptyMessage={`No TV shows found in ${browseGenre.name}`}
+            />
+          </div>
+        ) : searching ? (
           <TvShowGrid
             shows={results?.results}
             isLoading={searchLoading}
@@ -45,7 +75,7 @@ export function TvShowsPage() {
                     <button
                       key={genre.tmdbId}
                       type="button"
-                      onClick={() => setSearchQuery(genre.name)}
+                      onClick={() => setBrowseGenre({ tmdbId: genre.tmdbId, name: genre.name })}
                       className="cursor-pointer rounded-full border border-border/50 bg-card px-3 py-1 text-xs text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
                     >
                       {genre.name}

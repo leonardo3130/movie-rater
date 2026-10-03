@@ -241,6 +241,44 @@ public class TmdbClientTests
     }
 
     [Fact]
+    public async Task GetDiscoverTvShowsAsync_ShouldSendCorrectUrl()
+    {
+        var query = new TmdbDiscoverTvQuery
+        {
+            Page = 1,
+            WithGenres = "10765",
+            FirstAirDateYear = "2022",
+            SortBy = "popularity.desc",
+            Language = "en-US",
+        };
+
+        SetupHandler("{}");
+
+        var result = await _sut.GetDiscoverTvShowsAsync(query);
+
+        result.Should().NotBeNull();
+        _capturedRequestUri!.AbsolutePath.Should().Be("/3/discover/tv");
+        _capturedRequestUri.Query.Should().Contain("with_genres=10765");
+        _capturedRequestUri.Query.Should().Contain("first_air_date_year=2022");
+        _capturedRequestUri.Query.Should().Contain("sort_by=popularity.desc");
+        _capturedRequestUri.Query.Should().Contain("page=1");
+        _capturedRequestUri.Query.Should().Contain("language=en-US");
+    }
+
+    [Fact]
+    public async Task GetDiscoverTvShowsAsync_ShouldApplyDefaultLanguage_WhenNull()
+    {
+        var query = new TmdbDiscoverTvQuery { WithGenres = "10765", Language = null };
+
+        SetupHandler("{}");
+
+        var result = await _sut.GetDiscoverTvShowsAsync(query);
+
+        result.Should().NotBeNull();
+        _capturedRequestUri!.Query.Should().Contain("language=en-US");
+    }
+
+    [Fact]
     public async Task GetTvShowDetailsAsync_ShouldSendCorrectUrl()
     {
         var query = new TmdbTvDetailsQuery { SeriesId = 1396, Language = "en-US" };
