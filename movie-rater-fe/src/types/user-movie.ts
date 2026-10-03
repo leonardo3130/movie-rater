@@ -1,3 +1,5 @@
+import type { MediaType } from '@src/types/watch-session'
+
 export interface UserMovieResponse {
   userId: string
   movieId: string
@@ -10,11 +12,16 @@ export interface UserMovieResponse {
 export interface UserMovieWithMovie {
   id: string
   tmdbId: number
+  mediaType: MediaType
   title: string
   posterUrl: string | null
   backdropUrl: string | null
   releaseDate: string | null
   voteAverage: number
+  seriesTmdbId: number | null
+  seriesTitle: string | null
+  seasonNumber: number | null
+  episodeNumber: number | null
   isFavorite: boolean
   isInWatchlist: boolean
   createdAt: string

@@ -1,12 +1,9 @@
-import { motion } from 'framer-motion'
-import { Bookmark, Loader2, Star } from 'lucide-react'
+import { Bookmark, Loader2 } from 'lucide-react'
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
 import { useWatchlist } from '../hooks/use-watchlist'
-import { MoviePoster } from '../../movies/components/MoviePoster'
-import { UserMovieToggle } from '../components/UserMovieToggle'
-import { Link, useNavigate } from 'react-router'
+import { UserMovieCard } from '../components/UserMovieCard'
+import { useNavigate } from 'react-router'
 
 export function WatchlistPage() {
   const navigate = useNavigate()
@@ -29,9 +26,9 @@ export function WatchlistPage() {
     )
   }
 
-  const movies = data?.results ?? []
+  const items = data?.results ?? []
 
-  if (movies.length === 0) {
+  if (items.length === 0) {
     return (
       <div className="flex min-h-[60vh] flex-col items-center justify-center gap-4">
         <Bookmark className="size-16 text-muted-foreground/30" />
@@ -55,51 +52,21 @@ export function WatchlistPage() {
         <div>
           <h1 className="text-2xl font-bold">Watchlist</h1>
           <p className="text-sm text-muted-foreground">
-            {data?.totalResults ?? 0} movie{data?.totalResults !== 1 ? 's' : ''}
+            {data?.totalResults ?? 0} item{data?.totalResults !== 1 ? 's' : ''}
           </p>
         </div>
       </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
-        {movies.map((movie, index) => {
-          const year = movie.releaseDate ? movie.releaseDate.slice(0, 4) : null
-          return (
-            <motion.div
-              key={movie.id}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3, delay: index * 0.03, ease: 'easeOut' }}
-              whileHover={{ y: -4 }}
-              className="group shrink-0"
-            >
-              <Link to={`/movies/${movie.tmdbId}`} className="block space-y-2">
-                <div className="relative overflow-hidden rounded-lg">
-                  <MoviePoster src={movie.posterUrl} alt={movie.title} />
-                  <div className="absolute top-2 right-2">
-                    <Badge variant="secondary" className="flex items-center gap-1 text-xs">
-                      <Star className="size-3 fill-yellow-500 text-yellow-500" />
-                      {movie.voteAverage.toFixed(1)}
-                    </Badge>
-                  </div>
-                  <div className="absolute bottom-2 left-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <UserMovieToggle
-                      movieId={movie.id}
-                      isFavorite={movie.isFavorite}
-                      isInWatchlist={true}
-                      size="sm"
-                    />
-                  </div>
-                </div>
-                <div className="space-y-0.5">
-                  <p className="text-sm font-medium leading-tight text-foreground line-clamp-2 group-hover:text-primary transition-colors">
-                    {movie.title}
-                  </p>
-                  {year && <p className="text-xs text-muted-foreground">{year}</p>}
-                </div>
-              </Link>
-            </motion.div>
-          )
-        })}
+        {items.map((item, index) => (
+          <UserMovieCard
+            key={item.id}
+            item={item}
+            isFavorite={item.isFavorite}
+            isInWatchlist
+            index={index}
+          />
+        ))}
       </div>
 
       {totalPages > 1 && (
