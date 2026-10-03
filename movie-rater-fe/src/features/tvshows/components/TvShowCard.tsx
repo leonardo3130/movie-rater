@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge'
 import { MoviePoster } from '../../movies/components/MoviePoster'
 import { useToggleFavorite } from '../../user-movie/hooks/use-toggle-favorite'
 import { useToggleWatchlist } from '../../user-movie/hooks/use-toggle-watchlist'
+import { useUserMovieStore } from '../../../stores/user-movie-store'
 import type { TvShowSummaryDto } from '@src/types/tv'
 import { cn } from '@/lib/utils'
 
@@ -16,7 +17,11 @@ interface TvShowCardProps {
 export function TvShowCard({ show, index = 0 }: TvShowCardProps) {
   const toggleFavorite = useToggleFavorite()
   const toggleWatchlist = useToggleWatchlist()
+  const favoriteIds = useUserMovieStore((s) => s.favoriteIds)
+  const watchlistIds = useUserMovieStore((s) => s.watchlistIds)
   const year = show.firstAirDate ? show.firstAirDate.slice(0, 4) : null
+  const isFavorite = show.isFavorite || favoriteIds.has(show.id)
+  const isInWatchlist = show.isInWatchlist || watchlistIds.has(show.id)
 
   return (
     <motion.div
@@ -41,13 +46,13 @@ export function TvShowCard({ show, index = 0 }: TvShowCardProps) {
               onClick={(e) => {
                 e.preventDefault()
                 e.stopPropagation()
-                toggleFavorite.mutate({ movieId: show.id, value: !show.isFavorite })
+                toggleFavorite.mutate({ movieId: show.id, value: !isFavorite })
               }}
               className="rounded-full p-1 cursor-pointer transition-colors hover:bg-white/10 text-white/60 hover:text-white/90"
-              aria-label={show.isFavorite ? 'Remove from favorites' : 'Add to favorites'}
+              aria-label={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
             >
               <Heart
-                className={cn('size-3.5', show.isFavorite && 'fill-red-500 text-red-500')}
+                className={cn('size-3.5', isFavorite && 'fill-red-500 text-red-500')}
               />
             </button>
             <button
@@ -55,13 +60,13 @@ export function TvShowCard({ show, index = 0 }: TvShowCardProps) {
               onClick={(e) => {
                 e.preventDefault()
                 e.stopPropagation()
-                toggleWatchlist.mutate({ movieId: show.id, value: !show.isInWatchlist })
+                toggleWatchlist.mutate({ movieId: show.id, value: !isInWatchlist })
               }}
               className="rounded-full p-1 cursor-pointer transition-colors hover:bg-white/10 text-white/60 hover:text-white/90"
-              aria-label={show.isInWatchlist ? 'Remove from watchlist' : 'Add to watchlist'}
+              aria-label={isInWatchlist ? 'Remove from watchlist' : 'Add to watchlist'}
             >
               <Bookmark
-                className={cn('size-3.5', show.isInWatchlist && 'fill-yellow-400 text-yellow-400')}
+                className={cn('size-3.5', isInWatchlist && 'fill-yellow-400 text-yellow-400')}
               />
             </button>
           </div>

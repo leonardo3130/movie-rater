@@ -18,6 +18,7 @@ import { Button } from '@/components/ui/button'
 import { MoviePoster } from '../../movies/components/MoviePoster'
 import { useToggleFavorite } from '../../user-movie/hooks/use-toggle-favorite'
 import { useToggleWatchlist } from '../../user-movie/hooks/use-toggle-watchlist'
+import { useUserMovieStore } from '../../../stores/user-movie-store'
 import { useTvShowDetails } from '../hooks/use-tv'
 import { cn } from '@/lib/utils'
 import type { TvSeasonSummaryDto } from '@src/types/tv'
@@ -28,6 +29,8 @@ export function TvShowDetailsPage() {
   const { data: show, isLoading, isError } = useTvShowDetails(tmdbIdNumber)
   const toggleFavorite = useToggleFavorite()
   const toggleWatchlist = useToggleWatchlist()
+  const favoriteIds = useUserMovieStore((s) => s.favoriteIds)
+  const watchlistIds = useUserMovieStore((s) => s.watchlistIds)
 
   if (isLoading) {
     return (
@@ -49,6 +52,8 @@ export function TvShowDetailsPage() {
   }
 
   const year = show.firstAirDate ? show.firstAirDate.slice(0, 4) : null
+  const isFavorite = show.isFavorite || favoriteIds.has(show.id)
+  const isInWatchlist = show.isInWatchlist || watchlistIds.has(show.id)
 
   return (
     <div className="min-h-dvh bg-background">
@@ -130,20 +135,20 @@ export function TvShowDetailsPage() {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => toggleFavorite.mutate({ movieId: show.id, value: !show.isFavorite })}
+                onClick={() => toggleFavorite.mutate({ movieId: show.id, value: !isFavorite })}
               >
-                <Heart className={cn('size-4', show.isFavorite && 'fill-current text-red-500')} />
-                {show.isFavorite ? 'Remove from Favorites' : 'Add to Favorites'}
+                <Heart className={cn('size-4', isFavorite && 'fill-current text-red-500')} />
+                {isFavorite ? 'Remove from Favorites' : 'Add to Favorites'}
               </Button>
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => toggleWatchlist.mutate({ movieId: show.id, value: !show.isInWatchlist })}
+                onClick={() => toggleWatchlist.mutate({ movieId: show.id, value: !isInWatchlist })}
               >
                 <Bookmark
-                  className={cn('size-4', show.isInWatchlist && 'fill-current text-yellow-400')}
+                  className={cn('size-4', isInWatchlist && 'fill-current text-yellow-400')}
                 />
-                {show.isInWatchlist ? 'Remove from Watchlist' : 'Add to Watchlist'}
+                {isInWatchlist ? 'Remove from Watchlist' : 'Add to Watchlist'}
               </Button>
             </div>
 
