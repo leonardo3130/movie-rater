@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
 import { Skeleton } from '@/components/ui/skeleton'
 import { MoviePoster } from '../components/MoviePoster'
+import { WatchSessionEpisodeLabel } from '../components/WatchSessionEpisodeLabel'
 import { Stars } from '../components/Stars'
 import { RateMovieDialog } from '../components/RateMovieDialog'
 import { EditWatchSessionDialog } from '../components/EditWatchSessionDialog'
@@ -66,12 +67,18 @@ export function WatchSessionDetailPage() {
         className="flex flex-col sm:flex-row gap-6"
       >
         <div className="w-32 shrink-0 mx-auto sm:mx-0">
-          <MoviePoster src={session.moviePosterUrl} alt={session.movieTitle} />
+          <MoviePoster src={session.posterUrl} alt={session.title} />
         </div>
 
         <div className="flex-1 space-y-4">
           <div>
-            <h1 className="text-2xl font-bold">{session.movieTitle}</h1>
+            <h1 className="text-2xl font-bold">{session.title}</h1>
+            <WatchSessionEpisodeLabel
+              seriesTitle={session.seriesTitle}
+              seasonNumber={session.seasonNumber}
+              episodeNumber={session.episodeNumber}
+              className="mt-1 text-sm"
+            />
             <div className="flex flex-wrap items-center gap-3 mt-2 text-sm text-muted-foreground">
               <span className="flex items-center gap-1">
                 <Calendar className="size-3.5" />
@@ -122,7 +129,7 @@ export function WatchSessionDetailPage() {
           <div className="text-center py-8 space-y-3">
             <Star className="size-12 text-muted-foreground/30 mx-auto" />
             <p className="text-muted-foreground">No ratings yet. Be the first to rate!</p>
-            <Button onClick={() => setRateDialogOpen(true)}>Rate this movie</Button>
+            <Button onClick={() => setRateDialogOpen(true)}>Rate this</Button>
           </div>
         )}
 
@@ -182,7 +189,7 @@ export function WatchSessionDetailPage() {
         <div className="text-center">
           <Button onClick={() => setRateDialogOpen(true)}>
             <Star className="size-4" />
-            Rate this movie
+            Rate this
           </Button>
         </div>
       )}
@@ -191,8 +198,8 @@ export function WatchSessionDetailPage() {
         open={rateDialogOpen}
         onOpenChange={setRateDialogOpen}
         watchSessionId={session.id}
-        movieTitle={session.movieTitle}
-        moviePosterUrl={session.moviePosterUrl}
+        title={session.title}
+        posterUrl={session.posterUrl}
         existingRating={(myRating as RatingResponseDto) ?? null}
       />
 

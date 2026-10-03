@@ -23,18 +23,18 @@ import { Controller } from 'react-hook-form'
 interface CreateWatchSessionDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-  movieId: string
-  movieTitle: string
-  moviePosterUrl: string | null
+  mediaId: string
+  title: string
+  posterUrl: string | null
   onSuccess?: (sessionId: string) => void
 }
 
 export function CreateWatchSessionDialog({
   open,
   onOpenChange,
-  movieId,
-  movieTitle,
-  moviePosterUrl,
+  mediaId,
+  title,
+  posterUrl,
   onSuccess,
 }: CreateWatchSessionDialogProps) {
   const createSession = useCreateWatchSession()
@@ -58,7 +58,7 @@ export function CreateWatchSessionDialog({
   const onSubmit = (values: CreateWatchSessionFormValues) => {
     createSession.mutate(
       {
-        movieId,
+        mediaId,
         groupId: values.groupId,
         watchedAt: new Date(values.watchedAt).toISOString(),
         location: values.location || null,
@@ -81,16 +81,16 @@ export function CreateWatchSessionDialog({
         <DialogHeader>
           <DialogTitle>Mark as Watched</DialogTitle>
           <DialogDescription>
-            Record when you watched this movie together
+            Record when you watched this together
           </DialogDescription>
         </DialogHeader>
 
         <div className="flex items-center gap-3 mb-4 p-3 rounded-lg bg-muted/50">
           <div className="w-12 shrink-0">
-            <MoviePoster src={moviePosterUrl} alt={movieTitle} />
+            <MoviePoster src={posterUrl} alt={title} />
           </div>
           <div className="min-w-0">
-            <p className="font-medium text-sm leading-tight line-clamp-2">{movieTitle}</p>
+            <p className="font-medium text-sm leading-tight line-clamp-2">{title}</p>
           </div>
         </div>
 

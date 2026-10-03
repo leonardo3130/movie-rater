@@ -16,6 +16,7 @@ import {
 import { Label } from '@/components/ui/label'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
 import { MoviePoster } from '../components/MoviePoster'
+import { WatchSessionEpisodeLabel } from '../components/WatchSessionEpisodeLabel'
 import { useWatchSessions } from '../hooks/use-watch-sessions'
 import { useDeleteWatchSession } from '../hooks/use-delete-watch-session'
 import { useAuthStore } from '../../../stores/auth-store'
@@ -62,7 +63,7 @@ export function WatchHistoryPage() {
         <Film className="size-16 text-muted-foreground/30" />
         <h2 className="text-xl font-semibold">No watch sessions yet</h2>
         <p className="text-muted-foreground">
-          Start watching movies and mark them as watched!
+          Start watching movies and TV episodes and mark them as watched!
         </p>
         <Link to="/movies">
           <Button>Browse movies</Button>
@@ -173,13 +174,18 @@ export function WatchHistoryPage() {
                 className="flex items-center gap-4 p-3 rounded-lg border border-border/50 bg-card hover:bg-accent/50 transition-colors group"
               >
                 <div className="w-14 shrink-0">
-                  <MoviePoster src={session.moviePosterUrl} alt={session.movieTitle} />
+                  <MoviePoster src={session.posterUrl} alt={session.title} />
                 </div>
 
                 <div className="flex-1 min-w-0 space-y-1">
                   <p className="font-medium text-sm leading-tight line-clamp-1 group-hover:text-primary transition-colors">
-                    {session.movieTitle}
+                    {session.title}
                   </p>
+                  <WatchSessionEpisodeLabel
+                    seriesTitle={session.seriesTitle}
+                    seasonNumber={session.seasonNumber}
+                    episodeNumber={session.episodeNumber}
+                  />
                   <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
                     <span className="flex items-center gap-1">
                       <Calendar className="size-3" />

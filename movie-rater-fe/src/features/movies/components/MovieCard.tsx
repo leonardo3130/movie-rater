@@ -91,9 +91,9 @@ export function MovieCard({ movie, index = 0 }: MovieCardProps) {
       <CreateWatchSessionDialog
         open={wsDialogOpen}
         onOpenChange={setWsDialogOpen}
-        movieId={movie.id}
-        movieTitle={movie.title}
-        moviePosterUrl={movie.posterUrl}
+        mediaId={movie.id}
+        title={movie.title}
+        posterUrl={movie.posterUrl}
         onSuccess={(sessionId) => {
           setRateSessionId(sessionId)
           setRateDialogOpen(true)
@@ -104,8 +104,8 @@ export function MovieCard({ movie, index = 0 }: MovieCardProps) {
           open={rateDialogOpen}
           onOpenChange={setRateDialogOpen}
           watchSessionId={rateSessionId}
-          movieTitle={movie.title}
-          moviePosterUrl={movie.posterUrl}
+          title={movie.title}
+          posterUrl={movie.posterUrl}
           existingRating={null}
         />
       )}

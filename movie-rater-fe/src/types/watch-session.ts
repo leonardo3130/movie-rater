@@ -1,3 +1,5 @@
+export type MediaType = 'Movie' | 'TvSeries' | 'TvSeason' | 'TvEpisode'
+
 export interface RatingSummaryDto {
   id: string
   userId: string
@@ -8,9 +10,13 @@ export interface RatingSummaryDto {
 
 export interface WatchSessionResponseDto {
   id: string
-  movieId: string
-  movieTitle: string
-  moviePosterUrl: string | null
+  mediaId: string
+  title: string
+  posterUrl: string | null
+  mediaType: MediaType
+  seriesTitle: string | null
+  seasonNumber: number | null
+  episodeNumber: number | null
   watchedAt: string
   location: string | null
   notes: string | null
@@ -22,9 +28,13 @@ export interface WatchSessionResponseDto {
 
 export interface WatchSessionListItemDto {
   id: string
-  movieId: string
-  movieTitle: string
-  moviePosterUrl: string | null
+  mediaId: string
+  title: string
+  posterUrl: string | null
+  mediaType: MediaType
+  seriesTitle: string | null
+  seasonNumber: number | null
+  episodeNumber: number | null
   watchedAt: string
   location: string | null
   notes: string | null
@@ -42,7 +52,7 @@ export interface WatchSessionListResponseDto {
 }
 
 export interface CreateWatchSessionRequestDto {
-  movieId: string
+  mediaId: string
   groupId: string
   watchedAt: string
   location?: string | null
@@ -56,7 +66,7 @@ export interface UpdateWatchSessionRequestDto {
 }
 
 export interface WatchSessionQueryDto {
-  movieId?: string
+  mediaId?: string
   groupId?: string | null
   page?: number
   pageSize?: number

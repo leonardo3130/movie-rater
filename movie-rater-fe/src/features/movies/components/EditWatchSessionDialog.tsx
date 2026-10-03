@@ -59,7 +59,7 @@ export function EditWatchSessionDialog({
         <DialogHeader>
           <DialogTitle>Edit Watch Session</DialogTitle>
           <DialogDescription>
-            Update when and where you watched {session.movieTitle}
+            Update when and where you watched {session.title}
           </DialogDescription>
         </DialogHeader>
 

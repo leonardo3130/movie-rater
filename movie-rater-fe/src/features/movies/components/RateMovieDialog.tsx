@@ -12,8 +12,8 @@ interface RateMovieDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   watchSessionId: string
-  movieTitle: string
-  moviePosterUrl: string | null
+  title: string
+  posterUrl: string | null
   existingRating?: RatingResponseDto | null
 }
 
@@ -21,8 +21,8 @@ export function RateMovieDialog({
   open,
   onOpenChange,
   watchSessionId,
-  movieTitle,
-  moviePosterUrl,
+  title,
+  posterUrl,
   existingRating,
 }: RateMovieDialogProps) {
   const user = useAuthStore((s) => s.user)
@@ -64,10 +64,10 @@ export function RateMovieDialog({
 
         <div className="flex items-center gap-3 mb-4 p-3 rounded-lg bg-muted/50">
           <div className="w-12 shrink-0">
-            <MoviePoster src={moviePosterUrl} alt={movieTitle} />
+            <MoviePoster src={posterUrl} alt={title} />
           </div>
           <div className="min-w-0">
-            <p className="font-medium text-sm leading-tight line-clamp-2">{movieTitle}</p>
+            <p className="font-medium text-sm leading-tight line-clamp-2">{title}</p>
           </div>
         </div>
 
