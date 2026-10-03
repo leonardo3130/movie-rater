@@ -4,6 +4,7 @@ import { RegisterPage } from '../features/authentication/pages/RegisterPage'
 import { ResetPasswordPage } from '../features/authentication/pages/ResetPasswordPage'
 import { ProtectedRoute } from './ProtectedRoute'
 import { MoviesPage } from '../features/movies/pages/MoviesPage'
+import { TvShowsPage } from '../features/tvshows/pages/TvShowsPage'
 import { AppLayout } from '../features/layout/components/AppLayout'
 import { FavoritesPage } from '../features/user-movie/pages/FavoritesPage'
 import { WatchlistPage } from '../features/user-movie/pages/WatchlistPage'
@@ -53,6 +54,10 @@ export const router = createBrowserRouter([
           {
             path: '/watchlist',
             element: <WatchlistPage />,
+          },
+          {
+            path: '/tv',
+            element: <TvShowsPage />,
           },
           {
             path: '/lists',

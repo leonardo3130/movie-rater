@@ -18,6 +18,7 @@ import { Outlet, Link, useLocation, useNavigate } from 'react-router'
 import {
   LayoutDashboard,
   Film,
+  Tv,
   Heart,
   Bookmark,
   UserPlus,
@@ -34,6 +35,7 @@ import { cn } from '@/lib/utils'
 const NAV_ITEMS = [
   { icon: LayoutDashboard, label: 'Dashboard', path: '/dashboard' },
   { icon: Film, label: 'Movies', path: '/movies' },
+  { icon: Tv, label: 'TV Shows', path: '/tv' },
   { icon: Library, label: 'Lists', path: '/lists' },
   { icon: Clock, label: 'Watch History', path: '/watch-history' },
   { icon: Heart, label: 'Favorites', path: '/favorites' },
@@ -91,6 +93,7 @@ function AppSidebar() {
   const isActive = (path: string) =>
     location.pathname === path ||
     (path === '/movies' && location.pathname.startsWith('/movies/')) ||
+    (path === '/tv' && location.pathname.startsWith('/tv/')) ||
     (path === '/lists' && location.pathname.startsWith('/lists/')) ||
     (path === '/watch-history' && location.pathname.startsWith('/watch-history/'))
 
