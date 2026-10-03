@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 using MovieRaterApi.Data;
+using MovieRaterApi.Data.Entities;
 using MovieRaterApi.Features.Movies.Mapping;
 using MovieRaterApi.Features.UserMovie.DTOs;
 using MovieRaterApi.Features.UserMovie.Interfaces;
@@ -241,6 +242,7 @@ public class UserMovieService : IUserMovieService
             {
                 MediaId = um.Media.Id,
                 TmdbId = um.Media.TmdbId,
+                MediaType = um.Media.MediaType,
                 Title = um.Media.Title,
                 PosterPath = um.Media.PosterUrl,
                 BackdropPath = um.Media.BackdropUrl,
@@ -253,24 +255,39 @@ public class UserMovieService : IUserMovieService
             })
             .ToListAsync();
 
+        var tvInfo = await BuildTvMediaInfoAsync(
+            raw.Where(r => r.MediaType is MediaType.TvSeason or MediaType.TvEpisode)
+                .Select(r => r.MediaId)
+                .ToList()
+        );
+
         var imageConfig = await GetImageConfigAsync();
 
-        var items = raw.Select(r => new UserMovieWithMovieDto
+        var items = raw.Select(r =>
             {
-                Id = r.MediaId,
-                TmdbId = r.TmdbId,
-                Title = r.Title,
-                PosterUrl = MovieMapper.BuildPosterUrl(r.PosterPath, imageConfig.SecureBaseUrl),
-                BackdropUrl = MovieMapper.BuildBackdropUrl(
-                    r.BackdropPath,
-                    imageConfig.SecureBaseUrl
-                ),
-                ReleaseDate = r.ReleaseDate?.ToString("yyyy-MM-dd"),
-                VoteAverage = r.VoteAverage,
-                IsFavorite = r.IsFavorite,
-                IsInWatchlist = r.IsInWatchlist,
-                CreatedAt = r.CreatedAt,
-                UpdatedAt = r.UpdatedAt,
+                tvInfo.TryGetValue(r.MediaId, out var info);
+                return new UserMovieWithMovieDto
+                {
+                    Id = r.MediaId,
+                    TmdbId = r.TmdbId,
+                    MediaType = r.MediaType,
+                    Title = r.Title,
+                    PosterUrl = MovieMapper.BuildPosterUrl(r.PosterPath, imageConfig.SecureBaseUrl),
+                    BackdropUrl = MovieMapper.BuildBackdropUrl(
+                        r.BackdropPath,
+                        imageConfig.SecureBaseUrl
+                    ),
+                    ReleaseDate = r.ReleaseDate?.ToString("yyyy-MM-dd"),
+                    VoteAverage = r.VoteAverage,
+                    SeriesTmdbId = r.MediaType == MediaType.TvSeries ? r.TmdbId : info?.SeriesTmdbId,
+                    SeriesTitle = r.MediaType == MediaType.TvSeries ? r.Title : info?.SeriesTitle,
+                    SeasonNumber = r.MediaType == MediaType.TvSeries ? null : info?.SeasonNumber,
+                    EpisodeNumber = info?.EpisodeNumber,
+                    IsFavorite = r.IsFavorite,
+                    IsInWatchlist = r.IsInWatchlist,
+                    CreatedAt = r.CreatedAt,
+                    UpdatedAt = r.UpdatedAt,
+                };
             })
             .ToList();
 
@@ -315,5 +332,47 @@ public class UserMovieService : IUserMovieService
             CreatedAt = DateTime.MinValue,
             UpdatedAt = DateTime.MinValue,
         };
+    }
+
+    private async Task<Dictionary<Guid, TvMediaInfoDto>> BuildTvMediaInfoAsync(
+        List<Guid> mediaIds
+    )
+    {
+        if (mediaIds.Count == 0)
+            return [];
+
+        var rows = await _db
+            .Media.Where(m => mediaIds.Contains(m.Id))
+            .Select(m => new TvMediaInfoDto
+            {
+                MediaId = m.Id,
+                SeriesTmdbId =
+                    m.MediaType == MediaType.TvSeason
+                        ? ((TvSeason)m).Series!.TmdbId
+                        : ((TvEpisode)m).Season!.Series!.TmdbId,
+                SeriesTitle =
+                    m.MediaType == MediaType.TvSeason
+                        ? ((TvSeason)m).Series!.Title
+                        : ((TvEpisode)m).Season!.Series!.Title,
+                SeasonNumber =
+                    m.MediaType == MediaType.TvSeason
+                        ? ((TvSeason)m).SeasonNumber
+                        : ((TvEpisode)m).SeasonNumber,
+                EpisodeNumber = m.MediaType == MediaType.TvEpisode
+                    ? ((TvEpisode)m).EpisodeNumber
+                    : (int?)null,
+            })
+            .ToDictionaryAsync(x => x.MediaId);
+
+        return rows;
+    }
+
+    private sealed record TvMediaInfoDto
+    {
+        public Guid MediaId { get; init; }
+        public int SeriesTmdbId { get; init; }
+        public string? SeriesTitle { get; init; }
+        public int SeasonNumber { get; init; }
+        public int? EpisodeNumber { get; init; }
     }
 }

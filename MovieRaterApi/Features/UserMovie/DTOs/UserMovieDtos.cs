@@ -1,3 +1,5 @@
+using MovieRaterApi.Data.Entities;
+
 namespace MovieRaterApi.Features.UserMovie.DTOs;
 
 public class UserMovieResponseDto
@@ -22,11 +24,16 @@ public class UserMovieWithMovieDto
 {
     public Guid Id { get; set; }
     public int TmdbId { get; set; }
+    public MediaType MediaType { get; set; }
     public string Title { get; set; } = string.Empty;
     public string? PosterUrl { get; set; }
     public string? BackdropUrl { get; set; }
     public string? ReleaseDate { get; set; }
     public double VoteAverage { get; set; }
+    public int? SeriesTmdbId { get; set; }
+    public string? SeriesTitle { get; set; }
+    public int? SeasonNumber { get; set; }
+    public int? EpisodeNumber { get; set; }
     public bool IsFavorite { get; set; }
     public bool IsInWatchlist { get; set; }
     public DateTime CreatedAt { get; set; }

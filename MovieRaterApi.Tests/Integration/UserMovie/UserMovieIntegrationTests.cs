@@ -199,6 +199,108 @@ public class UserMovieIntegrationTests : IAsyncLifetime
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
     }
 
+    [Fact]
+    public async Task GetUserMovies_ShouldIncludeTvMediaWithSeriesInfo()
+    {
+        var (token, seasonId, episodeId) = await SeedTvAsync("favtv");
+
+        _client.DefaultRequestHeaders.Authorization =
+            new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+
+        var favResponse = await _client.PostAsync($"/api/user-movies/{episodeId}/favorite", null);
+        favResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+
+        var wlResponse = await _client.PostAsync($"/api/user-movies/{seasonId}/watchlist", null);
+        wlResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+
+        var favoritesResponse = await _client.GetAsync("/api/user-movies?favoritesOnly=true");
+        favoritesResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        var favorites = await favoritesResponse.Content.ReadFromJsonAsync<PagedUserMoviesResponseDto>();
+        var episodeItem = favorites!.Results.Single(r => r.Id == episodeId);
+        episodeItem.MediaType.Should().Be(MediaType.TvEpisode);
+        episodeItem.SeriesTmdbId.Should().NotBeNull();
+        episodeItem.SeriesTitle.Should().Be("Test Series");
+        episodeItem.SeasonNumber.Should().Be(1);
+        episodeItem.EpisodeNumber.Should().Be(3);
+
+        var watchlistResponse = await _client.GetAsync("/api/user-movies?watchlistOnly=true");
+        watchlistResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        var watchlist = await watchlistResponse.Content.ReadFromJsonAsync<PagedUserMoviesResponseDto>();
+        var seasonItem = watchlist!.Results.Single(r => r.Id == seasonId);
+        seasonItem.MediaType.Should().Be(MediaType.TvSeason);
+        seasonItem.SeriesTmdbId.Should().NotBeNull();
+        seasonItem.SeriesTitle.Should().Be("Test Series");
+        seasonItem.SeasonNumber.Should().Be(1);
+        seasonItem.EpisodeNumber.Should().BeNull();
+    }
+
+    private async Task<(string token, Guid seasonId, Guid episodeId)> SeedTvAsync(
+        string username
+    )
+    {
+        var registerResponse = await _client.PostAsJsonAsync(
+            "/api/auth/register",
+            new RegisterRequestDto
+            {
+                Username = username,
+                Email = $"{username}@test.com",
+                Password = "Password123!",
+            }
+        );
+        registerResponse.EnsureSuccessStatusCode();
+
+        var loginResponse = await _client.PostAsJsonAsync(
+            "/api/auth/login",
+            new LoginRequestDto { Email = $"{username}@test.com", Password = "Password123!" }
+        );
+        loginResponse.EnsureSuccessStatusCode();
+        var loginResult = await loginResponse.Content.ReadFromJsonAsync<AuthResponseDto>();
+
+        var seriesId = Guid.NewGuid();
+        var seasonId = Guid.NewGuid();
+        var episodeId = Guid.NewGuid();
+        var seriesTmdbId = new Random().Next(100000, 999999);
+
+        _db.TvSeries.Add(
+            new TvSeries
+            {
+                Id = seriesId,
+                TmdbId = seriesTmdbId,
+                Title = "Test Series",
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow,
+            }
+        );
+        _db.TvSeasons.Add(
+            new TvSeason
+            {
+                Id = seasonId,
+                SeriesId = seriesId,
+                TmdbId = seriesTmdbId + 1,
+                SeasonNumber = 1,
+                Title = "Season 1",
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow,
+            }
+        );
+        _db.TvEpisodes.Add(
+            new TvEpisode
+            {
+                Id = episodeId,
+                SeasonId = seasonId,
+                TmdbId = seriesTmdbId + 2,
+                SeasonNumber = 1,
+                EpisodeNumber = 3,
+                Title = "Test Episode",
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow,
+            }
+        );
+        await _db.SaveChangesAsync();
+
+        return (loginResult!.AccessToken, seasonId, episodeId);
+    }
+
     private async Task<(string token, Guid movieId)> SeedMovieAsync(string username)
     {
         var registerResponse = await _client.PostAsJsonAsync(
