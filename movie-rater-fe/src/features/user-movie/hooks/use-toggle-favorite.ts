@@ -33,6 +33,7 @@ export function useToggleFavorite() {
       queryClient.invalidateQueries({ queryKey: ['user-movie', movieId] })
       queryClient.invalidateQueries({ queryKey: ['user-movies'] })
       queryClient.invalidateQueries({ queryKey: ['movies'] })
+      queryClient.invalidateQueries({ queryKey: ['tv'] })
     },
     onError: (_, { movieId, value }) => {
       toggle(movieId, !value)

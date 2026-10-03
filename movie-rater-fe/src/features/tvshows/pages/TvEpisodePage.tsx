@@ -1,10 +1,18 @@
 import { useParams, Link } from 'react-router'
+import { useState } from 'react'
 import { motion } from 'framer-motion'
-import { ArrowLeft, Calendar, Clock, Star } from 'lucide-react'
+import { ArrowLeft, Calendar, Clock, Star, Eye, Heart, Bookmark } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
 import { Skeleton } from '@/components/ui/skeleton'
+import { Button } from '@/components/ui/button'
+import { CreateWatchSessionDialog } from '../../movies/components/CreateWatchSessionDialog'
+import { RateMovieDialog } from '../../movies/components/RateMovieDialog'
+import { useToggleFavorite } from '../../user-movie/hooks/use-toggle-favorite'
+import { useToggleWatchlist } from '../../user-movie/hooks/use-toggle-watchlist'
+import { useUserMovieStore } from '../../../stores/user-movie-store'
 import { useTvEpisode } from '../hooks/use-tv'
+import { cn } from '@/lib/utils'
 
 export function TvEpisodePage() {
   const { tmdbId, seasonNumber, episodeNumber } = useParams<{
@@ -20,6 +28,13 @@ export function TvEpisodePage() {
     seasonNumberValue,
     episodeNumberValue,
   )
+  const toggleFavorite = useToggleFavorite()
+  const toggleWatchlist = useToggleWatchlist()
+  const favoriteIds = useUserMovieStore((s) => s.favoriteIds)
+  const watchlistIds = useUserMovieStore((s) => s.watchlistIds)
+  const [wsDialogOpen, setWsDialogOpen] = useState(false)
+  const [rateDialogOpen, setRateDialogOpen] = useState(false)
+  const [rateSessionId, setRateSessionId] = useState<string | null>(null)
 
   if (isLoading) {
     return (
@@ -39,6 +54,9 @@ export function TvEpisodePage() {
       </div>
     )
   }
+
+  const isFavorite = episode.isFavorite || favoriteIds.has(episode.id)
+  const isInWatchlist = episode.isInWatchlist || watchlistIds.has(episode.id)
 
   return (
     <div className="min-h-dvh bg-background">
@@ -118,8 +136,56 @@ export function TvEpisodePage() {
                 </div>
               </>
             )}
+
+            <div className="flex flex-wrap gap-2">
+              <Button
+                size="sm"
+                onClick={() => setWsDialogOpen(true)}
+              >
+                <Eye className="size-4" />
+                Mark as Watched
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => toggleFavorite.mutate({ movieId: episode.id, value: !isFavorite })}
+              >
+                <Heart className={cn('size-4', isFavorite && 'fill-current text-red-500')} />
+                {isFavorite ? 'Remove from Favorites' : 'Add to Favorites'}
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => toggleWatchlist.mutate({ movieId: episode.id, value: !isInWatchlist })}
+              >
+                <Bookmark className={cn('size-4', isInWatchlist && 'fill-current text-yellow-400')} />
+                {isInWatchlist ? 'Remove from Watchlist' : 'Add to Watchlist'}
+              </Button>
+            </div>
           </div>
         </motion.div>
+
+        <CreateWatchSessionDialog
+          open={wsDialogOpen}
+          onOpenChange={setWsDialogOpen}
+          mediaId={episode.id}
+          title={episode.name}
+          posterUrl={episode.stillUrl}
+          onSuccess={(sessionId) => {
+            setRateSessionId(sessionId)
+            setRateDialogOpen(true)
+          }}
+        />
+        {rateSessionId && (
+          <RateMovieDialog
+            open={rateDialogOpen}
+            onOpenChange={setRateDialogOpen}
+            watchSessionId={rateSessionId}
+            title={episode.name}
+            posterUrl={episode.stillUrl}
+            existingRating={null}
+          />
+        )}
       </div>
     </div>
   )

@@ -8,18 +8,26 @@ import {
   Layers,
   ListVideo,
   Eye,
+  Heart,
+  Bookmark,
 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Separator } from '@/components/ui/separator'
+import { Button } from '@/components/ui/button'
 import { MoviePoster } from '../../movies/components/MoviePoster'
+import { useToggleFavorite } from '../../user-movie/hooks/use-toggle-favorite'
+import { useToggleWatchlist } from '../../user-movie/hooks/use-toggle-watchlist'
 import { useTvShowDetails } from '../hooks/use-tv'
+import { cn } from '@/lib/utils'
 import type { TvSeasonSummaryDto } from '@src/types/tv'
 
 export function TvShowDetailsPage() {
   const { tmdbId } = useParams<{ tmdbId: string }>()
   const tmdbIdNumber = tmdbId ? Number(tmdbId) : null
   const { data: show, isLoading, isError } = useTvShowDetails(tmdbIdNumber)
+  const toggleFavorite = useToggleFavorite()
+  const toggleWatchlist = useToggleWatchlist()
 
   if (isLoading) {
     return (
@@ -116,6 +124,27 @@ export function TvShowDetailsPage() {
                   Watched {show.watchedCount} time{show.watchedCount !== 1 ? 's' : ''}
                 </Badge>
               )}
+            </div>
+
+            <div className="flex flex-wrap gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => toggleFavorite.mutate({ movieId: show.id, value: !show.isFavorite })}
+              >
+                <Heart className={cn('size-4', show.isFavorite && 'fill-current text-red-500')} />
+                {show.isFavorite ? 'Remove from Favorites' : 'Add to Favorites'}
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => toggleWatchlist.mutate({ movieId: show.id, value: !show.isInWatchlist })}
+              >
+                <Bookmark
+                  className={cn('size-4', show.isInWatchlist && 'fill-current text-yellow-400')}
+                />
+                {show.isInWatchlist ? 'Remove from Watchlist' : 'Add to Watchlist'}
+              </Button>
             </div>
 
             <div className="flex flex-wrap items-center gap-4 text-xs text-muted-foreground">
