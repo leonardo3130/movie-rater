@@ -5,6 +5,9 @@ import { ResetPasswordPage } from '../features/authentication/pages/ResetPasswor
 import { ProtectedRoute } from './ProtectedRoute'
 import { MoviesPage } from '../features/movies/pages/MoviesPage'
 import { TvShowsPage } from '../features/tvshows/pages/TvShowsPage'
+import { TvShowDetailsPage } from '../features/tvshows/pages/TvShowDetailsPage'
+import { TvSeasonPage } from '../features/tvshows/pages/TvSeasonPage'
+import { TvEpisodePage } from '../features/tvshows/pages/TvEpisodePage'
 import { AppLayout } from '../features/layout/components/AppLayout'
 import { FavoritesPage } from '../features/user-movie/pages/FavoritesPage'
 import { WatchlistPage } from '../features/user-movie/pages/WatchlistPage'
@@ -58,6 +61,18 @@ export const router = createBrowserRouter([
           {
             path: '/tv',
             element: <TvShowsPage />,
+          },
+          {
+            path: '/tv/:tmdbId',
+            element: <TvShowDetailsPage />,
+          },
+          {
+            path: '/tv/:tmdbId/season/:seasonNumber',
+            element: <TvSeasonPage />,
+          },
+          {
+            path: '/tv/:tmdbId/season/:seasonNumber/episode/:episodeNumber',
+            element: <TvEpisodePage />,
           },
           {
             path: '/lists',
