@@ -4,6 +4,7 @@ using Microsoft.Extensions.Logging;
 using Moq;
 using MovieRaterApi.Data;
 using MovieRaterApi.Data.Entities;
+using MovieRaterApi.Features.UserMovie.DTOs;
 using MovieRaterApi.Features.UserMovie.Services;
 using MovieRaterApi.Infrastructure.Exceptions;
 using MovieRaterApi.Infrastructure.Tmdb;
@@ -220,6 +221,37 @@ public class UserMovieServiceTests
 
         result.IsFavorite.Should().BeFalse();
         result.IsInWatchlist.Should().BeFalse();
+    }
+
+    [Fact]
+    public async Task GetUserMoviesAsync_WhenImagePathsAreMissing_DoesNotCallTmdbConfiguration()
+    {
+        var movieId = SeedMovie();
+        var userId = Guid.NewGuid();
+        _db.UserMedias.Add(
+            new UserMedia
+            {
+                UserId = userId,
+                MediaId = movieId,
+                IsFavorite = true,
+                IsInWatchlist = false,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow,
+            }
+        );
+        _db.SaveChanges();
+        _tmdbMock.Invocations.Clear();
+
+        var result = await _sut.GetUserMoviesAsync(
+            userId,
+            new UserMovieListRequestDto { FavoritesOnly = true }
+        );
+
+        result.Results.Should().HaveCount(1);
+        result.Results[0].Id.Should().Be(movieId);
+        result.Results[0].PosterUrl.Should().BeNull();
+        result.Results[0].BackdropUrl.Should().BeNull();
+        _tmdbMock.Verify(x => x.GetConfigurationAsync(It.IsAny<CancellationToken>()), Times.Never);
     }
 
     private Guid SeedMovie()

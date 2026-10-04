@@ -565,6 +565,10 @@ Never hardcode
 
 Use the Options pattern for configuration classes.
 
+Do not call external TMDB configuration or API endpoints when response data does
+not require them (for example, no poster/backdrop paths); use fallback behavior
+and ensure tests/CI either mock TMDB or rely on fallback paths.
+
 ---
 
 ## Docker
