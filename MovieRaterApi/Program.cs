@@ -28,6 +28,8 @@ using MovieRaterApi.Features.TvShows.Interfaces;
 using MovieRaterApi.Features.TvShows.Services;
 using MovieRaterApi.Features.UserMovie.Interfaces;
 using MovieRaterApi.Features.UserMovie.Services;
+using MovieRaterApi.Features.Users.Interfaces;
+using MovieRaterApi.Features.Users.Services;
 using MovieRaterApi.Features.WatchSessions.Interfaces;
 using MovieRaterApi.Features.WatchSessions.Services;
 using MovieRaterApi.Infrastructure.Email;
@@ -148,6 +150,7 @@ builder.Services.AddScoped<IDashboardService, DashboardService>();
 builder.Services.AddScoped<IGroupService, GroupService>();
 builder.Services.AddScoped<IInvitationService, InvitationService>();
 builder.Services.AddScoped<IMovieListService, MovieListService>();
+builder.Services.AddScoped<IUserSuggestionService, UserSuggestionService>();
 builder.Services.AddMemoryCache();
 
 builder.Services.AddScoped<ICurrentUser>(sp =>
