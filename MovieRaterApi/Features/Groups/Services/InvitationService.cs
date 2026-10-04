@@ -31,10 +31,12 @@ public class InvitationService : IInvitationService
             throw new NotFoundException("Inviter user not found.");
         }
 
-        var invitee = await _db.Users.FirstOrDefaultAsync(u => u.Email == request.InviteeEmail);
+        var invitee = await _db.Users.FirstOrDefaultAsync(u =>
+            u.Username.ToLower() == request.InviteeUsername.ToLower()
+        );
         if (invitee is null)
         {
-            throw new NotFoundException("No user found with this email address.");
+            throw new NotFoundException("No user found with this username.");
         }
 
         if (invitee.Id == inviterUserId)
@@ -53,7 +55,7 @@ public class InvitationService : IInvitationService
         var existingInvitation = await _db.Set<Invitation>()
             .FirstOrDefaultAsync(ci =>
                 ci.InviterUserId == inviterUserId
-                && ci.InviteeEmail == request.InviteeEmail
+                && ci.InviteeEmail == invitee.Email
                 && ci.GroupId == request.GroupId
                 && ci.Status == InvitationStatus.Pending
             );
@@ -70,7 +72,7 @@ public class InvitationService : IInvitationService
             Id = Guid.NewGuid(),
             GroupId = request.GroupId,
             InviterUserId = inviterUserId,
-            InviteeEmail = request.InviteeEmail,
+            InviteeEmail = invitee.Email,
             InviteTokenHash = tokenHash,
             Status = InvitationStatus.Pending,
             ExpiresAt = DateTime.UtcNow.AddDays(7),
@@ -81,10 +83,11 @@ public class InvitationService : IInvitationService
         await _db.SaveChangesAsync();
 
         _logger.LogInformation(
-            "Invitation {InvitationId} created by {InviterUserId} for {InviteeEmail} to join {GroupId}",
+            "Invitation {InvitationId} created by {InviterUserId} for {InviteeUsername} ({InviteeEmail}) to join {GroupId}",
             invitation.Id,
             inviterUserId,
-            request.InviteeEmail,
+            request.InviteeUsername,
+            invitee.Email,
             request.GroupId
         );
 

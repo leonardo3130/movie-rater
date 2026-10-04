@@ -7,6 +7,7 @@ using Microsoft.Extensions.DependencyInjection;
 using MovieRaterApi.Data;
 using MovieRaterApi.Features.Authentication.DTOs;
 using MovieRaterApi.Features.Groups.DTOs;
+using MovieRaterApi.Features.Users.DTOs;
 using Testcontainers.PostgreSql;
 
 namespace MovieRaterApi.Tests.Integration.Invitations;
@@ -137,7 +138,7 @@ public class InvitationsIntegrationTests : IAsyncLifetime
 
         var request = new InvitationRequestDto
         {
-            InviteeEmail = "invitee@example.com",
+            InviteeUsername = "invitee",
             GroupId = group.Id,
         };
         var response = await _client.PostAsJsonAsync("/api/groups/invite", request);
@@ -150,6 +151,44 @@ public class InvitationsIntegrationTests : IAsyncLifetime
     }
 
     [Fact]
+    public async Task SuggestUsernames_ShouldReturnMatchingUsernames_ExcludingCurrentUser()
+    {
+        await RegisterUser("alexandra", "alexandra@example.com", "Password123!");
+        await RegisterUser("alpha", "alpha@example.com", "Password123!");
+        await RegisterUser("alice", "alice@example.com", "Password123!");
+        var current = await RegisterUser("zoey", "zoey@example.com", "Password123!");
+
+        _client.DefaultRequestHeaders.Authorization =
+            new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", current.AccessToken);
+
+        var response = await _client.GetAsync("/api/users/suggest?prefix=al");
+
+        response.EnsureSuccessStatusCode();
+        var result = await response.Content.ReadFromJsonAsync<ICollection<UserSuggestionDto>>();
+
+        result.Should().NotBeNull();
+        result!.Should().HaveCount(3);
+        result.Should().OnlyContain(u => u.Username != "zoey");
+        result!.Select(u => u.Username).Should().BeInAscendingOrder();
+    }
+
+    [Fact]
+    public async Task SuggestUsernames_ShouldReturnEmpty_WhenPrefixDoesNotMatch()
+    {
+        var current = await RegisterUser("zoey", "zoey@example.com", "Password123!");
+
+        _client.DefaultRequestHeaders.Authorization =
+            new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", current.AccessToken);
+
+        var response = await _client.GetAsync("/api/users/suggest?prefix=zzz");
+
+        response.EnsureSuccessStatusCode();
+        var result = await response.Content.ReadFromJsonAsync<ICollection<UserSuggestionDto>>();
+
+        result.Should().BeEmpty();
+    }
+
+    [Fact]
     public async Task InvitePartner_ShouldReturn404_WhenInviteeNotFound()
     {
         var user1 = await RegisterUser("inviter2", "inviter2@example.com", "Password123!");
@@ -157,8 +196,8 @@ public class InvitationsIntegrationTests : IAsyncLifetime
         _client.DefaultRequestHeaders.Authorization =
             new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", user1.AccessToken);
 
-        var request = new InvitationRequestDto { InviteeEmail = "nonexistent@example.com" };
-        var response = await _client.PostAsJsonAsync("/api/auth/invite", request);
+        var request = new InvitationRequestDto { InviteeUsername = "nonexistent" };
+        var response = await _client.PostAsJsonAsync("/api/groups/invite", request);
 
         response.StatusCode.Should().Be(HttpStatusCode.NotFound);
     }

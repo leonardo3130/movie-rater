@@ -328,7 +328,7 @@ public class WatchSessionsIntegrationTests : IAsyncLifetime
 
         var inviteResponse = await _client.PostAsJsonAsync(
             "/api/groups/invite",
-            new InvitationRequestDto { InviteeEmail = $"partner_{email}", GroupId = group.Id }
+            new InvitationRequestDto { InviteeUsername = $"{username}_partner", GroupId = group.Id }
         );
         inviteResponse.EnsureSuccessStatusCode();
         var inviteResult = await inviteResponse.Content.ReadFromJsonAsync<InvitationResponseDto>();

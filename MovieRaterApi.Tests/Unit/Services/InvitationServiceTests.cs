@@ -56,7 +56,7 @@ public class InvitationServiceTests
         var request = new InvitationRequestDto
         {
             GroupId = groupId,
-            InviteeEmail = "user2@example.com",
+            InviteeUsername = "user2",
         };
 
         var result = await _sut.InviteAsync(inviterId, request);
@@ -69,7 +69,7 @@ public class InvitationServiceTests
     [Fact]
     public async Task InviteAsync_ShouldThrow_WhenInviterNotFound()
     {
-        var request = new InvitationRequestDto { InviteeEmail = "partner@example.com" };
+        var request = new InvitationRequestDto { InviteeUsername = "partner" };
 
         await FluentActions
             .Awaiting(() => _sut.InviteAsync(Guid.NewGuid(), request))
@@ -90,13 +90,13 @@ public class InvitationServiceTests
         _db.Users.Add(inviter);
         await _db.SaveChangesAsync();
 
-        var request = new InvitationRequestDto { InviteeEmail = "nonexistent@example.com" };
+        var request = new InvitationRequestDto { InviteeUsername = "nonexistent" };
 
         await FluentActions
             .Awaiting(() => _sut.InviteAsync(inviter.Id, request))
             .Should()
             .ThrowAsync<NotFoundException>()
-            .WithMessage("No user found with this email address.");
+            .WithMessage("No user found with this username.");
     }
 
     [Fact]
@@ -113,7 +113,7 @@ public class InvitationServiceTests
         );
         await _db.SaveChangesAsync();
 
-        var request = new InvitationRequestDto { InviteeEmail = "self@example.com" };
+        var request = new InvitationRequestDto { InviteeUsername = "self" };
 
         await FluentActions
             .Awaiting(() => _sut.InviteAsync(userId, request))
@@ -169,7 +169,7 @@ public class InvitationServiceTests
 
         var request = new InvitationRequestDto
         {
-            InviteeEmail = "user2@example.com",
+            InviteeUsername = "user2",
             GroupId = groupId,
         };
 
@@ -210,7 +210,7 @@ public class InvitationServiceTests
             );
         await _db.SaveChangesAsync();
 
-        var request = new InvitationRequestDto { InviteeEmail = "user2@example.com" };
+        var request = new InvitationRequestDto { InviteeUsername = "user2" };
 
         await FluentActions
             .Awaiting(() => _sut.InviteAsync(inviterId, request))

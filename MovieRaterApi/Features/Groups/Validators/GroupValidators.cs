@@ -7,7 +7,7 @@ public class InvitePartnerRequestValidator : AbstractValidator<InvitationRequest
 {
     public InvitePartnerRequestValidator()
     {
-        RuleFor(x => x.InviteeEmail).NotEmpty().EmailAddress().MaximumLength(255);
+        RuleFor(x => x.InviteeUsername).NotEmpty().MaximumLength(100);
     }
 }
 

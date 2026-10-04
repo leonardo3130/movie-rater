@@ -33,7 +33,7 @@ public class AcceptInvitationResponseDto
 public class InvitationRequestDto
 {
     public Guid GroupId { get; set; }
-    public string InviteeEmail { get; set; } = string.Empty;
+    public string InviteeUsername { get; set; } = string.Empty;
 }
 
 public class AcceptInvitationRequestDto
