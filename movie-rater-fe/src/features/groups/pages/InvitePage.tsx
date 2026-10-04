@@ -24,6 +24,7 @@ import { inviteInGroup } from '@/src/api/endpoints/group'
 import type { ApiError } from '@src/types/auth'
 import { useGroups } from '../hooks/use-groups'
 import { CreateGroupDialog } from '../components/CreateGroupDialog'
+import { UsernameSuggestInput } from '../components/UsernameSuggestInput'
 
 interface InviteResult {
   inviteToken: string
@@ -37,7 +38,6 @@ export function InvitePage() {
   const groups = useGroups();
 
   const {
-    register,
     handleSubmit,
     formState: { errors },
     reset,
@@ -100,23 +100,29 @@ export function InvitePage() {
         <CardHeader>
           <CardTitle>Send invitation</CardTitle>
           <CardDescription>
-            Enter your partner&apos;s email address. They need to have an account first.
+            Enter your partner&apos;s username. They need to have an account first.
           </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="inviteeEmail">Partner&apos;s email</Label>
-              <Input
-                id="inviteeEmail"
-                type="email"
-                placeholder="partner@example.com"
-                autoComplete="email"
-                aria-invalid={!!errors.inviteeEmail}
-                {...register('inviteeEmail')}
+              <Label htmlFor="inviteeUsername">Partner&apos;s username</Label>
+              <Controller
+                name="inviteeUsername"
+                control={control}
+                render={({ field }) => (
+                  <UsernameSuggestInput
+                    id="inviteeUsername"
+                    value={field.value}
+                    onChange={field.onChange}
+                    onBlur={field.onBlur}
+                    placeholder="Start typing a username..."
+                    aria-invalid={!!errors.inviteeUsername}
+                  />
+                )}
               />
-              {errors.inviteeEmail && (
-                <p className="text-xs text-destructive">{errors.inviteeEmail.message}</p>
+              {errors.inviteeUsername && (
+                <p className="text-xs text-destructive">{errors.inviteeUsername.message}</p>
               )}
             </div>
 
@@ -178,7 +184,7 @@ export function InvitePage() {
               <CardTitle className="text-base">Invitation sent!</CardTitle>
             </div>
             <CardDescription>
-              Share this token with your friend s she/he can accept the invitation.
+              Share this token with your partner so they can accept the invitation.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">

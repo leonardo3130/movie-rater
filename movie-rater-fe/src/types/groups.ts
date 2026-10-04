@@ -25,7 +25,13 @@ export interface AcceptInvitationResponseDto {
 
 export interface InvitationRequestDto {
   groupId: string; // Guid
-  inviteeEmail: string;
+  inviteeUsername: string;
+}
+
+export interface UserSuggestionDto {
+  id: string; // Guid
+  username: string;
+  profilePictureUrl?: string | null;
 }
 
 export interface AcceptInvitationRequestDto {
