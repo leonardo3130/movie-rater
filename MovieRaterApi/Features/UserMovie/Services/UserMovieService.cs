@@ -261,7 +261,9 @@ public class UserMovieService : IUserMovieService
                 .ToList()
         );
 
-        var imageConfig = await GetImageConfigAsync();
+        var imageBaseUrl = raw.Any(r => r.PosterPath is not null || r.BackdropPath is not null)
+            ? (await GetImageConfigAsync()).SecureBaseUrl
+            : "https://image.tmdb.org/t/p/";
 
         var items = raw.Select(r =>
             {
@@ -272,11 +274,8 @@ public class UserMovieService : IUserMovieService
                     TmdbId = r.TmdbId,
                     MediaType = r.MediaType,
                     Title = r.Title,
-                    PosterUrl = MovieMapper.BuildPosterUrl(r.PosterPath, imageConfig.SecureBaseUrl),
-                    BackdropUrl = MovieMapper.BuildBackdropUrl(
-                        r.BackdropPath,
-                        imageConfig.SecureBaseUrl
-                    ),
+                    PosterUrl = MovieMapper.BuildPosterUrl(r.PosterPath, imageBaseUrl),
+                    BackdropUrl = MovieMapper.BuildBackdropUrl(r.BackdropPath, imageBaseUrl),
                     ReleaseDate = r.ReleaseDate?.ToString("yyyy-MM-dd"),
                     VoteAverage = r.VoteAverage,
                     SeriesTmdbId = r.MediaType == MediaType.TvSeries ? r.TmdbId : info?.SeriesTmdbId,
