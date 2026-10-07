@@ -128,9 +128,3 @@ docker compose run --rm api dotnet ef database update
 | Database   | PostgreSQL 17         |
 | Logging    | Serilog               |
 | Validation | FluentValidation      |
-| API docs   | Scalar (OpenAPI)      |
-
-# TODO
-
-- password recovery
-- improve invitation system
