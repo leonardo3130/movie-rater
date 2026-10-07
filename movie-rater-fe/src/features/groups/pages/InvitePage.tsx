@@ -138,7 +138,7 @@ export function InvitePage() {
                     return (
                       <div className='space-y-2'>
                         <Label htmlFor="groupId">Group</Label>
-                        <Select value={field.value} onValueChange={field.onChange} >
+                        <Select value={field.value ?? ''} onValueChange={field.onChange} >
                           <SelectTrigger className="w-full max-w-48">
                             {/*displyed value*/}
                             <SelectValue placeholder="Select group" >
