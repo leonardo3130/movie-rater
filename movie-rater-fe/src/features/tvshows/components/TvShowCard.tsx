@@ -29,7 +29,7 @@ export function TvShowCard({ show, index = 0 }: TvShowCardProps) {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3, delay: index * 0.05, ease: 'easeOut' }}
       whileHover={{ y: -4 }}
-      className="group shrink-0 w-[160px]"
+      className="group w-full"
     >
       <Link to={`/tv/${show.tmdbId}`} className="block space-y-2">
         <div className="relative overflow-hidden rounded-lg">
