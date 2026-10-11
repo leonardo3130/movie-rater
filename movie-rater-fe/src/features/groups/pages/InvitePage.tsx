@@ -25,6 +25,7 @@ import type { ApiError } from '@src/types/auth'
 import { useGroups } from '../hooks/use-groups'
 import { CreateGroupDialog } from '../components/CreateGroupDialog'
 import { UsernameSuggestInput } from '../components/UsernameSuggestInput'
+import { useI18n } from '@src/i18n/use-i18n'
 
 interface InviteResult {
   inviteToken: string
@@ -36,6 +37,7 @@ export function InvitePage() {
   const [result, setResult] = useState<InviteResult | null>(null)
   const [openModal, setOpenModal] = useState<boolean>(false);
   const groups = useGroups();
+  const { t, formatDate } = useI18n();
 
   const {
     handleSubmit,
@@ -54,13 +56,15 @@ export function InvitePage() {
         expiresAt: data.expiresAt,
         invitationId: data.invitationId,
       })
-      toast.success('Invitation sent!')
+      toast.success(t('groups.invite.invitationSentToast'))
       reset()
     },
     onError: (error: unknown) => {
       const apiError = error as { response?: { data?: ApiError } }
       const message =
-        apiError?.response?.data?.detail ?? apiError?.response?.data?.title ?? 'Failed to send invitation'
+        apiError?.response?.data?.detail ??
+        apiError?.response?.data?.title ??
+        t('groups.invite.failed')
       toast.error(message)
     },
   })
@@ -73,14 +77,14 @@ export function InvitePage() {
   const copyToken = () => {
     if (result) {
       navigator.clipboard.writeText(result.inviteToken)
-      toast.success('Token copied to clipboard')
+      toast.success(t('groups.invite.tokenCopied'))
     }
   }
 
   const copyLink = () => {
     if (result) {
       navigator.clipboard.writeText(`${window.location.origin}/invite/accept?token=${result.inviteToken}`)
-      toast.success('Link copied to clipboard')
+      toast.success(t('groups.invite.linkCopied'))
     }
   }
 
@@ -89,24 +93,24 @@ export function InvitePage() {
       <div className="space-y-2">
         <h1 className="text-2xl font-bold flex items-center gap-3">
           <UserPlus className="size-6 text-primary" />
-          Invite your partner
+          {t('groups.invite.title')}
         </h1>
         <p className="text-muted-foreground">
-          Send an invitation to your partner so you can start tracking movies together.
+          {t('groups.invite.description')}
         </p>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle>Send invitation</CardTitle>
+          <CardTitle>{t('groups.invite.sendTitle')}</CardTitle>
           <CardDescription>
-            Enter your partner&apos;s username. They need to have an account first.
+            {t('groups.invite.sendDescription')}
           </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="inviteeUsername">Partner&apos;s username</Label>
+              <Label htmlFor="inviteeUsername">{t('groups.invite.partnerUsername')}</Label>
               <Controller
                 name="inviteeUsername"
                 control={control}
@@ -116,7 +120,7 @@ export function InvitePage() {
                     value={field.value}
                     onChange={field.onChange}
                     onBlur={field.onBlur}
-                    placeholder="Start typing a username..."
+                    placeholder={t('groups.invite.usernamePlaceholder')}
                     aria-invalid={!!errors.inviteeUsername}
                   />
                 )}
@@ -137,17 +141,17 @@ export function InvitePage() {
                     );
                     return (
                       <div className='space-y-2'>
-                        <Label htmlFor="groupId">Group</Label>
+                        <Label htmlFor="groupId">{t('common.group')}</Label>
                         <Select value={field.value ?? ''} onValueChange={field.onChange} >
                           <SelectTrigger className="w-full max-w-48">
                             {/*displyed value*/}
-                            <SelectValue placeholder="Select group" >
+                            <SelectValue placeholder={t('common.selectGroup')} >
                               {selectedGroup?.name}
                             </SelectValue>
                           </SelectTrigger>
                           <SelectContent>
                             <SelectGroup>
-                              <SelectLabel>Groups</SelectLabel>
+                              <SelectLabel>{t('common.groups')}</SelectLabel>
                               {!(groups.isPending || groups.isLoading) && groups.data && groups.data.map(g =>
                                 <SelectItem key={g.id} value={g.id}>{g.name}</SelectItem>)}
                             </SelectGroup>
@@ -163,12 +167,12 @@ export function InvitePage() {
               </div>
               <Button className="cursor-pointer" onClick={() => setOpenModal(true)}>
                 <Plus className="w-5 h-5" />
-                Add group
+                {t('groups.invite.addGroup')}
               </Button>
             </div>
             <Button type="submit" className="w-full" disabled={mutation.isPending}>
               {mutation.isPending && <Loader2 className="size-4 animate-spin" />}
-              Send invitation
+              {t('groups.invite.send')}
             </Button>
           </form>
         </CardContent>
@@ -181,41 +185,41 @@ export function InvitePage() {
           <CardHeader>
             <div className="flex items-center gap-2">
               <CheckCircle2 className="size-5 text-green-500" />
-              <CardTitle className="text-base">Invitation sent!</CardTitle>
+              <CardTitle className="text-base">{t('groups.invite.sentTitle')}</CardTitle>
             </div>
             <CardDescription>
-              Share this token with your partner so they can accept the invitation.
+              {t('groups.invite.sentDescription')}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label>Invitation token</Label>
+              <Label>{t('groups.invite.tokenLabel')}</Label>
               <div className="flex gap-2">
                 <Input
                   readOnly
                   value={result.inviteToken}
                   className="font-mono text-xs"
                 />
-                <Button variant="outline" size="icon" onClick={copyToken} title="Copy token">
+                <Button variant="outline" size="icon" onClick={copyToken} title={t('groups.invite.copyToken')}>
                   <Copy className="size-4" />
                 </Button>
               </div>
             </div>
 
             <div className="text-xs text-muted-foreground space-y-1">
-              <p>Expires: {new Date(result.expiresAt).toLocaleDateString()}</p>
+              <p>{t('groups.invite.expires', { date: formatDate(result.expiresAt) })}</p>
             </div>
 
             <div className="rounded-lg bg-muted p-3 text-sm text-muted-foreground">
               <p className="font-medium mb-1 flex items-center gap-1">
                 <ExternalLink className="size-3.5" />
-                Your partner can accept by visiting:
+                {t('groups.invite.acceptByVisiting')}
               </p>
               <div className="flex gap-2 mt-1">
                 <code className="flex-1 text-xs bg-background rounded px-2 py-1 break-all">
                   {window.location.origin}/invite/accept?token={result.inviteToken}
                 </code>
-                <Button variant="outline" size="icon" onClick={copyLink} title="Copy link" className="shrink-0">
+                <Button variant="outline" size="icon" onClick={copyLink} title={t('groups.invite.copyLink')} className="shrink-0">
                   <Copy className="size-4" />
                 </Button>
               </div>

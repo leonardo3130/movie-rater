@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button'
 import { acceptInvitation } from '../../../api/endpoints/group.ts'
 import type { ApiError } from '@src/types/auth'
 import { useGroupsStore } from '@/src/stores/groups-store.ts'
+import { t } from '@src/stores/locale-store'
 
 type AcceptState =
   'loading' | 'success' | 'error'
@@ -27,7 +28,7 @@ export function AcceptInvitePage() {
     mutationFn: acceptInvitation,
     onSuccess: (response) => {
       setState('success')
-      toast.success('You hane now joined the group !')
+      toast.success(t('groups.accept.joinedToast'))
       queryClient.invalidateQueries({ queryKey: ['user-groups'] })
       setCurrentGroup(response.groupId);
       setTimeout(() => navigate('/dashboard', { replace: true }), 2000)
@@ -38,7 +39,7 @@ export function AcceptInvitePage() {
       const message =
         apiError?.response?.data?.detail ??
         apiError?.response?.data?.title ??
-        'Failed to accept invitation'
+        t('groups.accept.failedDefault')
       setErrorMessage(message)
       toast.error(message)
     },
@@ -49,7 +50,7 @@ export function AcceptInvitePage() {
   useEffect(() => {
     if (!token) {
       setState('error')
-      setErrorMessage('No invitation token provided.')
+      setErrorMessage(t('groups.accept.noToken'))
       return
     }
 
@@ -80,13 +81,13 @@ export function AcceptInvitePage() {
           )}
 
           <CardTitle>
-            {state === 'loading' && 'Accepting invitation...'}
-            {state === 'success' && 'Connected!'}
-            {state === 'error' && 'Invitation failed'}
+            {state === 'loading' && t('groups.accept.acceptingTitle')}
+            {state === 'success' && t('groups.accept.successTitle')}
+            {state === 'error' && t('groups.accept.errorTitle')}
           </CardTitle>
           <CardDescription>
-            {state === 'loading' && 'Please wait while we process your invitation.'}
-            {state === 'success' && 'You and your partner are now connected. Redirecting...'}
+            {state === 'loading' && t('groups.accept.acceptingDescription')}
+            {state === 'success' && t('groups.accept.successDescription')}
             {state === 'error' && errorMessage}
           </CardDescription>
         </CardHeader>
@@ -94,10 +95,10 @@ export function AcceptInvitePage() {
           {state === 'error' && (
             <div className="flex gap-3">
               <Button variant="outline" onClick={() => navigate('/dashboard')}>
-                Go to Dashboard
+                {t('groups.accept.goToDashboard')}
               </Button>
               <Button onClick={() => navigate('/invite')}>
-                Create new invitation
+                {t('groups.accept.createNewInvitation')}
               </Button>
             </div>
           )}

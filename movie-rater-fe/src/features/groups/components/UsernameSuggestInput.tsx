@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input'
 import { cn } from '@/lib/utils'
 import type { UserSuggestionDto } from '@/src/types/groups'
 import { useUsernameSuggestions } from '../hooks/use-username-suggestions'
+import { useI18n } from '@src/i18n/use-i18n'
 
 interface UsernameSuggestInputProps {
   id?: string
@@ -29,6 +30,7 @@ export function UsernameSuggestInput({
   const [open, setOpen] = useState(false)
   const [highlighted, setHighlighted] = useState(0)
   const inputRef = useRef<HTMLInputElement>(null)
+  const { t } = useI18n()
 
   const { data, isPending, isFetching } = useUsernameSuggestions(value)
   const isLoading = isPending || isFetching
@@ -87,10 +89,10 @@ export function UsernameSuggestInput({
           {isLoading ? (
             <div className="flex items-center gap-2 px-2.5 py-2 text-sm text-muted-foreground">
               <Loader2 className="size-3.5 animate-spin" />
-              Searching users...
+              {t('groups.usernameSuggest.searching')}
             </div>
           ) : !data || data.length === 0 ? (
-            <p className="px-2.5 py-2 text-sm text-muted-foreground">No users found</p>
+            <p className="px-2.5 py-2 text-sm text-muted-foreground">{t('groups.usernameSuggest.noUsersFound')}</p>
           ) : (
             <ul className="max-h-56 overflow-y-auto">
               {data.map((suggestion, index) => (

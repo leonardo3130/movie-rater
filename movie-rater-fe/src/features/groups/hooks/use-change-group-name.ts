@@ -6,6 +6,7 @@ import {
 import type { CreateGroupRequest } from "@/src/types/groups";
 import { toast } from "sonner";
 import { useGroupsStore } from "@/src/stores/groups-store";
+import { t } from "@src/stores/locale-store";
 
 export function useCreateGroup() {
   const updateGroupName = useGroupsStore(s => s.changeName);
@@ -14,10 +15,10 @@ export function useCreateGroup() {
     mutationFn: ({ gid, request }: { gid: string, request: CreateGroupRequest }) => changeGroupName(gid, request),
     onSuccess: (data, variables) => {
       updateGroupName(variables.gid, data);
-      toast.success(`Group name changed to ${data.name} successfully`);
+      toast.success(t('groups.toast.groupRenamed', { name: data.name }));
     },
     onError: () => {
-      toast.error("Error while changing group name")
+      toast.error(t('groups.toast.renameFailed'))
     }
   });
 }

@@ -5,6 +5,7 @@ import {
 import type { CreateGroupRequest } from "@/src/types/groups";
 import { toast } from "sonner";
 import { useGroupsStore } from "@/src/stores/groups-store";
+import { t } from "@src/stores/locale-store";
 
 export function useCreateGroup() {
   const addGroupToStore = useGroupsStore(s => s.createGroup);
@@ -13,10 +14,10 @@ export function useCreateGroup() {
     mutationFn: (request: CreateGroupRequest) => createGroup(request),
     onSuccess: (data) => {
       addGroupToStore(data);
-      toast.success(`Group ${data.name} created successfully`);
+      toast.success(t('groups.toast.groupCreated', { name: data.name }));
     },
-    onError: (error) => {
-      toast.error(error.message)
+    onError: () => {
+      toast.error(t('groups.toast.createFailed'))
     }
   });
 }

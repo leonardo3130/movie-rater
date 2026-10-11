@@ -4,6 +4,7 @@ import {
 } from "@src/api/endpoints/group.ts"
 import { toast } from "sonner";
 import { useGroupsStore } from "@/src/stores/groups-store";
+import { t } from "@src/stores/locale-store";
 
 export function useCreateGroup() {
   const removeGroup = useGroupsStore(s => s.deleteGroup);
@@ -12,10 +13,10 @@ export function useCreateGroup() {
     mutationFn: (gid: string) => deleteGroup(gid),
     onSuccess: (_data, gid) => {
       removeGroup(gid);
-      toast.success(`Group deleted successfully`);
+      toast.success(t('groups.toast.groupDeleted'));
     },
     onError: () => {
-      toast.error("Error while changing group name")
+      toast.error(t('groups.toast.renameFailed'))
     }
   });
 }

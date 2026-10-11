@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { useGroupsStore } from "@/src/stores/groups-store";
 import { useQueryClient } from "@tanstack/react-query";
+import { useI18n } from '@src/i18n/use-i18n';
 
 interface CreateGroupDialogProps {
   open: boolean
@@ -20,6 +21,7 @@ export function CreateGroupDialog({ open, onOpenChange, onSuccess }: CreateGroup
   const createGroup = useCreateGroup();
   const addGroup = useGroupsStore(s => s.createGroup);
   const queryClient = useQueryClient();
+  const { t } = useI18n();
 
   const {
     register,
@@ -51,16 +53,16 @@ export function CreateGroupDialog({ open, onOpenChange, onSuccess }: CreateGroup
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md max-h-[30vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Create Group</DialogTitle>
+          <DialogTitle>{t('groups.createDialog.title')}</DialogTitle>
           <DialogDescription>
-            Create a new group for your friends !
+            {t('groups.createDialog.description')}
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="watchedAt" className="flex items-center gap-1.5">
               <Mail className="size-3.5 text-muted-foreground" />
-              Group Name
+              {t('groups.createDialog.groupName')}
             </Label>
             <Input
               id="watchedAt"
@@ -81,12 +83,12 @@ export function CreateGroupDialog({ open, onOpenChange, onSuccess }: CreateGroup
               onClick={() => onOpenChange(false)}
               disabled={pending}
             >
-              Cancel
+              {t('common.cancel')}
             </Button>
             <Button type="submit" size="sm" disabled={pending}>
               {pending && <Loader2 className="size-4 animate-spin" />}
               <Plus className="size-4" />
-              Create group
+              {t('groups.createDialog.create')}
             </Button>
           </div>
         </form>
