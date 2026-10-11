@@ -7,9 +7,11 @@ const COMMON_PATTERNS = [
 
 const SEQUENCES = 'abcdefghijklmnopqrstuvwxyz0123456789'
 
+export type PasswordStrengthLabel = 'weak' | 'fair' | 'good' | 'strong'
+
 export interface PasswordScore {
   score: 0 | 1 | 2 | 3 | 4
-  label: string
+  label: PasswordStrengthLabel
   color: string
 }
 
@@ -27,7 +29,7 @@ function hasRepeatingChars(password: string): boolean {
 }
 
 export function scorePassword(password: string): PasswordScore {
-  if (!password) return { score: 0, label: '', color: '' }
+  if (!password) return { score: 0, label: 'weak', color: '' }
 
   let score = 0
 
@@ -46,12 +48,12 @@ export function scorePassword(password: string): PasswordScore {
 
   const clamped = Math.max(0, Math.min(4, score)) as 0 | 1 | 2 | 3 | 4
 
-  const LABELS: Record<number, string> = {
-    0: 'Weak',
-    1: 'Weak',
-    2: 'Fair',
-    3: 'Good',
-    4: 'Strong',
+  const LABELS: Record<number, PasswordStrengthLabel> = {
+    0: 'weak',
+    1: 'weak',
+    2: 'fair',
+    3: 'good',
+    4: 'strong',
   }
 
   const COLORS: Record<number, string> = {

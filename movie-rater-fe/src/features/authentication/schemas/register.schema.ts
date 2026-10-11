@@ -1,24 +1,26 @@
 import { z } from 'zod'
+import { t } from '@src/stores/locale-store'
 
 export const registerSchema = z
   .object({
     username: z
       .string()
-      .min(1, 'Username is required')
-      .max(100, 'Username must be at most 100 characters'),
-    email:
-      z
-        .email("Email is not valid")
-        .min(1, 'Email is required')
-        .max(255, 'Email must be at most 255 characters'),
+      .min(1, { error: () => t('validation.usernameRequired') })
+      .max(100, { error: () => t('validation.usernameMax') }),
+    email: z
+      .email({ error: () => t('validation.invalidEmail') })
+      .min(1, { error: () => t('validation.emailRequired') })
+      .max(255, { error: () => t('validation.emailMax') }),
     password: z
       .string()
-      .min(8, 'Password must be at least 8 characters')
-      .max(100, 'Password must be at most 100 characters'),
-    confirmPassword: z.string().min(1, 'Please confirm your password'),
+      .min(8, { error: () => t('validation.passwordMin') })
+      .max(100, { error: () => t('validation.passwordMax') }),
+    confirmPassword: z
+      .string()
+      .min(1, { error: () => t('validation.confirmPasswordRequired') }),
   })
   .refine((data) => data.password === data.confirmPassword, {
-    message: 'Passwords do not match',
+    error: () => t('validation.passwordsMismatch'),
     path: ['confirmPassword'],
   })
 

@@ -14,10 +14,12 @@ import { PasswordStrengthMeter } from '../components/PasswordStrengthMeter'
 import { registerSchema, type RegisterFormValues } from '../schemas/register.schema'
 import { register as registerApi } from '../../../api/endpoints/auth'
 import { useAuthStore } from '../../../stores/auth-store'
+import { useI18n } from '@src/i18n'
 
 export function RegisterPage() {
   const navigate = useNavigate()
   const setAuth = useAuthStore((s) => s.setAuth)
+  const { t } = useI18n()
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirm, setShowConfirm] = useState(false)
 
@@ -43,32 +45,35 @@ export function RegisterPage() {
       const serverErrors = err?.response?.data?.errors
       if (serverErrors) {
         const messages = Object.values(serverErrors).flat().join('. ')
-        toast.error(messages || 'Registration failed')
+        toast.error(messages || t('auth.register.registrationFailed'))
       } else {
-        toast.error('Registration failed. Please try again.')
+        toast.error(t('auth.register.registrationFailedGeneric'))
       }
     },
   })
 
   const onSubmit = (values: RegisterFormValues) => {
-    const { confirmPassword: _, ...body } = values
-    mutation.mutate(body)
+    mutation.mutate({
+      username: values.username,
+      email: values.email,
+      password: values.password,
+    })
   }
 
   const pending = isSubmitting || mutation.isPending
 
   return (
     <AuthLayout
-      title="Create an account"
-      subtitle="Start tracking your movie nights together"
+      title={t('auth.register.title')}
+      subtitle={t('auth.register.subtitle')}
     >
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         <div className="space-y-2">
-          <Label htmlFor="username">Username</Label>
+          <Label htmlFor="username">{t('auth.register.username')}</Label>
           <Input
             id="username"
             type="text"
-            placeholder="yourname"
+            placeholder={t('auth.register.usernamePlaceholder')}
             autoComplete="username"
             aria-invalid={!!errors.username}
             {...register('username')}
@@ -79,11 +84,11 @@ export function RegisterPage() {
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="email">Email</Label>
+          <Label htmlFor="email">{t('auth.email')}</Label>
           <Input
             id="email"
             type="email"
-            placeholder="you@example.com"
+            placeholder={t('auth.emailPlaceholder')}
             autoComplete="email"
             aria-invalid={!!errors.email}
             {...register('email')}
@@ -94,12 +99,12 @@ export function RegisterPage() {
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="password">Password</Label>
+          <Label htmlFor="password">{t('auth.password')}</Label>
           <div className="relative">
             <Input
               id="password"
               type={showPassword ? 'text' : 'password'}
-              placeholder="At least 8 characters"
+              placeholder={t('auth.minCharsPlaceholder')}
               autoComplete="new-password"
               aria-invalid={!!errors.password}
               className="pr-10"
@@ -121,12 +126,12 @@ export function RegisterPage() {
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="confirmPassword">Confirm password</Label>
+          <Label htmlFor="confirmPassword">{t('auth.confirmPassword')}</Label>
           <div className="relative">
             <Input
               id="confirmPassword"
               type={showConfirm ? 'text' : 'password'}
-              placeholder="Repeat your password"
+              placeholder={t('auth.repeatPasswordPlaceholder')}
               autoComplete="new-password"
               aria-invalid={!!errors.confirmPassword}
               className="pr-10"
@@ -148,17 +153,17 @@ export function RegisterPage() {
 
         <Button type="submit" className="w-full" disabled={pending}>
           {pending && <Loader2 className="size-4 animate-spin" />}
-          Create account
+          {t('auth.register.createAccount')}
         </Button>
       </form>
 
       <p className="text-center text-sm text-muted-foreground">
-        Already have an account?{' '}
+        {t('auth.register.alreadyHaveAccount')}{' '}
         <Link
           to="/login"
           className="font-medium text-primary underline-offset-4 hover:underline"
         >
-          Sign in
+          {t('auth.signIn')}
         </Link>
       </p>
     </AuthLayout>

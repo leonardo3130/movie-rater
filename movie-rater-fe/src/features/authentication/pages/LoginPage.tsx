@@ -13,10 +13,12 @@ import { AuthLayout } from '../components/AuthLayout'
 import { loginSchema, type LoginFormValues } from '../schemas/login.schema'
 import { login as loginApi, forgotPassword as forgotPasswordApi } from '../../../api/endpoints/auth'
 import { useAuthStore } from '../../../stores/auth-store'
+import { useI18n } from '@src/i18n'
 
 export function LoginPage() {
   const navigate = useNavigate()
   const setAuth = useAuthStore((s) => s.setAuth)
+  const { t } = useI18n()
   const [showPassword, setShowPassword] = useState(false)
 
   const {
@@ -35,17 +37,17 @@ export function LoginPage() {
       navigate('/dashboard', { replace: true })
     },
     onError: () => {
-      toast.error('Invalid email or password')
+      toast.error(t('auth.login.invalidCredentials'))
     },
   })
 
   const forgotPasswordMutation = useMutation({
     mutationFn: forgotPasswordApi,
     onSuccess: () => {
-      toast.success("If an account with that email exists, you'll receive a password reset link.")
+      toast.success(t('auth.login.resetLinkSent'))
     },
     onError: () => {
-      toast.error('Something went wrong sending the reset link. Please try again.')
+      toast.error(t('auth.login.resetLinkFailed'))
     },
   })
 
@@ -58,7 +60,7 @@ export function LoginPage() {
   const onForgotPassword = () => {
     const email = watch('email')
     if (!email || email.trim() === '') {
-      toast.error('Enter your email address first to receive a reset link')
+      toast.error(t('auth.login.enterEmailFirst'))
       return
     }
     forgotPasswordMutation.mutate({ email })
@@ -66,16 +68,16 @@ export function LoginPage() {
 
   return (
     <AuthLayout
-      title="Welcome back"
-      subtitle="Sign in to continue tracking your movies"
+      title={t('auth.login.title')}
+      subtitle={t('auth.login.subtitle')}
     >
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         <div className="space-y-2">
-          <Label htmlFor="email">Email</Label>
+          <Label htmlFor="email">{t('auth.email')}</Label>
           <Input
             id="email"
             type="email"
-            placeholder="you@example.com"
+            placeholder={t('auth.emailPlaceholder')}
             autoComplete="email"
             aria-invalid={!!errors.email}
             {...register('email')}
@@ -86,12 +88,12 @@ export function LoginPage() {
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="password">Password</Label>
+          <Label htmlFor="password">{t('auth.password')}</Label>
           <div className="relative">
             <Input
               id="password"
               type={showPassword ? 'text' : 'password'}
-              placeholder="Enter your password"
+              placeholder={t('auth.passwordPlaceholder')}
               autoComplete="current-password"
               aria-invalid={!!errors.password}
               className="pr-10"
@@ -118,23 +120,23 @@ export function LoginPage() {
             disabled={forgotPasswordMutation.isPending}
           >
             {forgotPasswordMutation.isPending && <Loader2 className="size-3 animate-spin" />}
-            Forgot password?
+            {t('auth.login.forgotPassword')}
           </Button>
         </div>
 
         <Button type="submit" className="w-full" disabled={pending}>
           {pending && <Loader2 className="size-4 animate-spin" />}
-          Sign in
+          {t('auth.signIn')}
         </Button>
       </form>
 
       <p className="text-center text-sm text-muted-foreground">
-        Don&apos;t have an account?{' '}
+        {t('auth.login.noAccount')}{' '}
         <Link
           to="/register"
           className="font-medium text-primary underline-offset-4 hover:underline"
         >
-          Create one
+          {t('auth.login.createOne')}
         </Link>
       </p>
     </AuthLayout>

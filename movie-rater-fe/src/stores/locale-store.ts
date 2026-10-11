@@ -1,6 +1,6 @@
 import { create } from 'zustand'
-import { APP_LOCALES } from '@src/i18n/lib'
-import type { AppLocale } from '@src/i18n/lib'
+import { APP_LOCALES, translate } from '@src/i18n/lib'
+import type { AppLocale, InterpolationParams, MessageKey } from '@src/i18n/lib'
 
 const STORAGE_KEY = 'mr_locale'
 const DEFAULT_LOCALE: AppLocale = 'en'
@@ -39,4 +39,8 @@ export function getLocale(): AppLocale {
 
 export function tmdbLanguage(locale: AppLocale = getLocale()): string {
   return locale === 'it' ? 'it-IT' : 'en-US'
+}
+
+export function t(key: MessageKey, params?: InterpolationParams): string {
+  return translate(getLocale(), key, params)
 }

@@ -1,11 +1,13 @@
 import { motion } from 'framer-motion'
 import { scorePassword } from '../../../lib/password-strength'
+import { useI18n } from '@src/i18n'
 
 interface Props {
   password: string
 }
 
 export function PasswordStrengthMeter({ password }: Props) {
+  const { t } = useI18n()
   if (!password) return null
 
   const { score, label, color } = scorePassword(password)
@@ -26,7 +28,7 @@ export function PasswordStrengthMeter({ password }: Props) {
           />
         ))}
       </div>
-      <p className="text-xs text-muted-foreground">{label}</p>
+      <p className="text-xs text-muted-foreground">{t(`password.${label}`)}</p>
     </div>
   )
 }

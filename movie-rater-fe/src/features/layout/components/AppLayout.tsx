@@ -27,21 +27,24 @@ import {
   Clock,
   Library,
 } from 'lucide-react'
+import type { LucideIcon } from 'lucide-react'
 import { useAuthStore } from '../../../stores/auth-store'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { logout as logoutApi } from '../../../api/endpoints/auth'
 import { cn } from '@/lib/utils'
+import { useI18n } from '@src/i18n'
+import type { MessageKey } from '@src/i18n'
 import { LanguageSwitcher } from './LanguageSwitcher'
 
-const NAV_ITEMS = [
-  { icon: LayoutDashboard, label: 'Dashboard', path: '/dashboard' },
-  { icon: Film, label: 'Movies', path: '/movies' },
-  { icon: Tv, label: 'TV Shows', path: '/tv' },
-  { icon: Library, label: 'Lists', path: '/lists' },
-  { icon: Clock, label: 'Watch History', path: '/watch-history' },
-  { icon: Heart, label: 'Favorites', path: '/favorites' },
-  { icon: Bookmark, label: 'Watchlist', path: '/watchlist' },
-  { icon: UserPlus, label: 'Invite Partner', path: '/invite' },
+const NAV_ITEMS: { icon: LucideIcon; labelKey: MessageKey; path: string }[] = [
+  { icon: LayoutDashboard, labelKey: 'nav.dashboard', path: '/dashboard' },
+  { icon: Film, labelKey: 'nav.movies', path: '/movies' },
+  { icon: Tv, labelKey: 'nav.tvShows', path: '/tv' },
+  { icon: Library, labelKey: 'nav.lists', path: '/lists' },
+  { icon: Clock, labelKey: 'nav.watchHistory', path: '/watch-history' },
+  { icon: Heart, labelKey: 'nav.favorites', path: '/favorites' },
+  { icon: Bookmark, labelKey: 'nav.watchlist', path: '/watchlist' },
+  { icon: UserPlus, labelKey: 'nav.invitePartner', path: '/invite' },
 ]
 
 export function AppLayout() {
@@ -60,6 +63,7 @@ export function AppLayout() {
 
 function TopBar() {
   const { isMobile } = useSidebar()
+  const { t } = useI18n()
   return (
     <header className="sticky top-0 z-30 flex h-14 items-center gap-3 border-b border-sidebar-border bg-background/80 px-4 backdrop-blur-xl">
       <SidebarTrigger className="text-muted-foreground hover:text-foreground" />
@@ -67,7 +71,7 @@ function TopBar() {
         <Link to="/dashboard" className="flex items-center gap-2">
           <Clapperboard className="size-5 text-primary" />
           <span className="font-heading text-sm font-bold tracking-tight">
-            Movie Rater
+            {t('app.brand')}
           </span>
         </Link>
       )}
@@ -84,6 +88,7 @@ function AppSidebar() {
   const user = useAuthStore((s) => s.user)
   const clear = useAuthStore((s) => s.clear)
   const queryClient = useQueryClient();
+  const { t } = useI18n()
 
   const logoutMutation = useMutation({
     mutationFn: logoutApi,
@@ -114,10 +119,10 @@ function AppSidebar() {
           </div>
           <div className="flex flex-col group-data-[collapsible=icon]:hidden">
             <span className="font-heading text-base font-bold leading-tight tracking-tight">
-              Movie Rater
+              {t('app.brand')}
             </span>
             <span className="text-[0.65rem] font-medium uppercase tracking-wider text-muted-foreground">
-              By Leonardo Po
+              {t('app.by')}
             </span>
           </div>
         </Link>
@@ -129,12 +134,13 @@ function AppSidebar() {
             <SidebarMenu>
               {NAV_ITEMS.map((item) => {
                 const active = isActive(item.path)
+                const label = t(item.labelKey)
                 return (
                   <SidebarMenuItem key={item.path} className='my-1'>
                     <SidebarMenuButton
                       render={<Link to={item.path} />}
                       isActive={active}
-                      tooltip={item.label}
+                      tooltip={label}
                       size="lg"
                       className={cn(
                         'relative h-10 rounded-lg transition-all duration-200',
@@ -149,7 +155,7 @@ function AppSidebar() {
                           active ? 'ms-1.5 scale-110' : 'group-hover/menu-button:scale-105',
                         )}
                       />
-                      <span className="text-sm font-medium group-data-[collapsible=icon]:hidden">{item.label}</span>
+                      <span className="text-sm font-medium group-data-[collapsible=icon]:hidden">{label}</span>
                     </SidebarMenuButton>
                     {active && (
                       <motion.div
@@ -175,7 +181,7 @@ function AppSidebar() {
           </div>
           <div className="flex min-w-0 flex-1 flex-col group-data-[collapsible=icon]:hidden">
             <span className="truncate text-sm font-medium leading-tight">
-              {user?.username ?? 'User'}
+              {user?.username ?? t('common.user')}
             </span>
             <span className="truncate text-xs text-muted-foreground leading-tight">
               {user?.email ?? ''}
@@ -185,8 +191,8 @@ function AppSidebar() {
             type="button"
             onClick={() => logoutMutation.mutate()}
             className="flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive group-data-[collapsible=icon]:hidden"
-            title="Logout"
-            aria-label="Logout"
+            title={t('common.logout')}
+            aria-label={t('common.logout')}
           >
             <LogOut className="size-3.5" />
           </button>
@@ -195,7 +201,7 @@ function AppSidebar() {
         <SidebarMenu className="group-data-[collapsible=icon]:block hidden">
           <SidebarMenuItem>
             <SidebarMenuButton
-              tooltip="Logout"
+              tooltip={t('common.logout')}
               onClick={() => logoutMutation.mutate()}
               className="text-muted-foreground hover:text-destructive hover:bg-destructive/10"
             >
