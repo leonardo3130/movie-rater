@@ -31,6 +31,7 @@ import { useAuthStore } from '../../../stores/auth-store'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { logout as logoutApi } from '../../../api/endpoints/auth'
 import { cn } from '@/lib/utils'
+import { LanguageSwitcher } from './LanguageSwitcher'
 
 const NAV_ITEMS = [
   { icon: LayoutDashboard, label: 'Dashboard', path: '/dashboard' },
@@ -70,6 +71,9 @@ function TopBar() {
           </span>
         </Link>
       )}
+      <div className="ml-auto">
+        <LanguageSwitcher />
+      </div>
     </header>
   )
 }
