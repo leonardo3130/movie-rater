@@ -10,6 +10,7 @@ import { RateMovieDialog } from './RateMovieDialog'
 import { AddToListDialog } from '../../movie-lists/components/AddToListDialog'
 import { useUserMovieStore } from '../../../stores/user-movie-store'
 import type { MovieSummaryDto } from '@src/types/movie'
+import { useI18n } from '@src/i18n/use-i18n'
 
 interface MovieCardProps {
   movie: MovieSummaryDto
@@ -19,6 +20,7 @@ interface MovieCardProps {
 export function MovieCard({ movie, index = 0 }: MovieCardProps) {
   const year = movie.releaseDate ? movie.releaseDate.slice(0, 4) : null
   const movieId = String(movie.tmdbId)
+  const { t } = useI18n()
   const favoriteIds = useUserMovieStore((s) => s.favoriteIds)
   const watchlistIds = useUserMovieStore((s) => s.watchlistIds)
   const isFavorite = movie.isFavorite || favoriteIds.has(movieId)
@@ -61,7 +63,7 @@ export function MovieCard({ movie, index = 0 }: MovieCardProps) {
                 setAddToListOpen(true)
               }}
               className="rounded-full p-1 cursor-pointer transition-colors hover:bg-white/10 text-white/60 hover:text-white/90"
-              aria-label="Add to list"
+              aria-label={t('movies.card.addToList')}
             >
               <ListPlus className="size-3.5" />
             </motion.button>
@@ -74,7 +76,7 @@ export function MovieCard({ movie, index = 0 }: MovieCardProps) {
                 setWsDialogOpen(true)
               }}
               className="rounded-full p-1 cursor-pointer transition-colors hover:bg-white/10 text-white/60 hover:text-white/90"
-              aria-label="Mark as watched"
+              aria-label={t('movies.card.markAsWatched')}
             >
               <Eye className="size-3.5" />
             </motion.button>

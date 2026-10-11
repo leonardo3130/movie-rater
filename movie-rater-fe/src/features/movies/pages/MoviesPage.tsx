@@ -9,9 +9,11 @@ import { usePopular } from '../hooks/use-popular'
 import { useNowPlaying } from '../hooks/use-now-playing'
 import { useSearchMovies } from '../hooks/use-search-movies'
 import { useDiscoverMovies } from '../hooks/use-discover-movies'
+import { useI18n } from '@src/i18n/use-i18n'
 
 export function MoviesPage() {
   const { tmdbId } = useParams<{ tmdbId: string }>()
+  const { t } = useI18n()
   const mode = useMoviesStore((s) => s.mode)
   const searchQuery = useMoviesStore((s) => s.searchQuery)
   const pages = useMoviesStore((s) => s.pages)
@@ -32,7 +34,7 @@ export function MoviesPage() {
         {mode === 'home' && (
           <>
             <MovieRow
-              title="Top Rated"
+              title={t('movies.page.topRated')}
               movies={topRated?.results}
               isLoading={topRatedLoading}
               page={pages.topRated}
@@ -40,7 +42,7 @@ export function MoviesPage() {
               onPageChange={(p) => setPage('topRated', p)}
             />
             <MovieRow
-              title="Popular"
+              title={t('movies.page.popular')}
               movies={popular?.results}
               isLoading={popularLoading}
               page={pages.popular}
@@ -48,7 +50,7 @@ export function MoviesPage() {
               onPageChange={(p) => setPage('popular', p)}
             />
             <MovieRow
-              title="Now Playing"
+              title={t('movies.page.nowPlaying')}
               movies={nowPlaying?.results}
               isLoading={nowPlayingLoading}
               page={pages.nowPlaying}

@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion'
-import { useI18n } from '@src/i18n'
+import { useI18n } from '@src/i18n/use-i18n'
 
 interface Props {
   children: React.ReactNode

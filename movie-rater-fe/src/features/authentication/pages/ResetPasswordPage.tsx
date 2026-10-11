@@ -13,7 +13,7 @@ import { AuthLayout } from '../components/AuthLayout'
 import { PasswordStrengthMeter } from '../components/PasswordStrengthMeter'
 import { resetPasswordSchema, type ResetPasswordFormValues } from '../schemas/reset-password.schema'
 import { resetPassword as resetPasswordApi } from '../../../api/endpoints/auth'
-import { useI18n } from '@src/i18n'
+import { useI18n } from '@src/i18n/use-i18n'
 
 export function ResetPasswordPage() {
   const navigate = useNavigate()

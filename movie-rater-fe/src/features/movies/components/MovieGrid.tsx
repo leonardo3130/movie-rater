@@ -5,6 +5,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { MovieCard } from './MovieCard'
 import type { MovieSummaryDto } from '@src/types/movie'
 import { useMoviesStore } from '@src/stores/movies-store'
+import { useI18n } from '@src/i18n/use-i18n'
 
 interface MovieGridProps {
   movies: MovieSummaryDto[] | undefined
@@ -16,13 +17,16 @@ interface MovieGridProps {
 export function MovieGrid({ movies, isLoading, totalPages, category }: MovieGridProps) {
   const page = useMoviesStore((s) => s.pages[category])
   const setPage = useMoviesStore((s) => s.setPage)
+  const { t } = useI18n()
 
   if (!isLoading && (!movies || movies.length === 0)) {
     return (
       <div className="flex flex-col items-center justify-center py-20 text-muted-foreground">
         <SearchX className="size-12 mb-3" />
         <p className="text-sm">
-          {category === 'search' ? 'No movies match your search' : 'No movies match your filters'}
+          {category === 'search'
+            ? t('movies.grid.noSearchResults')
+            : t('movies.grid.noFiltersResults')}
         </p>
       </div>
     )
@@ -56,7 +60,7 @@ export function MovieGrid({ movies, isLoading, totalPages, category }: MovieGrid
             onClick={() => setPage(category, page - 1)}
           >
             <ChevronLeft className="size-4" />
-            Previous
+            {t('common.previous')}
           </Button>
           <span className="text-sm text-muted-foreground tabular-nums">
             {page} / {totalPages}
@@ -67,7 +71,7 @@ export function MovieGrid({ movies, isLoading, totalPages, category }: MovieGrid
             disabled={page >= totalPages}
             onClick={() => setPage(category, page + 1)}
           >
-            Next
+            {t('common.next')}
             <ChevronRight className="size-4" />
           </Button>
         </div>

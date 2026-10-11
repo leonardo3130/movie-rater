@@ -14,7 +14,7 @@ import { PasswordStrengthMeter } from '../components/PasswordStrengthMeter'
 import { registerSchema, type RegisterFormValues } from '../schemas/register.schema'
 import { register as registerApi } from '../../../api/endpoints/auth'
 import { useAuthStore } from '../../../stores/auth-store'
-import { useI18n } from '@src/i18n'
+import { useI18n } from '@src/i18n/use-i18n'
 
 export function RegisterPage() {
   const navigate = useNavigate()

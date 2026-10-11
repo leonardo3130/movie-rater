@@ -10,7 +10,7 @@ import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Separator } from "@/components/ui/separator"
-import { useI18n } from "@src/i18n"
+import { useI18n } from "@src/i18n/use-i18n"
 import {
   Sheet,
   SheetContent,

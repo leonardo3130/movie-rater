@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { updateRating } from '../../../api/endpoints/ratings'
 import { toast } from 'sonner'
+import { t } from '@src/stores/locale-store'
 
 export function useUpdateRating() {
   const queryClient = useQueryClient()
@@ -11,10 +12,10 @@ export function useUpdateRating() {
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: ['watch-sessions', variables.watchSessionId] })
       queryClient.invalidateQueries({ queryKey: ['watch-sessions'] })
-      toast.success('Rating updated')
+      toast.success(t('movies.toast.ratingUpdated'))
     },
     onError: () => {
-      toast.error('Failed to update rating')
+      toast.error(t('movies.toast.updateRatingFailed'))
     },
   })
 }

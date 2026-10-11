@@ -11,6 +11,7 @@ import { Badge } from '@/components/ui/badge'
 import { useGenres } from '../hooks/use-genres'
 import { useMoviesStore } from '@src/stores/movies-store'
 import { discoverSchema, type DiscoverFormValues } from '../schemas/discover.schema'
+import { useI18n } from '@src/i18n/use-i18n'
 
 interface DiscoverDialogProps {
   open: boolean
@@ -19,6 +20,7 @@ interface DiscoverDialogProps {
 
 export function DiscoverDialog({ open, onOpenChange }: DiscoverDialogProps) {
   const { data: genresData } = useGenres()
+  const { t } = useI18n()
   const setDiscoverFilters = useMoviesStore((s) => s.setDiscoverFilters)
   const setPage = useMoviesStore((s) => s.setPage)
   const setMode = useMoviesStore((s) => s.setMode)
@@ -83,15 +85,15 @@ export function DiscoverDialog({ open, onOpenChange }: DiscoverDialogProps) {
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Discover Movies</DialogTitle>
+          <DialogTitle>{t('movies.discover.title')}</DialogTitle>
           <DialogDescription>
-            Filter movies by genre, year, rating, and more
+            {t('movies.discover.description')}
           </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
           <div className="space-y-2">
-            <Label>Genres</Label>
+            <Label>{t('movies.discover.genres')}</Label>
             <div className="flex flex-wrap gap-1.5">
               {genresData?.genres.map((genre) => {
                 const isSelected = selectedGenres?.includes(genre.tmdbId)
@@ -111,10 +113,10 @@ export function DiscoverDialog({ open, onOpenChange }: DiscoverDialogProps) {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="primaryReleaseYear">Release Year</Label>
+            <Label htmlFor="primaryReleaseYear">{t('movies.discover.releaseYear')}</Label>
             <Input
               id="primaryReleaseYear"
-              placeholder="e.g. 2024"
+              placeholder={t('movies.discover.releaseYearPlaceholder')}
               {...register('primaryReleaseYear')}
             />
             {errors.primaryReleaseYear && (
@@ -124,7 +126,7 @@ export function DiscoverDialog({ open, onOpenChange }: DiscoverDialogProps) {
 
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-2">
-              <Label htmlFor="primaryReleaseDateGte">From Date</Label>
+              <Label htmlFor="primaryReleaseDateGte">{t('movies.discover.fromDate')}</Label>
               <Input
                 id="primaryReleaseDateGte"
                 type="date"
@@ -132,7 +134,7 @@ export function DiscoverDialog({ open, onOpenChange }: DiscoverDialogProps) {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="primaryReleaseDateLte">To Date</Label>
+              <Label htmlFor="primaryReleaseDateLte">{t('movies.discover.toDate')}</Label>
               <Input
                 id="primaryReleaseDateLte"
                 type="date"
@@ -142,7 +144,9 @@ export function DiscoverDialog({ open, onOpenChange }: DiscoverDialogProps) {
           </div>
 
           <div className="space-y-2">
-            <Label>Minimum Rating: {voteAverageGte?.toFixed(1) ?? '0.0'}</Label>
+            <Label>
+            {t('movies.discover.minimumRating', { value: voteAverageGte?.toFixed(1) ?? '0.0' })}
+          </Label>
             <Slider
               min={0}
               max={10}
@@ -153,7 +157,7 @@ export function DiscoverDialog({ open, onOpenChange }: DiscoverDialogProps) {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="sortBy">Sort By</Label>
+            <Label htmlFor="sortBy">{t('movies.discover.sortBy')}</Label>
             <Select
               value={sortBy}
               onValueChange={(v) => setValue('sortBy', v as DiscoverFormValues['sortBy'])}
@@ -162,16 +166,16 @@ export function DiscoverDialog({ open, onOpenChange }: DiscoverDialogProps) {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="popularity.desc">Popularity (High to Low)</SelectItem>
-                <SelectItem value="popularity.asc">Popularity (Low to High)</SelectItem>
-                <SelectItem value="vote_average.desc">Rating (High to Low)</SelectItem>
-                <SelectItem value="vote_average.asc">Rating (Low to High)</SelectItem>
-                <SelectItem value="primary_release_date.desc">Release Date (Newest)</SelectItem>
-                <SelectItem value="primary_release_date.asc">Release Date (Oldest)</SelectItem>
-                <SelectItem value="revenue.desc">Revenue (High to Low)</SelectItem>
-                <SelectItem value="revenue.asc">Revenue (Low to High)</SelectItem>
-                <SelectItem value="original_title.asc">Title (A-Z)</SelectItem>
-                <SelectItem value="original_title.desc">Title (Z-A)</SelectItem>
+                <SelectItem value="popularity.desc">{t('movies.discover.popularityHighToLow')}</SelectItem>
+                <SelectItem value="popularity.asc">{t('movies.discover.popularityLowToHigh')}</SelectItem>
+                <SelectItem value="vote_average.desc">{t('movies.discover.ratingHighToLow')}</SelectItem>
+                <SelectItem value="vote_average.asc">{t('movies.discover.ratingLowToHigh')}</SelectItem>
+                <SelectItem value="primary_release_date.desc">{t('movies.discover.releaseDateNewest')}</SelectItem>
+                <SelectItem value="primary_release_date.asc">{t('movies.discover.releaseDateOldest')}</SelectItem>
+                <SelectItem value="revenue.desc">{t('movies.discover.revenueHighToLow')}</SelectItem>
+                <SelectItem value="revenue.asc">{t('movies.discover.revenueLowToHigh')}</SelectItem>
+                <SelectItem value="original_title.asc">{t('movies.discover.titleAZ')}</SelectItem>
+                <SelectItem value="original_title.desc">{t('movies.discover.titleZA')}</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -184,17 +188,17 @@ export function DiscoverDialog({ open, onOpenChange }: DiscoverDialogProps) {
               {...register('includeAdult')}
             />
             <Label htmlFor="includeAdult" className="text-sm font-normal cursor-pointer">
-              Include adult content
+              {t('movies.discover.includeAdult')}
             </Label>
           </div>
 
           <div className="flex items-center justify-between pt-2">
             <Button type="button" variant="ghost" size="sm" onClick={handleReset}>
-              Reset
+              {t('common.reset')}
             </Button>
             <Button type="submit" size="sm">
               <Search className="size-4" />
-              Search
+              {t('common.search')}
             </Button>
           </div>
         </form>

@@ -8,6 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { useUpdateWatchSession } from '../hooks/use-update-watch-session'
 import { updateWatchSessionSchema, type UpdateWatchSessionFormValues } from '../schemas/watch-session.schema'
 import type { WatchSessionResponseDto } from '@src/types/watch-session'
+import { useI18n } from '@src/i18n/use-i18n'
 
 interface EditWatchSessionDialogProps {
   open: boolean
@@ -21,6 +22,7 @@ export function EditWatchSessionDialog({
   session,
 }: EditWatchSessionDialogProps) {
   const updateSession = useUpdateWatchSession()
+  const { t } = useI18n()
 
   const {
     register,
@@ -57,9 +59,9 @@ export function EditWatchSessionDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle>Edit Watch Session</DialogTitle>
+          <DialogTitle>{t('movies.watchSession.editTitle')}</DialogTitle>
           <DialogDescription>
-            Update when and where you watched {session.title}
+            {t('movies.watchSession.editDescription', { title: session.title })}
           </DialogDescription>
         </DialogHeader>
 
@@ -67,7 +69,7 @@ export function EditWatchSessionDialog({
           <div className="space-y-2">
             <Label htmlFor="watchedAt" className="flex items-center gap-1.5">
               <Calendar className="size-3.5 text-muted-foreground" />
-              When did you watch it?
+              {t('movies.watchSession.whenDidYouWatch')}
             </Label>
             <Input
               id="watchedAt"
@@ -83,11 +85,11 @@ export function EditWatchSessionDialog({
           <div className="space-y-2">
             <Label htmlFor="location" className="flex items-center gap-1.5">
               <MapPin className="size-3.5 text-muted-foreground" />
-              Location (optional)
+              {t('movies.watchSession.locationOptional')}
             </Label>
             <Input
               id="location"
-              placeholder="e.g. Home, Cinema, ..."
+              placeholder={t('movies.watchSession.locationPlaceholder')}
               aria-invalid={!!errors.location}
               {...register('location')}
             />
@@ -99,12 +101,12 @@ export function EditWatchSessionDialog({
           <div className="space-y-2">
             <Label htmlFor="notes" className="flex items-center gap-1.5">
               <FileText className="size-3.5 text-muted-foreground" />
-              Notes (optional)
+              {t('movies.watchSession.notesOptional')}
             </Label>
             <textarea
               id="notes"
               rows={3}
-              placeholder="How was the movie night?"
+              placeholder={t('movies.watchSession.notesPlaceholder')}
               className="flex w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-xs placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 resize-none"
               aria-invalid={!!errors.notes}
               {...register('notes')}
@@ -122,12 +124,12 @@ export function EditWatchSessionDialog({
               onClick={() => onOpenChange(false)}
               disabled={pending}
             >
-              Cancel
+              {t('common.cancel')}
             </Button>
             <Button type="submit" size="sm" disabled={pending}>
               {pending && <Loader2 className="size-4 animate-spin" />}
               <Save className="size-4" />
-              Save Changes
+              {t('common.saveChanges')}
             </Button>
           </div>
         </form>

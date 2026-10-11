@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion'
 import { scorePassword } from '../../../lib/password-strength'
-import { useI18n } from '@src/i18n'
+import { useI18n } from '@src/i18n/use-i18n'
 
 interface Props {
   password: string

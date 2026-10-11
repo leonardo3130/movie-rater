@@ -21,9 +21,11 @@ import { useWatchSessions } from '../hooks/use-watch-sessions'
 import { useDeleteWatchSession } from '../hooks/use-delete-watch-session'
 import { useAuthStore } from '../../../stores/auth-store'
 import { useGroups } from '../../groups/hooks/use-groups'
+import { useI18n } from '@src/i18n/use-i18n'
 
 export function WatchHistoryPage() {
   const user = useAuthStore((s) => s.user)
+  const { t, formatDate } = useI18n()
   const [page, setPage] = useState(1)
   const deleteSession = useDeleteWatchSession()
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null)
@@ -50,7 +52,7 @@ export function WatchHistoryPage() {
   if (isError || groups.isError) {
     return (
       <div className="flex min-h-[60vh] items-center justify-center">
-        <p className="text-muted-foreground">Failed to load watch history</p>
+        <p className="text-muted-foreground">{t('movies.watchSession.failedToLoad')}</p>
       </div>
     )
   }
@@ -61,20 +63,18 @@ export function WatchHistoryPage() {
     return (
       <div className="flex min-h-[60vh] flex-col items-center justify-center gap-4">
         <Film className="size-16 text-muted-foreground/30" />
-        <h2 className="text-xl font-semibold">No watch sessions yet</h2>
+        <h2 className="text-xl font-semibold">{t('movies.watchSession.emptyTitle')}</h2>
         <p className="text-muted-foreground">
-          Start watching movies and TV episodes and mark them as watched!
+          {t('movies.watchSession.emptyDescription')}
         </p>
         <Link to="/movies">
-          <Button>Browse movies</Button>
+          <Button>{t('movies.watchSession.browseMovies')}</Button>
         </Link>
       </div>
     )
   }
 
   const totalPages = data ? Math.ceil(data.totalCount / data.pageSize) : 1
-
-  console.log(groups.data)
 
   return (
     <div className="p-6 space-y-8">
@@ -84,33 +84,33 @@ export function WatchHistoryPage() {
         </div>
         <div className="flex justify-between w-full">
           <div>
-            <h1 className="text-2xl font-bold">Watch History</h1>
+            <h1 className="text-2xl font-bold">{t('movies.watchSession.heading')}</h1>
             <p className="text-sm text-muted-foreground">
-              {data?.totalCount ?? 0} session{data?.totalCount !== 1 ? 's' : ''}
+              {t('movies.watchSession.count', { count: data?.totalCount ?? 0 })}
             </p>
           </div>
 
           <div className='space-y-2'>
             <Label htmlFor="groupId">
               <UsersRound className="size-3.5 text-muted-foreground" />
-              Group
+              {t('common.group')}
             </Label>
             <Select value={groupId} onValueChange={(value) => {
               setGroupId(value)
             }} >
               <SelectTrigger className="w-full max-w-48">
                 {/*displyed value*/}
-                <SelectValue placeholder="Select group" >
+                <SelectValue placeholder={t('common.selectGroup')} >
                   {selectedGroup?.name}
                 </SelectValue>
               </SelectTrigger>
               <SelectContent>
                 <SelectGroup>
-                  <SelectLabel>Groups</SelectLabel>
+                  <SelectLabel>{t('common.groups')}</SelectLabel>
                   {!(groups.isPending || groups.isLoading) && groups.data && groups.data.map(g =>
                     <SelectItem key={g.id} value={g.id}>{g.name}</SelectItem>)}
                   <SelectItem value={null}>
-                    All groups
+                    {t('common.allGroups')}
                   </SelectItem>
                 </SelectGroup>
               </SelectContent>
@@ -123,10 +123,10 @@ export function WatchHistoryPage() {
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2">
                 <AlertTriangle className="size-5 text-destructive" />
-                Delete Watch Session?
+                {t('movies.watchSession.deleteTitle')}
               </DialogTitle>
               <DialogDescription>
-                This will permanently remove this watch session and all its ratings. This action cannot be undone.
+                {t('movies.watchSession.deleteDescription')}
               </DialogDescription>
             </DialogHeader>
             <div className="flex justify-end gap-2 pt-2">
@@ -135,7 +135,7 @@ export function WatchHistoryPage() {
                 size="sm"
                 onClick={() => setDeleteTarget(null)}
               >
-                Cancel
+                {t('common.cancel')}
               </Button>
               <Button
                 variant="destructive"
@@ -144,7 +144,7 @@ export function WatchHistoryPage() {
                 disabled={deleteSession.isPending}
               >
                 {deleteSession.isPending && <Loader2 className="size-4 animate-spin" />}
-                Delete
+                {t('common.delete')}
               </Button>
             </div>
           </DialogContent>
@@ -153,8 +153,7 @@ export function WatchHistoryPage() {
 
       <div className="space-y-3">
         {sessions.map((session, index) => {
-          const watchedDate = new Date(session.watchedAt)
-          const formattedDate = watchedDate.toLocaleDateString('en-US', {
+          const formattedDate = formatDate(new Date(session.watchedAt), {
             weekday: 'short',
             year: 'numeric',
             month: 'short',
@@ -199,7 +198,7 @@ export function WatchHistoryPage() {
                     )}
                     <span className="flex items-center gap-1">
                       <Star className="size-3" />
-                      {session.ratingCount} rating{session.ratingCount !== 1 ? 's' : ''}
+                      {t('movies.watchSession.ratingCount', { count: session.ratingCount })}
                     </span>
                   </div>
                   {session.notes && (
@@ -209,7 +208,7 @@ export function WatchHistoryPage() {
                   )}
                   {isCreator && (
                     <Badge variant="outline" className="text-[10px] py-0 h-4">
-                      You created this
+                      {t('movies.watchSession.youCreatedThis')}
                     </Badge>
                   )}
                 </div>
@@ -243,7 +242,7 @@ export function WatchHistoryPage() {
             disabled={page <= 1 || isFetching}
             onClick={() => setPage((p) => Math.max(1, p - 1))}
           >
-            Previous
+            {t('common.previous')}
           </Button>
           <span className="text-sm text-muted-foreground tabular-nums">
             {page} / {totalPages}
@@ -255,7 +254,7 @@ export function WatchHistoryPage() {
             onClick={() => setPage((p) => p + 1)}
           >
             {isFetching && <Loader2 className="size-3 animate-spin mr-1" />}
-            Next
+            {t('common.next')}
           </Button>
         </div>
       )}

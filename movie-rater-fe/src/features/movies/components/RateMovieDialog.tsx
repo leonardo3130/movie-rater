@@ -7,6 +7,7 @@ import { useCreateRating } from '../hooks/use-create-rating'
 import { useUpdateRating } from '../hooks/use-update-rating'
 import { useAuthStore } from '../../../stores/auth-store'
 import type { RatingResponseDto } from '@src/types/rating'
+import { useI18n } from '@src/i18n/use-i18n'
 
 interface RateMovieDialogProps {
   open: boolean
@@ -26,6 +27,7 @@ export function RateMovieDialog({
   existingRating,
 }: RateMovieDialogProps) {
   const user = useAuthStore((s) => s.user)
+  const { t } = useI18n()
   const createRating = useCreateRating()
   const updateRating = useUpdateRating()
   const [ratingValue, setRatingValue] = useState(existingRating?.ratingValue ?? 0)
@@ -56,9 +58,13 @@ export function RateMovieDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md max-h-[85vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>{isEditing ? 'Edit Your Rating' : 'Rate the Movie'}</DialogTitle>
+          <DialogTitle>
+            {isEditing ? t('movies.ratingDialog.editTitle') : t('movies.ratingDialog.rateTitle')}
+          </DialogTitle>
           <DialogDescription>
-            {isEditing ? 'Update your rating and review' : 'Share your thoughts on this movie'}
+            {isEditing
+              ? t('movies.ratingDialog.editDescription')
+              : t('movies.ratingDialog.rateDescription')}
           </DialogDescription>
         </DialogHeader>
 
@@ -74,7 +80,8 @@ export function RateMovieDialog({
         <div className="space-y-6">
           <div className="space-y-3">
             <p className="text-sm font-medium text-center">
-              Your Rating: <span className="text-yellow-500 font-bold">{ratingValue}/10</span>
+              {t('movies.ratingDialog.yourRatingLabel')}{' '}
+              <span className="text-yellow-500 font-bold">{ratingValue}/10</span>
             </p>
             <div className="flex justify-center">
               <Stars value={ratingValue} onChange={setRatingValue} size="lg" />
@@ -83,14 +90,14 @@ export function RateMovieDialog({
 
           <div className="space-y-2">
             <label htmlFor="review" className="text-sm font-medium">
-              Review (optional)
+              {t('movies.ratingDialog.reviewOptional')}
             </label>
             <textarea
               id="review"
               rows={4}
               value={review}
               onChange={(e) => setReview(e.target.value)}
-              placeholder="What did you think? Write your review..."
+              placeholder={t('movies.ratingDialog.reviewPlaceholder')}
               className="flex w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-xs placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 resize-none"
             />
           </div>
@@ -103,7 +110,7 @@ export function RateMovieDialog({
               onClick={() => onOpenChange(false)}
               disabled={pending}
             >
-              {isEditing ? 'Cancel' : 'Skip'}
+              {isEditing ? t('common.cancel') : t('movies.ratingDialog.skip')}
             </Button>
             <Button
               type="button"
@@ -112,7 +119,7 @@ export function RateMovieDialog({
               disabled={ratingValue < 1 || pending}
             >
               {pending && <span className="size-4 animate-spin rounded-full border-2 border-current border-t-transparent mr-1" />}
-              {isEditing ? 'Update Rating' : 'Submit Rating'}
+              {isEditing ? t('movies.ratingDialog.update') : t('movies.ratingDialog.submit')}
             </Button>
           </div>
         </div>

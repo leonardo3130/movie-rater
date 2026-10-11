@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { deleteWatchSession } from '../../../api/endpoints/watch-sessions'
 import { toast } from 'sonner'
+import { t } from '@src/stores/locale-store'
 
 export function useDeleteWatchSession() {
   const queryClient = useQueryClient()
@@ -9,10 +10,10 @@ export function useDeleteWatchSession() {
     mutationFn: deleteWatchSession,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['watch-sessions'] })
-      toast.success('Watch session deleted')
+      toast.success(t('movies.toast.sessionDeleted'))
     },
     onError: () => {
-      toast.error('Failed to delete watch session')
+      toast.error(t('movies.toast.deleteSessionFailed'))
     },
   })
 }

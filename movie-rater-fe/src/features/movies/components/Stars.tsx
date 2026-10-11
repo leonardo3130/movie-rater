@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion'
 import { Star } from 'lucide-react'
+import { useI18n } from '@src/i18n/use-i18n'
 
 interface StarsProps {
   value: number
@@ -11,6 +12,7 @@ interface StarsProps {
 const sizeMap = { sm: 'size-3.5', md: 'size-5', lg: 'size-7' }
 
 export function Stars({ value, onChange, size = 'md', readonly = false }: StarsProps) {
+  const { t } = useI18n()
   return (
     <div className="flex items-center gap-0.5">
       {Array.from({ length: 10 }, (_, i) => {
@@ -33,7 +35,7 @@ export function Stars({ value, onChange, size = 'md', readonly = false }: StarsP
                 : 'text-muted-foreground/30 hover:text-yellow-500/50'
             }`}
             disabled={readonly}
-            aria-label={`${starValue} star${starValue > 1 ? 's' : ''}`}
+            aria-label={t('movies.stars.aria', { count: starValue })}
           >
             <Star className={sizeMap[size]} fill={filled ? 'currentColor' : 'none'} />
           </motion.button>

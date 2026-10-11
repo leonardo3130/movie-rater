@@ -14,10 +14,12 @@ import { EditWatchSessionDialog } from '../components/EditWatchSessionDialog'
 import { useWatchSession } from '../hooks/use-watch-session'
 import { useAuthStore } from '../../../stores/auth-store'
 import type { RatingResponseDto } from '@/src/types/rating'
+import { useI18n } from '@src/i18n/use-i18n'
 
 export function WatchSessionDetailPage() {
   const { id } = useParams<{ id: string }>()
   const user = useAuthStore((s) => s.user)
+  const { t, formatDate } = useI18n()
   const { data: session, isLoading, isError } = useWatchSession(id)
   const [rateDialogOpen, setRateDialogOpen] = useState(false)
   const [editDialogOpen, setEditDialogOpen] = useState(false)
@@ -36,13 +38,12 @@ export function WatchSessionDetailPage() {
   if (isError || !session) {
     return (
       <div className="flex min-h-[60vh] items-center justify-center">
-        <p className="text-muted-foreground">Session not found</p>
+        <p className="text-muted-foreground">{t('movies.watchSession.notFound')}</p>
       </div>
     )
   }
 
-  const watchedDate = new Date(session.watchedAt)
-  const formattedDate = watchedDate.toLocaleDateString('en-US', {
+  const formattedDate = formatDate(new Date(session.watchedAt), {
     weekday: 'long',
     year: 'numeric',
     month: 'long',
@@ -58,7 +59,7 @@ export function WatchSessionDetailPage() {
         className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors"
       >
         <ArrowLeft className="size-4" />
-        Back to Watch History
+        {t('movies.watchSession.backToHistory')}
       </Link>
 
       <motion.div
@@ -91,7 +92,7 @@ export function WatchSessionDetailPage() {
                     onClick={() => setEditDialogOpen(true)}
                   >
                     <Pencil className="size-3.5" />
-                    Edit
+                    {t('common.edit')}
                   </Button>
                 )}
               </span>
@@ -103,7 +104,7 @@ export function WatchSessionDetailPage() {
               )}
               <span className="flex items-center gap-1">
                 <User className="size-3.5" />
-                Added by {session.createdByUsername}
+                {t('movies.watchSession.addedBy', { username: session.createdByUsername })}
               </span>
             </div>
           </div>
@@ -112,7 +113,7 @@ export function WatchSessionDetailPage() {
             <div className="p-3 rounded-lg bg-muted/50">
               <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-1">
                 <FileText className="size-3" />
-                Notes
+                {t('movies.watchSession.notes')}
               </div>
               <p className="text-sm leading-relaxed">{session.notes}</p>
             </div>
@@ -123,13 +124,13 @@ export function WatchSessionDetailPage() {
       <Separator />
 
       <div className="space-y-6">
-        <h2 className="font-heading text-lg font-medium tracking-tight">Ratings</h2>
+        <h2 className="font-heading text-lg font-medium tracking-tight">{t('movies.watchSession.ratings')}</h2>
 
         {session.ratings.length === 0 && (
           <div className="text-center py-8 space-y-3">
             <Star className="size-12 text-muted-foreground/30 mx-auto" />
-            <p className="text-muted-foreground">No ratings yet. Be the first to rate!</p>
-            <Button onClick={() => setRateDialogOpen(true)}>Rate this</Button>
+            <p className="text-muted-foreground">{t('movies.watchSession.noRatingsYet')}</p>
+            <Button onClick={() => setRateDialogOpen(true)}>{t('movies.watchSession.rateThis')}</Button>
           </div>
         )}
 
@@ -150,7 +151,7 @@ export function WatchSessionDetailPage() {
                   <div>
                     <p className="text-sm font-medium">{rating.username}</p>
                     <p className="text-[10px] text-muted-foreground">
-                      {isMe ? 'You' : 'Your partner'}
+                      {isMe ? t('common.you') : t('common.yourPartner')}
                     </p>
                   </div>
                 </div>
@@ -176,7 +177,7 @@ export function WatchSessionDetailPage() {
                     size="xs"
                     onClick={() => setRateDialogOpen(true)}
                   >
-                    Edit Rating
+                    {t('movies.watchSession.editRating')}
                   </Button>
                 </div>
               )}
@@ -189,7 +190,7 @@ export function WatchSessionDetailPage() {
         <div className="text-center">
           <Button onClick={() => setRateDialogOpen(true)}>
             <Star className="size-4" />
-            Rate this
+            {t('movies.watchSession.rateThis')}
           </Button>
         </div>
       )}

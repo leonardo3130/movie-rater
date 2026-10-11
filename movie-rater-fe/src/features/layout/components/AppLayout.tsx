@@ -32,7 +32,7 @@ import { useAuthStore } from '../../../stores/auth-store'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { logout as logoutApi } from '../../../api/endpoints/auth'
 import { cn } from '@/lib/utils'
-import { useI18n } from '@src/i18n'
+import { useI18n } from '@src/i18n/use-i18n'
 import type { MessageKey } from '@src/i18n'
 import { LanguageSwitcher } from './LanguageSwitcher'
 

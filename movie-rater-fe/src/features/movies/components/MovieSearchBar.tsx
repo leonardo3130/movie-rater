@@ -5,11 +5,13 @@ import { useMoviesStore } from '@src/stores/movies-store'
 import { useEffect, useState } from 'react'
 import { useDebouncedValue } from '@src/hooks/use-debounced-value'
 import { DiscoverDialog } from './DiscoverDialog'
+import { useI18n } from '@src/i18n/use-i18n'
 
 export function MovieSearchBar() {
   const searchQuery = useMoviesStore((s) => s.searchQuery)
   const setSearchQuery = useMoviesStore((s) => s.setSearchQuery)
   const setMode = useMoviesStore((s) => s.setMode)
+  const { t } = useI18n()
   const [localQuery, setLocalQuery] = useState(searchQuery)
   const debouncedQuery = useDebouncedValue(localQuery, 350)
   const [discoverOpen, setDiscoverOpen] = useState(false)
@@ -39,7 +41,7 @@ export function MovieSearchBar() {
           <Input
             value={localQuery}
             onChange={(e) => setLocalQuery(e.target.value)}
-            placeholder="Search movies..."
+            placeholder={t('movies.search.placeholder')}
             className="pl-9 pr-8"
           />
           {localQuery && (
@@ -57,7 +59,7 @@ export function MovieSearchBar() {
           onClick={() => setDiscoverOpen(true)}
         >
           <SlidersHorizontal className="size-4" />
-          Discover
+          {t('movies.search.discover')}
         </Button>
       </div>
       <DiscoverDialog open={discoverOpen} onOpenChange={setDiscoverOpen} />

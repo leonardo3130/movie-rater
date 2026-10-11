@@ -9,7 +9,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { useI18n } from '@src/i18n'
+import { useI18n } from '@src/i18n/use-i18n'
 import { APP_LOCALES } from '@src/i18n/lib'
 import type { AppLocale } from '@src/i18n/lib'
 import { useLocaleStore } from '@src/stores/locale-store'

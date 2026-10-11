@@ -13,7 +13,7 @@ import { AuthLayout } from '../components/AuthLayout'
 import { loginSchema, type LoginFormValues } from '../schemas/login.schema'
 import { login as loginApi, forgotPassword as forgotPasswordApi } from '../../../api/endpoints/auth'
 import { useAuthStore } from '../../../stores/auth-store'
-import { useI18n } from '@src/i18n'
+import { useI18n } from '@src/i18n/use-i18n'
 
 export function LoginPage() {
   const navigate = useNavigate()

@@ -17,10 +17,12 @@ import { useMovieRecommendations } from '../hooks/use-movie-recommendations'
 import { useToggleFavorite } from '../../user-movie/hooks/use-toggle-favorite'
 import { useToggleWatchlist } from '../../user-movie/hooks/use-toggle-watchlist'
 import { useUserMovieStore } from '../../../stores/user-movie-store'
+import { useI18n } from '@src/i18n/use-i18n'
 
 export function MovieDetailsDialog() {
   const { tmdbId } = useParams<{ tmdbId: string }>()
   const navigate = useNavigate()
+  const { t, formatNumber, formatCurrency, formatRuntime } = useI18n()
   const movieId = tmdbId ? Number(tmdbId) : null
   const movieIdStr = String(movieId ?? '')
 
@@ -47,7 +49,7 @@ export function MovieDetailsDialog() {
   const handleClose = () => navigate('/movies')
 
   const year = movie?.releaseDate ? movie.releaseDate.slice(0, 4) : null
-  const runtime = movie?.runtime ? `${Math.floor(movie.runtime / 60)}h ${movie.runtime % 60}m` : null
+  const runtime = movie?.runtime && movie.runtime > 0 ? formatRuntime(movie.runtime) : null
 
   const trailer = movie?.videos?.find(
     (v) => v.site === 'YouTube' && (v.type === 'Trailer' || v.type === 'Teaser') && v.official
@@ -106,7 +108,9 @@ export function MovieDetailsDialog() {
                   <div className="flex items-center gap-2">
                     <Star className="size-5 fill-yellow-500 text-yellow-500" />
                     <span className="font-semibold text-lg">{movie.voteAverage.toFixed(1)}</span>
-                    <span className="text-xs text-muted-foreground">({movie.voteCount.toLocaleString()} votes)</span>
+                    <span className="text-xs text-muted-foreground">
+                      {t('movies.details.votes', { count: formatNumber(movie.voteCount) })}
+                    </span>
                   </div>
                   {movie.genres.map((g) => (
                     <Badge key={g.tmdbId} variant="secondary">{g.name}</Badge>
@@ -115,7 +119,7 @@ export function MovieDetailsDialog() {
 
                 {movie.overview && (
                   <div>
-                    <h3 className="font-heading text-sm font-medium text-muted-foreground mb-1">Overview</h3>
+                    <h3 className="font-heading text-sm font-medium text-muted-foreground mb-1">{t('movies.details.overview')}</h3>
                     <p className="text-sm leading-relaxed break-words">{movie.overview}</p>
                   </div>
                 )}
@@ -130,7 +134,7 @@ export function MovieDetailsDialog() {
                     }}
                   >
                     <Heart className="size-4" fill={isFavorite ? 'currentColor' : 'none'} />
-                    {isFavorite ? 'Remove from Favorites' : 'Add to Favorites'}
+                    {isFavorite ? t('movies.details.removeFromFavorites') : t('movies.details.addToFavorites')}
                   </Button>
                   <Button
                     variant="outline"
@@ -141,7 +145,7 @@ export function MovieDetailsDialog() {
                     }}
                   >
                     <Bookmark className="size-4" fill={isInWatchlist ? 'currentColor' : 'none'} />
-                    {isInWatchlist ? 'Remove from Watchlist' : 'Add to Watchlist'}
+                    {isInWatchlist ? t('movies.details.removeFromWatchlist') : t('movies.details.addToWatchlist')}
                   </Button>
                   <Button
                     variant="outline"
@@ -152,7 +156,7 @@ export function MovieDetailsDialog() {
                     }}
                   >
                     <ListPlus className="size-4" />
-                    Add to List
+                    {t('movies.details.addToList')}
                   </Button>
                   <Button
                     variant="default"
@@ -163,7 +167,7 @@ export function MovieDetailsDialog() {
                     }}
                   >
                     <Eye className="size-4" />
-                    Mark as Watched
+                    {t('movies.details.markAsWatched')}
                   </Button>
                   {trailer && (
                     <Button variant="outline" size="sm">
@@ -174,7 +178,7 @@ export function MovieDetailsDialog() {
                         className="flex items-center gap-1"
                       >
                         <Play className="size-4" />
-                        Trailer
+                        {t('movies.details.trailer')}
                       </a>
                     </Button>
                   )}
@@ -187,7 +191,7 @@ export function MovieDetailsDialog() {
                         className="flex items-center gap-1"
                       >
                         <ExternalLink className="size-4" />
-                        Homepage
+                        {t('movies.details.homepage')}
                       </a>
                     </Button>
                   )}
@@ -197,14 +201,14 @@ export function MovieDetailsDialog() {
                   <div className="grid grid-cols-2 gap-4 text-sm">
                     {movie.budget > 0 && (
                       <div>
-                        <span className="text-muted-foreground">Budget</span>
-                        <p className="font-medium">${movie.budget.toLocaleString()}</p>
+                        <span className="text-muted-foreground">{t('movies.details.budget')}</span>
+                        <p className="font-medium">{formatCurrency(movie.budget)}</p>
                       </div>
                     )}
                     {movie.revenue > 0 && (
                       <div>
-                        <span className="text-muted-foreground">Revenue</span>
-                        <p className="font-medium">${movie.revenue.toLocaleString()}</p>
+                        <span className="text-muted-foreground">{t('movies.details.revenue')}</span>
+                        <p className="font-medium">{formatCurrency(movie.revenue)}</p>
                       </div>
                     )}
                   </div>
@@ -216,7 +220,7 @@ export function MovieDetailsDialog() {
                     <div>
                       <h3 className="font-heading text-sm font-medium text-muted-foreground mb-3 flex items-center gap-2">
                         <Users className="size-4" />
-                        Cast
+                        {t('movies.details.cast')}
                       </h3>
                       <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-none max-w-full">
                         {movie.cast.slice(0, 10).map((person) => (
@@ -226,7 +230,7 @@ export function MovieDetailsDialog() {
                                 <img src={person.profileUrl} alt={person.name} className="size-full object-cover" />
                               ) : (
                                 <div className="size-full flex items-center justify-center text-muted-foreground text-xs">
-                                  N/A
+                                  {t('common.nA')}
                                 </div>
                               )}
                             </div>
@@ -245,7 +249,7 @@ export function MovieDetailsDialog() {
                   <>
                     <Separator />
                     <div>
-                      <h3 className="font-heading text-sm font-medium text-muted-foreground mb-3">Recommendations</h3>
+                      <h3 className="font-heading text-sm font-medium text-muted-foreground mb-3">{t('movies.details.recommendations')}</h3>
                       <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-none max-w-full">
                         {recs.results.slice(0, 10).map((recMovie, i) => (
                           <div key={recMovie.tmdbId} className="w-[120px] shrink-0" onClick={handleClose}>
