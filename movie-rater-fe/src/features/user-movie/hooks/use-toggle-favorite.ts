@@ -7,6 +7,7 @@ import {
 } from '../../../api/endpoints/user-movie'
 import { useUserMovieStore } from '../../../stores/user-movie-store'
 import { toast } from 'sonner'
+import { t } from '@src/stores/locale-store'
 
 function favoriteMutation({ movieId, value }: { movieId: string; value: boolean }) {
   const isTmdb = !movieId.includes('-')
@@ -37,7 +38,7 @@ export function useToggleFavorite() {
     },
     onError: (_, { movieId, value }) => {
       toggle(movieId, !value)
-      toast.error('Failed to update favorite')
+      toast.error(t('userMovie.toast.favoriteFailed'))
     },
   })
 }

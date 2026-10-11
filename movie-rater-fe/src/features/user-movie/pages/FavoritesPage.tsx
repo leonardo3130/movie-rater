@@ -4,9 +4,11 @@ import { Button } from '@/components/ui/button'
 import { useFavorites } from '../hooks/use-favorites'
 import { UserMovieCard } from '../components/UserMovieCard'
 import { useNavigate } from 'react-router'
+import { useI18n } from '@src/i18n/use-i18n'
 
 export function FavoritesPage() {
   const navigate = useNavigate()
+  const { t } = useI18n()
   const [page, setPage] = useState(1)
   const { data, isLoading, isError, isFetching } = useFavorites(page, 20)
 
@@ -21,7 +23,7 @@ export function FavoritesPage() {
   if (isError) {
     return (
       <div className="flex min-h-[60vh] items-center justify-center">
-        <p className="text-muted-foreground">Failed to load favorites</p>
+        <p className="text-muted-foreground">{t('userMovie.favorites.failedToLoad')}</p>
       </div>
     )
   }
@@ -32,11 +34,11 @@ export function FavoritesPage() {
     return (
       <div className="flex min-h-[60vh] flex-col items-center justify-center gap-4">
         <Heart className="size-16 text-muted-foreground/30" />
-        <h2 className="text-xl font-semibold">No favorites yet</h2>
+        <h2 className="text-xl font-semibold">{t('userMovie.favorites.emptyTitle')}</h2>
         <p className="text-muted-foreground">
-          Start discovering movies and TV shows and add your favorites!
+          {t('userMovie.favorites.emptyDescription')}
         </p>
-        <Button onClick={() => navigate('/movies')}>Browse movies</Button>
+        <Button onClick={() => navigate('/movies')}>{t('userMovie.favorites.browseMovies')}</Button>
       </div>
     )
   }
@@ -50,9 +52,9 @@ export function FavoritesPage() {
           <Heart className="size-5 text-red-500" />
         </div>
         <div>
-          <h1 className="text-2xl font-bold">Favorites</h1>
+          <h1 className="text-2xl font-bold">{t('userMovie.favorites.heading')}</h1>
           <p className="text-sm text-muted-foreground">
-            {data?.totalResults ?? 0} item{data?.totalResults !== 1 ? 's' : ''}
+            {t('userMovie.favorites.count', { count: data?.totalResults ?? 0 })}
           </p>
         </div>
       </div>
@@ -77,7 +79,7 @@ export function FavoritesPage() {
             disabled={page <= 1 || isFetching}
             onClick={() => setPage((p) => Math.max(1, p - 1))}
           >
-            Previous
+            {t('common.previous')}
           </Button>
           <div className="flex items-center gap-1.5">
             {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
@@ -107,7 +109,7 @@ export function FavoritesPage() {
             onClick={() => setPage((p) => p + 1)}
           >
             {isFetching ? <Loader2 className="size-3 animate-spin mr-1" /> : null}
-            Next
+            {t('common.next')}
           </Button>
         </div>
       )}

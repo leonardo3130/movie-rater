@@ -469,4 +469,26 @@ export const en = {
       groupDeleted: 'Group deleted successfully',
     },
   },
+  userMovie: {
+    favorites: {
+      failedToLoad: 'Failed to load favorites',
+      emptyTitle: 'No favorites yet',
+      emptyDescription: 'Start discovering movies and TV shows and add your favorites!',
+      browseMovies: 'Browse movies',
+      heading: 'Favorites',
+      count: { one: '{count} item', other: '{count} items' },
+    },
+    watchlist: {
+      failedToLoad: 'Failed to load watchlist',
+      emptyTitle: 'Your watchlist is empty',
+      emptyDescription: 'Find something to watch and add it to your list!',
+      browseMovies: 'Browse movies',
+      heading: 'Watchlist',
+      count: { one: '{count} item', other: '{count} items' },
+    },
+    toast: {
+      favoriteFailed: 'Failed to update favorite',
+      watchlistFailed: 'Failed to update watchlist',
+    },
+  },
 }

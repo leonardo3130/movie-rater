@@ -2,6 +2,7 @@ import { motion } from 'framer-motion'
 import { Heart, Bookmark } from 'lucide-react'
 import { useToggleFavorite } from '../hooks/use-toggle-favorite'
 import { useToggleWatchlist } from '../hooks/use-toggle-watchlist'
+import { useI18n } from '@src/i18n/use-i18n'
 
 interface UserMovieToggleProps {
   movieId: string
@@ -30,6 +31,7 @@ export function UserMovieToggle({
 }: UserMovieToggleProps) {
   const toggleFavorite = useToggleFavorite()
   const toggleWatchlist = useToggleWatchlist()
+  const { t } = useI18n()
 
   return (
     <div className="flex items-center gap-1">
@@ -44,7 +46,7 @@ export function UserMovieToggle({
         className={`rounded-full ${buttonSizeMap[size]} cursor-pointer transition-colors hover:bg-white/10 ${
           isFavorite ? 'text-red-500' : 'text-white/60 hover:text-white/90'
         }`}
-        aria-label={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
+        aria-label={isFavorite ? t('tv.card.removeFromFavorites') : t('tv.card.addToFavorites')}
       >
         <Heart
           className={sizeMap[size]}
@@ -63,7 +65,7 @@ export function UserMovieToggle({
         className={`rounded-full ${buttonSizeMap[size]} cursor-pointer transition-colors hover:bg-white/10 ${
           isInWatchlist ? 'text-yellow-400' : 'text-white/60 hover:text-white/90'
         }`}
-        aria-label={isInWatchlist ? 'Remove from watchlist' : 'Add to watchlist'}
+        aria-label={isInWatchlist ? t('tv.card.removeFromWatchlist') : t('tv.card.addToWatchlist')}
       >
         <Bookmark
           className={sizeMap[size]}

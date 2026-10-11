@@ -472,4 +472,26 @@ export const it: Messages = {
       groupDeleted: 'Gruppo eliminato con successo',
     },
   },
+  userMovie: {
+    favorites: {
+      failedToLoad: 'Impossibile caricare i preferiti',
+      emptyTitle: 'Nessun preferito ancora',
+      emptyDescription: 'Inizia a scoprire film e serie TV e aggiungi i tuoi preferiti!',
+      browseMovies: 'Sfoglia i film',
+      heading: 'Preferiti',
+      count: { one: '{count} elemento', other: '{count} elementi' },
+    },
+    watchlist: {
+      failedToLoad: 'Impossibile caricare la lista da guardare',
+      emptyTitle: 'La tua lista da guardare è vuota',
+      emptyDescription: 'Trova qualcosa da guardare e aggiungilo alla tua lista!',
+      browseMovies: 'Sfoglia i film',
+      heading: 'Da guardare',
+      count: { one: '{count} elemento', other: '{count} elementi' },
+    },
+    toast: {
+      favoriteFailed: 'Impossibile aggiornare i preferiti',
+      watchlistFailed: 'Impossibile aggiornare la lista da guardare',
+    },
+  },
 }
