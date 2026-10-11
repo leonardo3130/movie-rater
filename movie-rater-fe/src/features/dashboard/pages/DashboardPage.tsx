@@ -33,6 +33,7 @@ import { Separator } from '@/components/ui/separator'
 import { useDashboard } from '../hooks/use-dashboard'
 import type { GenreStatDto, MovieStatDto } from '@src/types/dashboard'
 import { useGroups } from '../../groups/hooks/use-groups'
+import { useI18n } from '@src/i18n/use-i18n'
 
 const item = {
   hidden: { opacity: 0, y: 20 },
@@ -109,6 +110,7 @@ function GenreSection({
   emptyLabel: string
 }) {
   const maxCount = genres.length > 0 ? Math.max(...genres.map((g) => g.count)) : 1
+  const { t } = useI18n()
 
   return (
     <motion.div variants={item}>
@@ -128,7 +130,7 @@ function GenreSection({
                 <div className="flex items-center justify-between text-sm">
                   <span className="font-medium truncate">{genre.genreName}</span>
                   <span className="ml-2 shrink-0 text-xs text-muted-foreground tabular-nums">
-                    {genre.count} {genre.count === 1 ? 'film' : 'films'}
+                    {t('dashboard.genres.films', { count: genre.count })}
                     {genre.averageRating > 0 && (
                       <span className="ml-1.5">
                         <span className="text-yellow-500">★</span> {genre.averageRating.toFixed(1)}
@@ -238,6 +240,7 @@ function RatingBar({ value, max = 10 }: { value: number; max?: number }) {
 
 export function DashboardPage() {
   const [groupId, setGroupId] = useState<string | null>(null);
+  const { t } = useI18n()
   const { data, isLoading } = useDashboard(groupId)
   const groups = useGroups();
   const selectedGroup = groups.data && groupId && !groups.isFetching ? groups.data.find(g => g.id == groupId) : undefined
@@ -251,7 +254,7 @@ export function DashboardPage() {
             <LayoutDashboard className="size-5 text-primary" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold">Dashboard</h1>
+            <h1 className="text-2xl font-bold">{t('dashboard.heading')}</h1>
             <Skeleton className="h-4 w-32 mt-1" />
           </div>
         </div>
@@ -302,31 +305,32 @@ export function DashboardPage() {
           <LayoutDashboard className="size-5 text-primary" />
         </div>
         <div>
-          <h1 className="text-2xl font-bold">Dashboard</h1>
+          <h1 className="text-2xl font-bold">{t('dashboard.heading')}</h1>
           <p className="text-sm text-muted-foreground">
-            {!groupId ? `Select one group to see stats` :
-              hasData
-                ? `You've watched ${data.moviesWatched} movie${data.moviesWatched !== 1 ? 's' : ''} together`
-                : 'Start watching movies together!'}
+            {!groupId
+              ? t('dashboard.selectGroupStats')
+              : hasData
+                ? t('dashboard.watchedTogether', { count: data.moviesWatched })
+                : t('dashboard.startWatching')}
           </p>
         </div>
         <div className='space-y-2 ml-auto mr-3.5'>
           <Label htmlFor="groupId">
             <UsersRound className="size-3.5 text-muted-foreground" />
-            Group
+            {t('common.group')}
           </Label>
           <Select value={groupId} onValueChange={(value) => {
             setGroupId(value)
           }} >
             <SelectTrigger className="w-full max-w-48">
               {/*displyed value*/}
-              <SelectValue placeholder="Select group" >
+              <SelectValue placeholder={t('common.selectGroup')} >
                 {selectedGroup?.name}
               </SelectValue>
             </SelectTrigger>
             <SelectContent>
               <SelectGroup>
-                <SelectLabel>Groups</SelectLabel>
+                <SelectLabel>{t('common.groups')}</SelectLabel>
                 {!(groups.isPending || groups.isLoading) && groups.data && groups.data.map(g =>
                   <SelectItem key={g.id} value={g.id}>{g.name}</SelectItem>)}
               </SelectGroup>
@@ -343,9 +347,9 @@ export function DashboardPage() {
           className="flex min-h-[40vh] flex-col items-center justify-center gap-4"
         >
           <Clapperboard className="size-20 text-muted-foreground/20" />
-          <h2 className="text-xl font-semibold text-muted-foreground">No movies yet</h2>
+          <h2 className="text-xl font-semibold text-muted-foreground">{t('dashboard.noMoviesYet')}</h2>
           <p className="text-sm text-muted-foreground max-w-sm text-center">
-            Mark your first movie as watched to unlock your dashboard statistics.
+            {t('dashboard.firstMovieDescription')}
           </p>
         </motion.div>
       ) : (
@@ -362,7 +366,7 @@ export function DashboardPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
             <StatCard
               icon={Clapperboard}
-              label="Movies Watched"
+              label={t('dashboard.stats.moviesWatched')}
               value={data.moviesWatched}
               iconBg="bg-blue-500/10"
               iconColor="text-blue-400"
@@ -370,36 +374,36 @@ export function DashboardPage() {
             />
             <StatCard
               icon={Calendar}
-              label="This Month"
+              label={t('dashboard.stats.thisMonth')}
               value={data.moviesThisMonth}
-              sublabel={data.moviesThisMonth === 1 ? 'movie this month' : 'movies this month'}
+              sublabel={t('dashboard.stats.moviesThisMonth', { count: data.moviesThisMonth })}
               iconBg="bg-emerald-500/10"
               iconColor="text-emerald-400"
               gradient="bg-gradient-to-br from-emerald-500/5 to-transparent"
             />
             <StatCard
               icon={TrendingUp}
-              label="This Year"
+              label={t('dashboard.stats.thisYear')}
               value={data.moviesThisYear}
-              sublabel={data.moviesThisYear === 1 ? 'movie this year' : 'movies this year'}
+              sublabel={t('dashboard.stats.moviesThisYear', { count: data.moviesThisYear })}
               iconBg="bg-violet-500/10"
               iconColor="text-violet-400"
               gradient="bg-gradient-to-br from-violet-500/5 to-transparent"
             />
             <StatCard
               icon={Star}
-              label="Average Rating"
+              label={t('dashboard.stats.averageRating')}
               value={data.averageRating.toFixed(1)}
-              sublabel="out of 10"
+              sublabel={t('dashboard.stats.outOf10')}
               iconBg="bg-yellow-500/10"
               iconColor="text-yellow-400"
               gradient="bg-gradient-to-br from-yellow-500/5 to-transparent"
             />
             <StatCard
               icon={Repeat}
-              label="Rewatches"
+              label={t('dashboard.stats.rewatches')}
               value={data.rewatchCount}
-              sublabel={data.rewatchCount === 1 ? 'rewatch' : 'rewatches'}
+              sublabel={t('dashboard.stats.rewatch', { count: data.rewatchCount })}
               iconBg="bg-rose-500/10"
               iconColor="text-rose-400"
               gradient="bg-gradient-to-br from-rose-500/5 to-transparent"
@@ -409,18 +413,18 @@ export function DashboardPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <StatCard
               icon={Flame}
-              label="Current Streak"
-              value={`${data.currentStreak} week${data.currentStreak !== 1 ? 's' : ''}`}
-              sublabel="consecutive weeks with a movie"
+              label={t('dashboard.stats.currentStreak')}
+              value={t('dashboard.stats.weeks', { count: data.currentStreak })}
+              sublabel={t('dashboard.stats.consecutiveWeeks')}
               iconBg="bg-orange-500/10"
               iconColor="text-orange-400"
               gradient="bg-gradient-to-br from-orange-500/5 to-transparent"
             />
             <StatCard
               icon={Award}
-              label="Longest Streak"
-              value={`${data.longestStreak} week${data.longestStreak !== 1 ? 's' : ''}`}
-              sublabel="all-time best streak"
+              label={t('dashboard.stats.longestStreak')}
+              value={t('dashboard.stats.weeks', { count: data.longestStreak })}
+              sublabel={t('dashboard.stats.bestStreak')}
               iconBg="bg-amber-500/10"
               iconColor="text-amber-400"
               gradient="bg-gradient-to-br from-amber-500/5 to-transparent"
@@ -429,18 +433,18 @@ export function DashboardPage() {
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             <GenreSection
-              title="Favorite Genres"
+              title={t('dashboard.genres.favorite')}
               icon={ThumbsUp}
               genres={data.favoriteGenres}
               colorClass="bg-gradient-to-r from-chart-1 to-chart-2"
-              emptyLabel="Rate more movies to discover your favorite genres"
+              emptyLabel={t('dashboard.genres.favoriteEmpty')}
             />
             <GenreSection
-              title="Most Watched Genres"
+              title={t('dashboard.genres.mostWatched')}
               icon={Film}
               genres={data.mostWatchedGenres}
               colorClass="bg-gradient-to-r from-chart-3 to-chart-4"
-              emptyLabel="Watch more movies to see your top genres"
+              emptyLabel={t('dashboard.genres.mostWatchedEmpty')}
             />
           </div>
 
@@ -448,33 +452,33 @@ export function DashboardPage() {
             <motion.div variants={item} className="mb-4">
               <h2 className="text-lg font-semibold flex items-center gap-2">
                 <Zap className="size-4 text-yellow-400" />
-                Movie Highlights
+                {t('dashboard.movieHighlights')}
               </h2>
             </motion.div>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <MovieHighlightCard
                 icon={ThumbsUp}
-                label="Highest Rated"
+                label={t('dashboard.highlights.highestRated')}
                 movie={data.highestRatedMovie}
                 colorClass="text-emerald-400"
                 iconBg="bg-emerald-500/10"
-                emptyLabel="No ratings yet"
+                emptyLabel={t('dashboard.highlights.noRatings')}
               />
               <MovieHighlightCard
                 icon={ThumbsDown}
-                label="Lowest Rated"
+                label={t('dashboard.highlights.lowestRated')}
                 movie={data.lowestRatedMovie}
                 colorClass="text-red-400"
                 iconBg="bg-red-500/10"
-                emptyLabel="No ratings yet"
+                emptyLabel={t('dashboard.highlights.noRatings')}
               />
               <MovieHighlightCard
                 icon={Zap}
-                label="Biggest Disagreement"
+                label={t('dashboard.highlights.biggestDisagreement')}
                 movie={data.biggestDisagreement}
                 colorClass="text-orange-400"
                 iconBg="bg-orange-500/10"
-                emptyLabel="Rate the same movies to compare"
+                emptyLabel={t('dashboard.highlights.rateSameMovies')}
               />
             </div>
           </div>
@@ -484,31 +488,31 @@ export function DashboardPage() {
               <CardHeader className="pb-3">
                 <CardTitle className="flex items-center gap-2 text-base">
                   <Gauge className="size-4 text-chart-3" />
-                  Rating Compatibility
+                  {t('dashboard.compatibility.title')}
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium">Average Disagreement</p>
+                    <p className="text-sm font-medium">{t('dashboard.compatibility.averageDisagreement')}</p>
                     <p className="text-xs text-muted-foreground">
-                      How far apart your ratings typically are
+                      {t('dashboard.compatibility.description')}
                     </p>
                   </div>
                   <div className="text-right">
                     <p className="text-2xl font-bold tabular-nums">
                       {data.averageDisagreement.toFixed(1)}
                     </p>
-                    <p className="text-xs text-muted-foreground">points apart</p>
+                    <p className="text-xs text-muted-foreground">{t('dashboard.compatibility.pointsApart')}</p>
                   </div>
                 </div>
                 <Separator />
                 <div className="space-y-2">
                   <RatingBar value={10 - data.averageDisagreement} max={10} />
                   <div className="flex justify-between text-xs text-muted-foreground">
-                    <span>Perfect match (10)</span>
-                    <span>Compatibility Score</span>
-                    <span>Polar opposites (0)</span>
+                    <span>{t('dashboard.compatibility.perfectMatch')}</span>
+                    <span>{t('dashboard.compatibility.score')}</span>
+                    <span>{t('dashboard.compatibility.polarOpposites')}</span>
                   </div>
                 </div>
               </CardContent>
