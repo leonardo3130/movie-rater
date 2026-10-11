@@ -6,6 +6,7 @@ import type {
   TvEpisodeDetailsResponse,
 } from '@src/types/tv'
 import type { GenresResponse } from '@src/types/movie'
+import { tmdbLanguage } from '@src/stores/locale-store'
 
 export function searchTvShows(params: {
   query: string
@@ -21,7 +22,7 @@ export function searchTvShows(params: {
   if (params.firstAirDateYear) qp.set('firstAirDateYear', params.firstAirDateYear)
   if (params.year) qp.set('year', params.year)
   if (params.includeAdult) qp.set('includeAdult', 'true')
-  if (params.language) qp.set('language', params.language)
+  qp.set('language', params.language ?? tmdbLanguage())
   return client.get<PagedTvShowsResponse>(`/api/tv/search?${qp.toString()}`).then((r) => r.data)
 }
 
@@ -45,21 +46,25 @@ export function discoverTvShows(params: {
   if (params.sortBy) qp.set('sortBy', params.sortBy)
   if (params.voteAverageGte) qp.set('voteAverageGte', String(params.voteAverageGte))
   if (params.includeAdult) qp.set('includeAdult', 'true')
-  if (params.language) qp.set('language', params.language)
+  qp.set('language', params.language ?? tmdbLanguage())
   return client.get<PagedTvShowsResponse>(`/api/tv/discover?${qp.toString()}`).then((r) => r.data)
 }
 
-export function getTvGenres(language?: string) {
+export function getTvGenres(language: string = tmdbLanguage()) {
   const qs = language ? `?language=${language}` : ''
   return client.get<GenresResponse>(`/api/tv/genres${qs}`).then((r) => r.data)
 }
 
-export function getTvShowDetails(tmdbId: number, language?: string) {
+export function getTvShowDetails(tmdbId: number, language: string = tmdbLanguage()) {
   const qs = language ? `?language=${language}` : ''
   return client.get<TvShowDetailsResponse>(`/api/tv/${tmdbId}${qs}`).then((r) => r.data)
 }
 
-export function getTvSeason(tmdbId: number, seasonNumber: number, language?: string) {
+export function getTvSeason(
+  tmdbId: number,
+  seasonNumber: number,
+  language: string = tmdbLanguage(),
+) {
   const qs = language ? `?language=${language}` : ''
   return client
     .get<TvSeasonDetailsResponse>(`/api/tv/${tmdbId}/seasons/${seasonNumber}${qs}`)
@@ -70,7 +75,7 @@ export function getTvEpisode(
   tmdbId: number,
   seasonNumber: number,
   episodeNumber: number,
-  language?: string,
+  language: string = tmdbLanguage(),
 ) {
   const qs = language ? `?language=${language}` : ''
   return client

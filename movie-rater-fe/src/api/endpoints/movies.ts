@@ -5,6 +5,7 @@ import type {
   GenresResponse,
   SortByOption,
 } from '@src/types/movie'
+import { tmdbLanguage } from '@src/stores/locale-store'
 
 interface PageParam {
   page?: number
@@ -28,7 +29,7 @@ export function searchMovies(params: {
   if (params.primaryReleaseYear) qp.set('primaryReleaseYear', params.primaryReleaseYear)
   if (params.includeAdult) qp.set('includeAdult', 'true')
   if (params.region) qp.set('region', params.region)
-  if (params.language) qp.set('language', params.language)
+  qp.set('language', params.language ?? tmdbLanguage())
   return client.get<PagedMoviesResponse>(`/api/movies/search?${qp.toString()}`).then((r) => r.data)
 }
 
@@ -54,14 +55,14 @@ export function discoverMovies(params: {
   if (params.voteAverageGte) qp.set('voteAverageGte', String(params.voteAverageGte))
   if (params.includeAdult) qp.set('includeAdult', 'true')
   if (params.region) qp.set('region', params.region)
-  if (params.language) qp.set('language', params.language)
+  qp.set('language', params.language ?? tmdbLanguage())
   return client.get<PagedMoviesResponse>(`/api/movies/discover?${qp.toString()}`).then((r) => r.data)
 }
 
 export function getPopularMovies(params: PageParam = {}) {
   const qp = new URLSearchParams()
   if (params.page) qp.set('page', String(params.page))
-  if (params.language) qp.set('language', params.language)
+  qp.set('language', params.language ?? tmdbLanguage())
   if (params.region) qp.set('region', params.region)
   return client.get<PagedMoviesResponse>(`/api/movies/popular?${qp.toString()}`).then((r) => r.data)
 }
@@ -69,20 +70,22 @@ export function getPopularMovies(params: PageParam = {}) {
 export function getNowPlayingMovies(params: PageParam = {}) {
   const qp = new URLSearchParams()
   if (params.page) qp.set('page', String(params.page))
-  if (params.language) qp.set('language', params.language)
+  qp.set('language', params.language ?? tmdbLanguage())
   if (params.region) qp.set('region', params.region)
-  return client.get<PagedMoviesResponse>(`/api/movies/now-playing?${qp.toString()}`).then((r) => r.data)
+  return client
+    .get<PagedMoviesResponse>(`/api/movies/now-playing?${qp.toString()}`)
+    .then((r) => r.data)
 }
 
 export function getTopRatedMovies(params: PageParam = {}) {
   const qp = new URLSearchParams()
   if (params.page) qp.set('page', String(params.page))
-  if (params.language) qp.set('language', params.language)
+  qp.set('language', params.language ?? tmdbLanguage())
   if (params.region) qp.set('region', params.region)
   return client.get<PagedMoviesResponse>(`/api/movies/top-rated?${qp.toString()}`).then((r) => r.data)
 }
 
-export function getMovieDetails(tmdbId: number, language?: string) {
+export function getMovieDetails(tmdbId: number, language: string = tmdbLanguage()) {
   const qs = language ? `?language=${language}` : ''
   return client.get<MovieDetailsResponse>(`/api/movies/${tmdbId}${qs}`).then((r) => r.data)
 }
@@ -90,11 +93,13 @@ export function getMovieDetails(tmdbId: number, language?: string) {
 export function getMovieRecommendations(tmdbId: number, params: PageParam = {}) {
   const qp = new URLSearchParams()
   if (params.page) qp.set('page', String(params.page))
-  if (params.language) qp.set('language', params.language)
-  return client.get<PagedMoviesResponse>(`/api/movies/${tmdbId}/recommendations?${qp.toString()}`).then((r) => r.data)
+  qp.set('language', params.language ?? tmdbLanguage())
+  return client
+    .get<PagedMoviesResponse>(`/api/movies/${tmdbId}/recommendations?${qp.toString()}`)
+    .then((r) => r.data)
 }
 
-export function getGenres(language?: string) {
+export function getGenres(language: string = tmdbLanguage()) {
   const qs = language ? `?language=${language}` : ''
   return client.get<GenresResponse>(`/api/movies/genres${qs}`).then((r) => r.data)
 }
