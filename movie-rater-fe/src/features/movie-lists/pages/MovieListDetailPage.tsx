@@ -11,11 +11,13 @@ import { EditListDialog } from '../components/ListFormDialog'
 import { DeleteListDialog } from '../components/DeleteListDialog'
 import { RemoveMovieDialog } from '../components/RemoveMovieDialog'
 import type { MovieListItemDto } from '@src/types/movie-list'
+import { useI18n } from '@src/i18n/use-i18n'
 
 export function MovieListDetailPage() {
   const { listId } = useParams<{ listId: string }>()
   const navigate = useNavigate()
   const groups = useGroups()
+  const { t } = useI18n()
 
   const { data: list, isLoading, isError, refetch } = useMovieList(listId)
 
@@ -40,13 +42,13 @@ export function MovieListDetailPage() {
     return (
       <div className="flex min-h-[60vh] flex-col items-center justify-center gap-4">
         <Library className="size-16 text-muted-foreground/30" />
-        <h2 className="text-xl font-semibold">List not found</h2>
-        <p className="text-muted-foreground">This list does not exist or is no longer available.</p>
+        <h2 className="text-xl font-semibold">{t('lists.notFound')}</h2>
+        <p className="text-muted-foreground">{t('lists.notFoundDescription')}</p>
         <Button variant="outline" onClick={() => navigate('/lists')}>
-          Back to lists
+          {t('lists.backToLists')}
         </Button>
         <Button variant="ghost" onClick={() => refetch()}>
-          Try again
+          {t('common.tryAgain')}
         </Button>
       </div>
     )
@@ -60,7 +62,7 @@ export function MovieListDetailPage() {
       <div className="flex flex-wrap items-center gap-2">
         <Button variant="ghost" size="sm" onClick={() => navigate('/lists')}>
           <ArrowLeft className="size-4" />
-          Back to lists
+          {t('lists.backToLists')}
         </Button>
       </div>
 
@@ -71,12 +73,12 @@ export function MovieListDetailPage() {
             {list.isPrivate ? (
               <Badge variant="outline" className="flex items-center gap-1 text-[10px]">
                 <Lock className="size-2.5" />
-                Private
+                {t('lists.private')}
               </Badge>
             ) : (
               <Badge variant="outline" className="flex items-center gap-1 text-[10px]">
                 <Users className="size-2.5" />
-                Shared
+                {t('lists.shared')}
               </Badge>
             )}
           </div>
@@ -84,19 +86,19 @@ export function MovieListDetailPage() {
             <p className="text-sm text-muted-foreground mt-1">{list.description}</p>
           )}
           <p className="text-xs text-muted-foreground mt-1">
-            {list.movies.length} movie{list.movies.length !== 1 ? 's' : ''}
+            {t('lists.movieCount', { count: list.movies.length })}
           </p>
         </div>
         {canEdit && (
           <div className="flex items-center gap-2">
             <Button variant="outline" size="sm" onClick={() => setEditOpen(true)}>
               <Pencil className="size-4" />
-              Edit
+              {t('common.edit')}
             </Button>
             {list.isOwner && (
               <Button variant="destructive" size="sm" onClick={() => setDeleteOpen(true)}>
                 <Trash2 className="size-4" />
-                Delete
+                {t('common.delete')}
               </Button>
             )}
           </div>
@@ -106,11 +108,11 @@ export function MovieListDetailPage() {
       {list.movies.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-20 gap-4">
           <Library className="size-16 text-muted-foreground/30" />
-          <h2 className="text-lg font-semibold">This list is empty</h2>
+          <h2 className="text-lg font-semibold">{t('lists.empty')}</h2>
           <p className="text-muted-foreground">
-            Browse movies and add them to this list from the Movies page.
+            {t('lists.emptyDescription')}
           </p>
-          <Button onClick={() => navigate('/movies')}>Browse movies</Button>
+          <Button onClick={() => navigate('/movies')}>{t('lists.browseMovies')}</Button>
         </div>
       ) : (
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
@@ -145,7 +147,7 @@ export function MovieListDetailPage() {
                             setRemovingMovie(movie)
                           }}
                           className="rounded-full p-1 cursor-pointer transition-colors hover:bg-red-500/20 text-white/70 hover:text-red-400"
-                          aria-label={`Remove ${movie.title} from list`}
+                          aria-label={t('lists.removeFromListAria', { title: movie.title })}
                         >
                           <X className="size-3.5" />
                         </motion.button>

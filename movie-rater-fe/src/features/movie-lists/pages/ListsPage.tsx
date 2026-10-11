@@ -9,9 +9,11 @@ import { CreateListDialog } from '../components/ListFormDialog'
 import { EditListDialog } from '../components/ListFormDialog'
 import { DeleteListDialog } from '../components/DeleteListDialog'
 import type { MovieListSummaryDto } from '@src/types/movie-list'
+import { useI18n } from '@src/i18n/use-i18n'
 
 export function ListsPage() {
   const { data, isLoading, isError, refetch } = useMovieLists()
+  const { t } = useI18n()
 
   const [createOpen, setCreateOpen] = useState(false)
   const [editingList, setEditingList] = useState<MovieListSummaryDto | null>(null)
@@ -44,9 +46,9 @@ export function ListsPage() {
     return (
       <div className="flex min-h-[60vh] flex-col items-center justify-center gap-4">
         <Library className="size-16 text-muted-foreground/30" />
-        <h2 className="text-xl font-semibold">Failed to load lists</h2>
-        <p className="text-muted-foreground">Something went wrong while loading your lists.</p>
-        <Button onClick={() => refetch()}>Try again</Button>
+        <h2 className="text-xl font-semibold">{t('lists.failedToLoad')}</h2>
+        <p className="text-muted-foreground">{t('lists.loadErrorDescription')}</p>
+        <Button onClick={() => refetch()}>{t('common.tryAgain')}</Button>
       </div>
     )
   }
@@ -57,13 +59,13 @@ export function ListsPage() {
     return (
       <div className="flex min-h-[60vh] flex-col items-center justify-center gap-4">
         <Library className="size-16 text-muted-foreground/30" />
-        <h2 className="text-xl font-semibold">No lists yet</h2>
+        <h2 className="text-xl font-semibold">{t('lists.noLists')}</h2>
         <p className="text-muted-foreground">
-          Create your first list to organize the movies you love.
+          {t('lists.noListsDescription')}
         </p>
         <Button onClick={() => setCreateOpen(true)}>
           <Plus className="size-4" />
-          Create your first list
+          {t('lists.createFirstList')}
         </Button>
         <CreateListDialog open={createOpen} onOpenChange={setCreateOpen} />
       </div>
@@ -78,15 +80,15 @@ export function ListsPage() {
             <Library className="size-5 text-primary" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold">Lists</h1>
+            <h1 className="text-2xl font-bold">{t('lists.heading')}</h1>
             <p className="text-sm text-muted-foreground">
-              {lists.length} list{lists.length !== 1 ? 's' : ''}
+              {t('lists.count', { count: lists.length })}
             </p>
           </div>
         </div>
         <Button onClick={() => setCreateOpen(true)}>
           <Plus className="size-4" />
-          New list
+          {t('lists.newList')}
         </Button>
       </div>
 

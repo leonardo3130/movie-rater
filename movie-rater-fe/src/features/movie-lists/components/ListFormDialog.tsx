@@ -12,6 +12,7 @@ import { movieListSchema, type MovieListFormValues } from '../schemas/movie-list
 import { useGroups } from '../../groups/hooks/use-groups'
 import type { GroupDto } from '@src/types/groups'
 import type { MovieListBaseDto } from '@src/types/movie-list'
+import { useI18n } from '@src/i18n/use-i18n'
 
 const TEXTAREA_CLASS =
   'flex w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-xs placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 resize-none'
@@ -28,6 +29,7 @@ function ListFormFields({ register, errors, watch, setValue, groups }: ListFormF
   const isPrivate = watch('isPrivate') ?? true
   const canGroupEdit = watch('canGroupEdit') ?? false
   const groupIds = watch('groupIds') ?? []
+  const { t } = useI18n()
 
   const togglePrivate = () => {
     const next = !isPrivate
@@ -48,10 +50,10 @@ function ListFormFields({ register, errors, watch, setValue, groups }: ListFormF
   return (
     <div className="space-y-4">
       <div className="space-y-2">
-        <Label htmlFor="name">Name</Label>
+        <Label htmlFor="name">{t('lists.form.name')}</Label>
         <Input
           id="name"
-          placeholder="e.g. Date night picks"
+          placeholder={t('lists.form.namePlaceholder')}
           aria-invalid={!!errors.name}
           {...register('name')}
         />
@@ -59,11 +61,11 @@ function ListFormFields({ register, errors, watch, setValue, groups }: ListFormF
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="description">Description (optional)</Label>
+        <Label htmlFor="description">{t('lists.form.descriptionOptional')}</Label>
         <textarea
           id="description"
           rows={3}
-          placeholder="What is this list about?"
+          placeholder={t('lists.form.descriptionPlaceholder')}
           className={TEXTAREA_CLASS}
           aria-invalid={!!errors.description}
           {...register('description')}
@@ -75,9 +77,9 @@ function ListFormFields({ register, errors, watch, setValue, groups }: ListFormF
 
       <div className="flex items-center justify-between gap-3">
         <div className="min-w-0">
-          <Label>Privacy</Label>
+          <Label>{t('lists.form.privacy')}</Label>
           <p className="text-xs text-muted-foreground">
-            {isPrivate ? 'Only visible to you' : 'Shared with the selected groups'}
+            {isPrivate ? t('lists.form.onlyVisibleToYou') : t('lists.form.sharedWithGroups')}
           </p>
         </div>
         <Button
@@ -88,15 +90,15 @@ function ListFormFields({ register, errors, watch, setValue, groups }: ListFormF
           onClick={togglePrivate}
         >
           <Lock className="size-3.5" fill={isPrivate ? 'currentColor' : 'none'} />
-          {isPrivate ? 'Private' : 'Shared'}
+          {isPrivate ? t('lists.private') : t('lists.shared')}
         </Button>
       </div>
 
       <div className={cn('flex items-center justify-between gap-3', isPrivate && 'opacity-50')}>
         <div className="min-w-0">
-          <Label>Group members can edit</Label>
+          <Label>{t('lists.form.groupMembersCanEdit')}</Label>
           <p className="text-xs text-muted-foreground">
-            Allows group members to add and remove movies
+            {t('lists.form.allowsGroupEdit')}
           </p>
         </div>
         <Button
@@ -108,15 +110,15 @@ function ListFormFields({ register, errors, watch, setValue, groups }: ListFormF
           onClick={() => setValue('canGroupEdit', !canGroupEdit)}
         >
           <Users className="size-3.5" fill={canGroupEdit ? 'currentColor' : 'none'} />
-          {canGroupEdit ? 'Allowed' : 'Restricted'}
+          {canGroupEdit ? t('lists.form.allowed') : t('lists.form.restricted')}
         </Button>
       </div>
 
       <div className="space-y-2">
-        <Label>Share with groups</Label>
+        <Label>{t('lists.form.shareWithGroups')}</Label>
         {groups.length === 0 ? (
           <p className="text-xs text-muted-foreground">
-            You are not part of any group yet. Create one from the Invite page to share lists.
+            {t('lists.form.noGroupsDescription')}
           </p>
         ) : (
           <div className="flex flex-wrap gap-1.5">
@@ -154,6 +156,7 @@ interface ListDialogProps {
 export function CreateListDialog({ open, onOpenChange }: ListDialogProps) {
   const createList = useCreateMovieList()
   const groups = useGroups()
+  const { t } = useI18n()
 
   const {
     register,
@@ -194,9 +197,9 @@ export function CreateListDialog({ open, onOpenChange }: ListDialogProps) {
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Create List</DialogTitle>
+          <DialogTitle>{t('lists.form.createTitle')}</DialogTitle>
           <DialogDescription>
-            Organize movies into your own custom lists
+            {t('lists.form.createDescription')}
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
@@ -209,12 +212,12 @@ export function CreateListDialog({ open, onOpenChange }: ListDialogProps) {
           />
           <div className="flex items-center justify-end gap-2 pt-2">
             <Button type="button" variant="ghost" size="sm" onClick={() => onOpenChange(false)} disabled={pending}>
-              Cancel
+              {t('common.cancel')}
             </Button>
             <Button type="submit" size="sm" disabled={pending}>
               {pending && <Loader2 className="size-4 animate-spin" />}
               <Plus className="size-4" />
-              Create list
+              {t('lists.form.create')}
             </Button>
           </div>
         </form>
@@ -230,6 +233,7 @@ interface EditListDialogProps extends ListDialogProps {
 export function EditListDialog({ open, onOpenChange, list }: EditListDialogProps) {
   const updateList = useUpdateMovieList()
   const groups = useGroups()
+  const { t } = useI18n()
 
   const {
     register,
@@ -273,9 +277,9 @@ export function EditListDialog({ open, onOpenChange, list }: EditListDialogProps
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Edit List</DialogTitle>
+          <DialogTitle>{t('lists.form.editTitle')}</DialogTitle>
           <DialogDescription>
-            Update the details of &quot;{list.name}&quot;
+            {t('lists.form.editDescription', { name: list.name })}
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
@@ -288,12 +292,12 @@ export function EditListDialog({ open, onOpenChange, list }: EditListDialogProps
           />
           <div className="flex items-center justify-end gap-2 pt-2">
             <Button type="button" variant="ghost" size="sm" onClick={() => onOpenChange(false)} disabled={pending}>
-              Cancel
+              {t('common.cancel')}
             </Button>
             <Button type="submit" size="sm" disabled={pending}>
               {pending && <Loader2 className="size-4 animate-spin" />}
               <Pencil className="size-4" />
-              Save changes
+              {t('lists.form.editSubmit')}
             </Button>
           </div>
         </form>

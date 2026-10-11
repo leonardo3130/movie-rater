@@ -12,6 +12,7 @@ import { useMovieLists } from '../hooks/use-movie-lists'
 import { useCreateMovieList } from '../hooks/use-create-movie-list'
 import { useAddMovieToList } from '../hooks/use-add-movie-to-list'
 import { quickListSchema, type QuickListFormValues } from '../schemas/movie-list.schema'
+import { useI18n } from '@src/i18n/use-i18n'
 
 interface AddToListDialogProps {
   open: boolean
@@ -33,6 +34,7 @@ export function AddToListDialog({
   const listsQuery = useMovieLists()
   const createList = useCreateMovieList()
   const addMovie = useAddMovieToList()
+  const { t } = useI18n()
 
   const [selectedOverride, setSelectedOverride] = useState('')
   const [showQuickCreate, setShowQuickCreate] = useState(false)
@@ -94,9 +96,9 @@ export function AddToListDialog({
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="max-w-md max-h-[85vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Add to list</DialogTitle>
+          <DialogTitle>{t('lists.addToList.title')}</DialogTitle>
           <DialogDescription>
-            Choose a list to add this movie to
+            {t('lists.addToList.description')}
           </DialogDescription>
         </DialogHeader>
 
@@ -118,14 +120,14 @@ export function AddToListDialog({
         {listsLoaded && !showQuickCreate && lists.length > 0 && (
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="listId">List</Label>
+              <Label htmlFor="listId">{t('lists.addToList.list')}</Label>
               <Select value={selectedListId} onValueChange={(value) => { if (value) setSelectedOverride(value) }}>
                 <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Select a list">{selectedList?.name}</SelectValue>
+                  <SelectValue placeholder={t('lists.addToList.selectList')}>{selectedList?.name}</SelectValue>
                 </SelectTrigger>
                 <SelectContent>
                   <SelectGroup>
-                    <SelectLabel>Your lists</SelectLabel>
+                    <SelectLabel>{t('lists.addToList.yourLists')}</SelectLabel>
                     {lists.map((list) => (
                       <SelectItem key={list.id} value={list.id}>
                         {list.name}
@@ -139,12 +141,12 @@ export function AddToListDialog({
             <div className="flex items-center justify-end gap-2 pt-2">
               <Button type="button" variant="ghost" size="sm" onClick={() => setShowQuickCreate(true)}>
                 <Plus className="size-4" />
-                New list
+                {t('lists.addToList.newList')}
               </Button>
               <Button type="button" size="sm" disabled={!selectedListId || pending} onClick={handleAdd}>
                 {pending && <Loader2 className="size-4 animate-spin" />}
                 <ListPlus className="size-4" />
-                Add to list
+                {t('lists.addToList.add')}
               </Button>
             </div>
           </div>
@@ -153,10 +155,10 @@ export function AddToListDialog({
         {listsLoaded && (showQuickCreate || lists.length === 0) && (
           <form onSubmit={handleSubmit(handleQuickCreate)} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="quickListName">New list name</Label>
+              <Label htmlFor="quickListName">{t('lists.addToList.newListName')}</Label>
               <Input
                 id="quickListName"
-                placeholder="e.g. Date night picks"
+                placeholder={t('lists.addToList.namePlaceholder')}
                 aria-invalid={!!errors.name}
                 {...register('name')}
               />
@@ -175,13 +177,13 @@ export function AddToListDialog({
                     setShowQuickCreate(false)
                   }}
                 >
-                  Back
+                  {t('lists.addToList.back')}
                 </Button>
               )}
               <Button type="submit" size="sm" disabled={pending}>
                 {pending && <Loader2 className="size-4 animate-spin" />}
                 <CheckCircle2 className="size-4" />
-                Create &amp; add
+                {t('lists.addToList.createAndAdd')}
               </Button>
             </div>
           </form>

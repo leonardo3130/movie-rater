@@ -4,6 +4,7 @@ import { Lock, Users, Pencil, Trash2 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { ListCover } from './ListCover'
 import type { MovieListSummaryDto } from '@src/types/movie-list'
+import { useI18n } from '@src/i18n/use-i18n'
 
 interface ListCardProps {
   list: MovieListSummaryDto
@@ -13,6 +14,9 @@ interface ListCardProps {
 }
 
 export function ListCard({ list, index = 0, onEdit, onDelete }: ListCardProps) {
+  const { t } = useI18n()
+  const editAria = t('lists.card.editAria', { name: list.name })
+  const deleteAria = t('lists.card.deleteAria', { name: list.name })
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -46,12 +50,12 @@ export function ListCard({ list, index = 0, onEdit, onDelete }: ListCardProps) {
           {list.isPrivate ? (
             <Badge variant="outline" className="flex items-center gap-1 text-[10px]">
               <Lock className="size-2.5" />
-              Private
+              {t('lists.private')}
             </Badge>
           ) : (
             <Badge variant="outline" className="flex items-center gap-1 text-[10px]">
               <Users className="size-2.5" />
-              Shared
+              {t('lists.shared')}
             </Badge>
           )}
         </div>
@@ -68,7 +72,7 @@ export function ListCard({ list, index = 0, onEdit, onDelete }: ListCardProps) {
               onEdit()
             }}
             className="rounded-full p-1.5 cursor-pointer transition-colors hover:bg-white/10 text-white/70 hover:text-white/95"
-            aria-label={`Edit list ${list.name}`}
+            aria-label={editAria}
           >
             <Pencil className="size-3.5" />
           </motion.button>
@@ -81,7 +85,7 @@ export function ListCard({ list, index = 0, onEdit, onDelete }: ListCardProps) {
               onDelete()
             }}
             className="rounded-full p-1.5 cursor-pointer transition-colors hover:bg-red-500/20 text-red-400"
-            aria-label={`Delete list ${list.name}`}
+            aria-label={deleteAria}
           >
             <Trash2 className="size-3.5" />
           </motion.button>

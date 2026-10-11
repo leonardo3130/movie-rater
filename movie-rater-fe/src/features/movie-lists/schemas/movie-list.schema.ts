@@ -1,11 +1,15 @@
 import { z } from 'zod'
+import { t } from '@src/stores/locale-store'
 
 export const movieListSchema = z
   .object({
-    name: z.string().min(1, 'Name is required').max(100, 'Name must be at most 100 characters'),
+    name: z
+      .string()
+      .min(1, { error: () => t('validation.nameRequired') })
+      .max(100, { error: () => t('validation.nameMax') }),
     description: z
       .string()
-      .max(500, 'Description must be at most 500 characters')
+      .max(500, { error: () => t('validation.descriptionMax') })
       .optional(),
     isPrivate: z.boolean(),
     canGroupEdit: z.boolean(),
@@ -16,14 +20,14 @@ export const movieListSchema = z
       ctx.addIssue({
         code: 'custom',
         path: ['canGroupEdit'],
-        message: 'A private list cannot be edited by group members.',
+        message: t('validation.privateListCannotEdit'),
       })
     }
     if (!data.isPrivate && data.groupIds.length === 0) {
       ctx.addIssue({
         code: 'custom',
         path: ['groupIds'],
-        message: 'Select at least one group to share the list with.',
+        message: t('validation.selectAtLeastOneGroup'),
       })
     }
   })
@@ -31,7 +35,10 @@ export const movieListSchema = z
 export type MovieListFormValues = z.infer<typeof movieListSchema>
 
 export const quickListSchema = z.object({
-  name: z.string().min(1, 'Name is required').max(100, 'Name must be at most 100 characters'),
+  name: z
+    .string()
+    .min(1, { error: () => t('validation.nameRequired') })
+    .max(100, { error: () => t('validation.nameMax') }),
 })
 
 export type QuickListFormValues = z.infer<typeof quickListSchema>

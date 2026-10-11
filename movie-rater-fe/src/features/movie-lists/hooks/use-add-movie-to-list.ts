@@ -3,6 +3,7 @@ import { addMovieToList } from '../../../api/endpoints/movie-lists'
 import { getMovieDetails } from '../../../api/endpoints/movies'
 import type { ApiError } from '@src/types/auth'
 import { toast } from 'sonner'
+import { t } from '@src/stores/locale-store'
 
 const ZERO_GUID = '00000000-0000-0000-0000-000000000000'
 
@@ -26,15 +27,15 @@ export function useAddMovieToList() {
     onSuccess: (_data, { listId }) => {
       queryClient.invalidateQueries({ queryKey: ['movie-lists'] })
       queryClient.invalidateQueries({ queryKey: ['movie-list', listId] })
-      toast.success('Movie added to list')
+      toast.success(t('lists.toast.added'))
     },
     onError: (error: unknown) => {
       const apiError = error as { response?: { data?: ApiError } }
       const status = apiError?.response?.data?.status
       if (status === 409) {
-        toast.error('This movie is already in the selected list')
+        toast.error(t('lists.toast.alreadyInList'))
       } else {
-        toast.error('Failed to add movie to list')
+        toast.error(t('lists.toast.addFailed'))
       }
     },
   })
