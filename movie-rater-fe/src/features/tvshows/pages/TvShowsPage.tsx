@@ -5,12 +5,14 @@ import { TvSearchBar } from '../components/TvSearchBar'
 import { TvShowGrid } from '../components/TvShowGrid'
 import { useTvStore } from '../stores/tv-store'
 import { useDiscoverTv, useSearchTv, useTvGenres } from '../hooks/use-tv'
+import { useI18n } from '@src/i18n/use-i18n'
 
 export function TvShowsPage() {
   const searchQuery = useTvStore((s) => s.searchQuery)
   const browseGenre = useTvStore((s) => s.browseGenre)
   const setBrowseGenre = useTvStore((s) => s.setBrowseGenre)
   const page = useTvStore((s) => s.page)
+  const { t } = useI18n()
   const { data: results, isLoading: searchLoading } = useSearchTv(searchQuery, page)
   const { data: discoverResults, isLoading: discoverLoading } = useDiscoverTv(
     browseGenre ? String(browseGenre.tmdbId) : null,
@@ -41,14 +43,14 @@ export function TvShowsPage() {
                 className="text-muted-foreground hover:text-foreground"
               >
                 <X className="size-4" />
-                Clear genre
+                {t('tv.browse.clearGenre')}
               </Button>
             </div>
             <TvShowGrid
               shows={discoverResults?.results}
               isLoading={discoverLoading}
               totalPages={discoverResults?.totalPages}
-              emptyMessage={`No TV shows found in ${browseGenre.name}`}
+              emptyMessage={t('tv.browse.notFoundInGenre', { genre: browseGenre.name })}
             />
           </div>
         ) : searching ? (
@@ -61,7 +63,7 @@ export function TvShowsPage() {
           <div className="space-y-8">
             <div className="space-y-3">
               <h2 className="font-heading text-lg font-medium tracking-tight">
-                Browse by genre
+                {t('tv.browse.browseByGenre')}
               </h2>
               {genresLoading ? (
                 <div className="flex flex-wrap gap-2">
@@ -87,10 +89,9 @@ export function TvShowsPage() {
 
             <div className="flex flex-col items-center justify-center gap-3 py-16 text-center">
               <Tv className="size-14 text-muted-foreground/30" />
-              <h2 className="text-xl font-semibold">Explore TV shows</h2>
+              <h2 className="text-xl font-semibold">{t('tv.browse.exploreTitle')}</h2>
               <p className="max-w-sm text-sm text-muted-foreground">
-                Search for a series, then dive into seasons and episodes to track what you watch
-                together.
+                {t('tv.browse.exploreDescription')}
               </p>
             </div>
           </div>

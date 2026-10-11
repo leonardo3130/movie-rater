@@ -5,6 +5,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { TvShowCard } from './TvShowCard'
 import type { TvShowSummaryDto } from '@src/types/tv'
 import { useTvStore } from '../stores/tv-store'
+import { useI18n } from '@src/i18n/use-i18n'
 
 interface TvShowGridProps {
   shows: TvShowSummaryDto[] | undefined
@@ -16,12 +17,13 @@ interface TvShowGridProps {
 export function TvShowGrid({ shows, isLoading, totalPages, emptyMessage }: TvShowGridProps) {
   const page = useTvStore((s) => s.page)
   const setPage = useTvStore((s) => s.setPage)
+  const { t } = useI18n()
 
   if (!isLoading && (!shows || shows.length === 0)) {
     return (
       <div className="flex flex-col items-center justify-center py-20 text-muted-foreground">
         <SearchX className="size-12 mb-3" />
-        <p className="text-sm">{emptyMessage ?? 'No TV shows match your search'}</p>
+        <p className="text-sm">{emptyMessage ?? t('tv.grid.noResults')}</p>
       </div>
     )
   }
@@ -54,7 +56,7 @@ export function TvShowGrid({ shows, isLoading, totalPages, emptyMessage }: TvSho
             onClick={() => setPage(page - 1)}
           >
             <ChevronLeft className="size-4" />
-            Previous
+            {t('common.previous')}
           </Button>
           <span className="text-sm text-muted-foreground tabular-nums">
             {page} / {totalPages}
@@ -65,7 +67,7 @@ export function TvShowGrid({ shows, isLoading, totalPages, emptyMessage }: TvSho
             disabled={page >= totalPages}
             onClick={() => setPage(page + 1)}
           >
-            Next
+            {t('common.next')}
             <ChevronRight className="size-4" />
           </Button>
         </div>

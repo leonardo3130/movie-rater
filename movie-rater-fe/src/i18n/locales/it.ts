@@ -134,6 +134,7 @@ export const it: Messages = {
     details: {
       votes: { one: '({count} voto)', other: '({count} voti)' },
       overview: 'Panoramica',
+      runtimeMinutes: '{minutes}min',
       addToFavorites: 'Aggiungi ai preferiti',
       removeFromFavorites: 'Rimuovi dai preferiti',
       addToWatchlist: 'Aggiungi alla lista da guardare',
@@ -224,6 +225,51 @@ export const it: Messages = {
       submitRatingFailed: 'Impossibile inviare il voto',
       ratingUpdated: 'Voto aggiornato',
       updateRatingFailed: 'Impossibile aggiornare il voto',
+    },
+  },
+  tv: {
+    browse: {
+      clearGenre: 'Azzera genere',
+      notFoundInGenre: 'Nessuna serie TV trovata in {genre}',
+      browseByGenre: 'Sfoglia per genere',
+      exploreTitle: 'Esplora le serie TV',
+      exploreDescription:
+        'Cerca una serie, poi esplora stagioni ed episodi per tracciare ciò che guardate insieme.',
+    },
+    search: {
+      placeholder: 'Cerca serie TV...',
+      clearSearch: 'Azzera ricerca',
+    },
+    grid: {
+      noResults: 'Nessuna serie TV corrisponde alla ricerca',
+    },
+    details: {
+      notFound: 'Serie non trovata',
+      backToTv: 'Torna alle serie TV',
+      seasonsCount: { one: '{count} stagione', other: '{count} stagioni' },
+      episodesCount: { one: '{count} episodio', other: '{count} episodi' },
+      watchedCount: { one: 'Visto {count} volta', other: 'Visto {count} volte' },
+      firstAirDate: 'Prima messa in onda: {date}',
+      lastAirDate: 'Ultima messa in onda: {date}',
+      seasons: 'Stagioni',
+      seasonNumber: 'Stagione {number}',
+    },
+    season: {
+      notFound: 'Stagione non trovata',
+      backToSeries: 'Torna alla serie',
+      episodesHeading: 'Episodi',
+      episodesCount: { one: '{count} episodio', other: '{count} episodi' },
+    },
+    episode: {
+      notFound: 'Episodio non trovato',
+      seriesFallback: 'Serie',
+      season: 'Stagione {number}',
+    },
+    card: {
+      addToFavorites: 'Aggiungi ai preferiti',
+      removeFromFavorites: 'Rimuovi dai preferiti',
+      addToWatchlist: 'Aggiungi alla lista da guardare',
+      removeFromWatchlist: 'Rimuovi dalla lista da guardare',
     },
   },
 }

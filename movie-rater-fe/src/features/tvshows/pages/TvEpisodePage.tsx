@@ -13,6 +13,7 @@ import { useToggleWatchlist } from '../../user-movie/hooks/use-toggle-watchlist'
 import { useUserMovieStore } from '../../../stores/user-movie-store'
 import { useTvEpisode } from '../hooks/use-tv'
 import { cn } from '@/lib/utils'
+import { useI18n } from '@src/i18n/use-i18n'
 
 export function TvEpisodePage() {
   const { tmdbId, seasonNumber, episodeNumber } = useParams<{
@@ -20,6 +21,7 @@ export function TvEpisodePage() {
     seasonNumber: string
     episodeNumber: string
   }>()
+  const { t, formatDate } = useI18n()
   const tmdbIdNumber = tmdbId ? Number(tmdbId) : null
   const seasonNumberValue = seasonNumber ? Number(seasonNumber) : null
   const episodeNumberValue = episodeNumber ? Number(episodeNumber) : null
@@ -50,7 +52,7 @@ export function TvEpisodePage() {
   if (isError || !episode) {
     return (
       <div className="flex min-h-[60vh] items-center justify-center">
-        <p className="text-muted-foreground">Episode not found</p>
+        <p className="text-muted-foreground">{t('tv.episode.notFound')}</p>
       </div>
     )
   }
@@ -67,14 +69,14 @@ export function TvEpisodePage() {
             className="flex items-center gap-1 hover:text-foreground transition-colors"
           >
             <ArrowLeft className="size-4" />
-            {episode.seriesTitle ?? 'Series'}
+            {episode.seriesTitle ?? t('tv.episode.seriesFallback')}
           </Link>
           <span>/</span>
           <Link
             to={`/tv/${episode.seriesTmdbId}/season/${episode.seasonNumber}`}
             className="hover:text-foreground transition-colors"
           >
-            Season {episode.seasonNumber}
+            {t('tv.episode.season', { number: episode.seasonNumber })}
           </Link>
         </div>
 
@@ -105,7 +107,7 @@ export function TvEpisodePage() {
                 {episode.airDate && (
                   <span className="flex items-center gap-1">
                     <Calendar className="size-3" />
-                    {new Date(episode.airDate).toLocaleDateString('en-US', {
+                    {formatDate(new Date(episode.airDate), {
                       year: 'numeric',
                       month: 'short',
                       day: 'numeric',
@@ -115,7 +117,7 @@ export function TvEpisodePage() {
                 {episode.runtime != null && (
                   <span className="flex items-center gap-1">
                     <Clock className="size-3" />
-                    {episode.runtime}m
+                    {t('movies.details.runtimeMinutes', { minutes: episode.runtime })}
                   </span>
                 )}
                 <span className="flex items-center gap-1">
@@ -125,17 +127,17 @@ export function TvEpisodePage() {
               </div>
             </div>
 
-            {episode.overview && (
-              <>
-                <Separator />
-                <div>
-                  <h2 className="font-heading text-sm font-medium text-muted-foreground mb-1">
-                    Overview
-                  </h2>
-                  <p className="text-sm leading-relaxed break-words">{episode.overview}</p>
-                </div>
-              </>
-            )}
+{episode.overview && (
+                <>
+                  <Separator />
+                  <div>
+                    <h2 className="font-heading text-sm font-medium text-muted-foreground mb-1">
+                      {t('movies.details.overview')}
+                    </h2>
+                    <p className="text-sm leading-relaxed break-words">{episode.overview}</p>
+                  </div>
+                </>
+              )}
 
             <div className="flex flex-wrap gap-2">
               <Button
@@ -143,7 +145,7 @@ export function TvEpisodePage() {
                 onClick={() => setWsDialogOpen(true)}
               >
                 <Eye className="size-4" />
-                Mark as Watched
+                {t('movies.details.markAsWatched')}
               </Button>
               <Button
                 variant="outline"
@@ -151,7 +153,7 @@ export function TvEpisodePage() {
                 onClick={() => toggleFavorite.mutate({ movieId: episode.id, value: !isFavorite })}
               >
                 <Heart className={cn('size-4', isFavorite && 'fill-current text-red-500')} />
-                {isFavorite ? 'Remove from Favorites' : 'Add to Favorites'}
+                {isFavorite ? t('movies.details.removeFromFavorites') : t('movies.details.addToFavorites')}
               </Button>
               <Button
                 variant="outline"
@@ -159,7 +161,7 @@ export function TvEpisodePage() {
                 onClick={() => toggleWatchlist.mutate({ movieId: episode.id, value: !isInWatchlist })}
               >
                 <Bookmark className={cn('size-4', isInWatchlist && 'fill-current text-yellow-400')} />
-                {isInWatchlist ? 'Remove from Watchlist' : 'Add to Watchlist'}
+                {isInWatchlist ? t('movies.details.removeFromWatchlist') : t('movies.details.addToWatchlist')}
               </Button>
             </div>
           </div>

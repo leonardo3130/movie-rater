@@ -22,11 +22,13 @@ import { useUserMovieStore } from '../../../stores/user-movie-store'
 import { useTvShowDetails } from '../hooks/use-tv'
 import { cn } from '@/lib/utils'
 import type { TvSeasonSummaryDto } from '@src/types/tv'
+import { useI18n } from '@src/i18n/use-i18n'
 
 export function TvShowDetailsPage() {
   const { tmdbId } = useParams<{ tmdbId: string }>()
   const tmdbIdNumber = tmdbId ? Number(tmdbId) : null
   const { data: show, isLoading, isError } = useTvShowDetails(tmdbIdNumber)
+  const { t, formatNumber, formatDate } = useI18n()
   const toggleFavorite = useToggleFavorite()
   const toggleWatchlist = useToggleWatchlist()
   const favoriteIds = useUserMovieStore((s) => s.favoriteIds)
@@ -46,7 +48,7 @@ export function TvShowDetailsPage() {
   if (isError || !show) {
     return (
       <div className="flex min-h-[60vh] items-center justify-center">
-        <p className="text-muted-foreground">Show not found</p>
+        <p className="text-muted-foreground">{t('tv.details.notFound')}</p>
       </div>
     )
   }
@@ -63,7 +65,7 @@ export function TvShowDetailsPage() {
           className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors"
         >
           <ArrowLeft className="size-4" />
-          Back to TV Shows
+          {t('tv.details.backToTv')}
         </Link>
 
         <motion.div
@@ -98,11 +100,11 @@ export function TvShowDetailsPage() {
                   )}
                   <span className="flex items-center gap-1">
                     <Layers className="size-3" />
-                    {show.numberOfSeasons} season{show.numberOfSeasons !== 1 ? 's' : ''}
+                    {t('tv.details.seasonsCount', { count: show.numberOfSeasons })}
                   </span>
                   <span className="flex items-center gap-1">
                     <ListVideo className="size-3" />
-                    {show.numberOfEpisodes} episodes
+                    {t('tv.details.episodesCount', { count: show.numberOfEpisodes })}
                   </span>
                   {show.status && <Badge variant="outline" className="text-[10px]">{show.status}</Badge>}
                   {show.type && <Badge variant="outline" className="text-[10px]">{show.type}</Badge>}
@@ -117,7 +119,7 @@ export function TvShowDetailsPage() {
                 <Star className="size-5 fill-yellow-500 text-yellow-500" />
                 <span className="font-semibold text-lg">{show.voteAverage.toFixed(1)}</span>
                 <span className="text-xs text-muted-foreground">
-                  ({show.voteCount.toLocaleString()} votes)
+                  {t('movies.details.votes', { count: formatNumber(show.voteCount) })}
                 </span>
               </div>
               {show.genres.map((genre) => (
@@ -126,7 +128,7 @@ export function TvShowDetailsPage() {
               {show.watchedCount > 0 && (
                 <Badge variant="outline" className="flex items-center gap-1">
                   <Eye className="size-3" />
-                  Watched {show.watchedCount} time{show.watchedCount !== 1 ? 's' : ''}
+                  {t('tv.details.watchedCount', { count: show.watchedCount })}
                 </Badge>
               )}
             </div>
@@ -138,7 +140,7 @@ export function TvShowDetailsPage() {
                 onClick={() => toggleFavorite.mutate({ movieId: show.id, value: !isFavorite })}
               >
                 <Heart className={cn('size-4', isFavorite && 'fill-current text-red-500')} />
-                {isFavorite ? 'Remove from Favorites' : 'Add to Favorites'}
+                {isFavorite ? t('movies.details.removeFromFavorites') : t('movies.details.addToFavorites')}
               </Button>
               <Button
                 variant="outline"
@@ -148,26 +150,30 @@ export function TvShowDetailsPage() {
                 <Bookmark
                   className={cn('size-4', isInWatchlist && 'fill-current text-yellow-400')}
                 />
-                {isInWatchlist ? 'Remove from Watchlist' : 'Add to Watchlist'}
+                {isInWatchlist ? t('movies.details.removeFromWatchlist') : t('movies.details.addToWatchlist')}
               </Button>
             </div>
 
             <div className="flex flex-wrap items-center gap-4 text-xs text-muted-foreground">
               {show.firstAirDate && (
                 <span>
-                  First air date: {new Date(show.firstAirDate).toLocaleDateString('en-US', {
-                    year: 'numeric',
-                    month: 'short',
-                    day: 'numeric',
+                  {t('tv.details.firstAirDate', {
+                    date: formatDate(new Date(show.firstAirDate), {
+                      year: 'numeric',
+                      month: 'short',
+                      day: 'numeric',
+                    }),
                   })}
                 </span>
               )}
               {show.lastAirDate && (
                 <span>
-                  Last air date: {new Date(show.lastAirDate).toLocaleDateString('en-US', {
-                    year: 'numeric',
-                    month: 'short',
-                    day: 'numeric',
+                  {t('tv.details.lastAirDate', {
+                    date: formatDate(new Date(show.lastAirDate), {
+                      year: 'numeric',
+                      month: 'short',
+                      day: 'numeric',
+                    }),
                   })}
                 </span>
               )}
@@ -176,7 +182,7 @@ export function TvShowDetailsPage() {
             {show.overview && (
               <div>
                 <h2 className="font-heading text-sm font-medium text-muted-foreground mb-1">
-                  Overview
+                  {t('movies.details.overview')}
                 </h2>
                 <p className="text-sm leading-relaxed break-words">{show.overview}</p>
               </div>
@@ -190,7 +196,7 @@ export function TvShowDetailsPage() {
             <div className="space-y-4">
               <h2 className="font-heading text-lg font-medium tracking-tight flex items-center gap-2">
                 <MonitorPlay className="size-4 text-muted-foreground" />
-                Seasons
+                {t('tv.details.seasons')}
               </h2>
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
                 {show.seasons.map((season, index) => (
@@ -219,6 +225,8 @@ function SeasonCard({
   seriesTmdbId: number
   index: number
 }) {
+  const { t } = useI18n()
+  const seasonLabel = t('tv.details.seasonNumber', { number: season.seasonNumber })
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -232,15 +240,15 @@ function SeasonCard({
         className="block space-y-2"
       >
         <div className="relative overflow-hidden rounded-lg">
-          <MoviePoster src={season.posterUrl} alt={`Season ${season.seasonNumber}`} />
+          <MoviePoster src={season.posterUrl} alt={seasonLabel} />
           <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
           <div className="absolute bottom-2 left-2 text-xs font-medium text-white opacity-0 group-hover:opacity-100 transition-opacity">
-            {season.episodeCount} episodes
+            {t('tv.details.episodesCount', { count: season.episodeCount })}
           </div>
         </div>
         <div>
           <p className="text-sm font-medium leading-tight line-clamp-1 group-hover:text-primary transition-colors">
-            Season {season.seasonNumber}
+            {seasonLabel}
           </p>
           {season.airDate && (
             <p className="text-xs text-muted-foreground">

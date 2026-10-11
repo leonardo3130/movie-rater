@@ -131,6 +131,7 @@ export const en = {
     details: {
       votes: { one: '({count} vote)', other: '({count} votes)' },
       overview: 'Overview',
+      runtimeMinutes: '{minutes}m',
       addToFavorites: 'Add to Favorites',
       removeFromFavorites: 'Remove from Favorites',
       addToWatchlist: 'Add to Watchlist',
@@ -221,6 +222,51 @@ export const en = {
       submitRatingFailed: 'Failed to submit rating',
       ratingUpdated: 'Rating updated',
       updateRatingFailed: 'Failed to update rating',
+    },
+  },
+  tv: {
+    browse: {
+      clearGenre: 'Clear genre',
+      notFoundInGenre: 'No TV shows found in {genre}',
+      browseByGenre: 'Browse by genre',
+      exploreTitle: 'Explore TV shows',
+      exploreDescription:
+        'Search for a series, then dive into seasons and episodes to track what you watch together.',
+    },
+    search: {
+      placeholder: 'Search TV shows...',
+      clearSearch: 'Clear search',
+    },
+    grid: {
+      noResults: 'No TV shows match your search',
+    },
+    details: {
+      notFound: 'Show not found',
+      backToTv: 'Back to TV Shows',
+      seasonsCount: { one: '{count} season', other: '{count} seasons' },
+      episodesCount: { one: '{count} episode', other: '{count} episodes' },
+      watchedCount: { one: 'Watched {count} time', other: 'Watched {count} times' },
+      firstAirDate: 'First air date: {date}',
+      lastAirDate: 'Last air date: {date}',
+      seasons: 'Seasons',
+      seasonNumber: 'Season {number}',
+    },
+    season: {
+      notFound: 'Season not found',
+      backToSeries: 'Back to series',
+      episodesHeading: 'Episodes',
+      episodesCount: { one: '{count} episode', other: '{count} episodes' },
+    },
+    episode: {
+      notFound: 'Episode not found',
+      seriesFallback: 'Series',
+      season: 'Season {number}',
+    },
+    card: {
+      addToFavorites: 'Add to favorites',
+      removeFromFavorites: 'Remove from favorites',
+      addToWatchlist: 'Add to watchlist',
+      removeFromWatchlist: 'Remove from watchlist',
     },
   },
 }

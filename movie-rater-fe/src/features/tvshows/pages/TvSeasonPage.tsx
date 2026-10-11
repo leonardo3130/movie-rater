@@ -6,12 +6,14 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { MoviePoster } from '../../movies/components/MoviePoster'
 import { useTvSeason } from '../hooks/use-tv'
 import type { TvEpisodeSummaryDto } from '@src/types/tv'
+import { useI18n } from '@src/i18n/use-i18n'
 
 export function TvSeasonPage() {
   const { tmdbId, seasonNumber } = useParams<{ tmdbId: string; seasonNumber: string }>()
   const tmdbIdNumber = tmdbId ? Number(tmdbId) : null
   const seasonNumberValue = seasonNumber ? Number(seasonNumber) : null
   const { data: season, isLoading, isError } = useTvSeason(tmdbIdNumber, seasonNumberValue)
+  const { t, formatNumber, formatDate } = useI18n()
 
   if (isLoading) {
     return (
@@ -26,7 +28,7 @@ export function TvSeasonPage() {
   if (isError || !season) {
     return (
       <div className="flex min-h-[60vh] items-center justify-center">
-        <p className="text-muted-foreground">Season not found</p>
+        <p className="text-muted-foreground">{t('tv.season.notFound')}</p>
       </div>
     )
   }
@@ -39,7 +41,7 @@ export function TvSeasonPage() {
           className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors"
         >
           <ArrowLeft className="size-4" />
-          Back to series
+          {t('tv.season.backToSeries')}
         </Link>
 
         <div className="flex flex-col sm:flex-row gap-6">
@@ -52,7 +54,7 @@ export function TvSeasonPage() {
               {season.airDate && (
                 <span className="flex items-center gap-1">
                   <Calendar className="size-3" />
-                  {new Date(season.airDate).toLocaleDateString('en-US', {
+                  {formatDate(new Date(season.airDate), {
                     year: 'numeric',
                     month: 'short',
                     day: 'numeric',
@@ -61,14 +63,14 @@ export function TvSeasonPage() {
               )}
               <span className="flex items-center gap-1">
                 <ListVideo className="size-3" />
-                {season.episodes.length} episodes
+                {t('tv.season.episodesCount', { count: season.episodes.length })}
               </span>
             </div>
             <div className="flex items-center gap-2">
               <Star className="size-4 fill-yellow-500 text-yellow-500" />
               <span className="font-semibold">{season.voteAverage.toFixed(1)}</span>
               <span className="text-xs text-muted-foreground">
-                ({season.voteCount.toLocaleString()} votes)
+                {t('movies.details.votes', { count: formatNumber(season.voteCount) })}
               </span>
             </div>
             {season.overview && (
@@ -78,7 +80,7 @@ export function TvSeasonPage() {
         </div>
 
         <div className="space-y-3">
-          <h2 className="font-heading text-lg font-medium tracking-tight">Episodes</h2>
+          <h2 className="font-heading text-lg font-medium tracking-tight">{t('tv.season.episodesHeading')}</h2>
           {season.episodes.map((episode, index) => (
             <EpisodeRow
               key={episode.tmdbId}
@@ -105,6 +107,7 @@ function EpisodeRow({
   seasonNumber: number
   index: number
 }) {
+  const { t, formatDate } = useI18n()
   return (
     <motion.div
       initial={{ opacity: 0, y: 8 }}
@@ -126,7 +129,7 @@ function EpisodeRow({
             {episode.airDate && (
               <span className="flex items-center gap-1">
                 <Calendar className="size-3" />
-                {new Date(episode.airDate).toLocaleDateString('en-US', {
+                {formatDate(new Date(episode.airDate), {
                   year: 'numeric',
                   month: 'short',
                   day: 'numeric',
@@ -136,7 +139,7 @@ function EpisodeRow({
             {episode.runtime != null && (
               <span className="flex items-center gap-1">
                 <Clock className="size-3" />
-                {episode.runtime}m
+                {t('movies.details.runtimeMinutes', { minutes: episode.runtime })}
               </span>
             )}
             <Badge variant="outline" className="text-[10px] px-1.5">

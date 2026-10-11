@@ -8,6 +8,7 @@ import { useToggleWatchlist } from '../../user-movie/hooks/use-toggle-watchlist'
 import { useUserMovieStore } from '../../../stores/user-movie-store'
 import type { TvShowSummaryDto } from '@src/types/tv'
 import { cn } from '@/lib/utils'
+import { useI18n } from '@src/i18n/use-i18n'
 
 interface TvShowCardProps {
   show: TvShowSummaryDto
@@ -17,6 +18,7 @@ interface TvShowCardProps {
 export function TvShowCard({ show, index = 0 }: TvShowCardProps) {
   const toggleFavorite = useToggleFavorite()
   const toggleWatchlist = useToggleWatchlist()
+  const { t } = useI18n()
   const favoriteIds = useUserMovieStore((s) => s.favoriteIds)
   const watchlistIds = useUserMovieStore((s) => s.watchlistIds)
   const year = show.firstAirDate ? show.firstAirDate.slice(0, 4) : null
@@ -49,7 +51,9 @@ export function TvShowCard({ show, index = 0 }: TvShowCardProps) {
                 toggleFavorite.mutate({ movieId: show.id, value: !isFavorite })
               }}
               className="rounded-full p-1 cursor-pointer transition-colors hover:bg-white/10 text-white/60 hover:text-white/90"
-              aria-label={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
+              aria-label={
+                isFavorite ? t('tv.card.removeFromFavorites') : t('tv.card.addToFavorites')
+              }
             >
               <Heart
                 className={cn('size-3.5', isFavorite && 'fill-red-500 text-red-500')}
@@ -63,7 +67,9 @@ export function TvShowCard({ show, index = 0 }: TvShowCardProps) {
                 toggleWatchlist.mutate({ movieId: show.id, value: !isInWatchlist })
               }}
               className="rounded-full p-1 cursor-pointer transition-colors hover:bg-white/10 text-white/60 hover:text-white/90"
-              aria-label={isInWatchlist ? 'Remove from watchlist' : 'Add to watchlist'}
+              aria-label={
+                isInWatchlist ? t('tv.card.removeFromWatchlist') : t('tv.card.addToWatchlist')
+              }
             >
               <Bookmark
                 className={cn('size-3.5', isInWatchlist && 'fill-yellow-400 text-yellow-400')}

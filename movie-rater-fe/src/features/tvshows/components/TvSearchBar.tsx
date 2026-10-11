@@ -3,12 +3,14 @@ import { Input } from '@/components/ui/input'
 import { useTvStore } from '../stores/tv-store'
 import { useEffect, useState } from 'react'
 import { useDebouncedValue } from '@src/hooks/use-debounced-value'
+import { useI18n } from '@src/i18n/use-i18n'
 
 export function TvSearchBar() {
   const searchQuery = useTvStore((s) => s.searchQuery)
   const setSearchQuery = useTvStore((s) => s.setSearchQuery)
   const browseGenre = useTvStore((s) => s.browseGenre)
   const setBrowseGenre = useTvStore((s) => s.setBrowseGenre)
+  const { t } = useI18n()
   const [localQuery, setLocalQuery] = useState(searchQuery)
   const debouncedQuery = useDebouncedValue(localQuery, 350)
 
@@ -42,14 +44,14 @@ export function TvSearchBar() {
       <Input
         value={value}
         onChange={(e) => handleChange(e.target.value)}
-        placeholder="Search TV shows..."
+        placeholder={t('tv.search.placeholder')}
         className="pl-9 pr-8"
       />
       {value && (
         <button
           onClick={handleClear}
           className="absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer text-muted-foreground hover:text-foreground"
-          aria-label="Clear search"
+          aria-label={t('tv.search.clearSearch')}
         >
           <X className="size-4" />
         </button>
