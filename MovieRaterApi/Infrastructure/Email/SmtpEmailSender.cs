@@ -2,11 +2,14 @@ using System.Net;
 using System.Net.Mail;
 using Microsoft.Extensions.Options;
 using MovieRaterApi.Infrastructure.Email.Options;
+using MovieRaterApi.Infrastructure.Exceptions;
 
 namespace MovieRaterApi.Infrastructure.Email;
 
 public class SmtpEmailSender : IEmailSender
 {
+    private const int SendTimeoutMs = 30_000;
+
     private readonly EmailConfiguration _emailOptions;
     private readonly ILogger<SmtpEmailSender> _logger;
 
@@ -20,21 +23,45 @@ public class SmtpEmailSender : IEmailSender
     {
         using var message = new MailMessage
         {
-            From = new MailAddress(_emailOptions.FromAddress),
+            From = new MailAddress(_emailOptions.FromAddress.Trim()),
             Subject = subject,
             Body = htmlBody,
             IsBodyHtml = true,
         };
         message.To.Add(toAddress);
 
-        using var client = new SmtpClient(_emailOptions.SmtpServer, _emailOptions.Port)
+        using var client = new SmtpClient(_emailOptions.SmtpServer.Trim(), _emailOptions.Port)
         {
-            Credentials = new NetworkCredential(_emailOptions.Username, _emailOptions.Password),
+            Credentials = new NetworkCredential(
+                _emailOptions.Username.Trim(),
+                _emailOptions.Password.Trim()
+            ),
             EnableSsl = _emailOptions.EnableSsl,
+            UseDefaultCredentials = false,
+            Timeout = SendTimeoutMs,
         };
 
-        await client.SendMailAsync(message, cancellationToken);
+        try
+        {
+            await client.SendMailAsync(message, cancellationToken);
 
-        _logger.LogInformation("Sent email '{Subject}' to {ToAddress}", subject, toAddress);
+            _logger.LogInformation("Sent email '{Subject}' to {ToAddress}", subject, toAddress);
+        }
+        catch (Exception ex) when (!cancellationToken.IsCancellationRequested)
+        {
+            _logger.LogError(
+                ex,
+                "Failed to send email '{Subject}' to {ToAddress} via SMTP host {SmtpServer}:{Port}",
+                subject,
+                toAddress,
+                _emailOptions.SmtpServer,
+                _emailOptions.Port
+            );
+
+            throw new EmailDeliveryException(
+                "The email could not be delivered. Please try again later.",
+                ex
+            );
+        }
     }
 }

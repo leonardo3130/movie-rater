@@ -142,6 +142,30 @@ public class PasswordResetServiceTests : IDisposable
     }
 
     [Fact]
+    public async Task SendResetPasswordEmail_ShouldNotThrow_WhenEmailDeliveryFails()
+    {
+        var user = SeedUser();
+        _tokenServiceMock
+            .Setup(t => t.GeneratePasswordResetToken())
+            .Returns(("raw-token", "hashed-token"));
+
+        _emailSenderMock
+            .Setup(e => e.SendAsync(
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<CancellationToken>()
+            ))
+            .ThrowsAsync(new EmailDeliveryException("smtp down"));
+
+        var act = () => _sut.SendResetPasswordEmail(user.Email);
+
+        await act.Should().NotThrowAsync();
+
+        _db.PasswordResetTokens.Should().ContainSingle(t => t.UserId == user.Id);
+    }
+
+    [Fact]
     public async Task SendResetPasswordEmail_ShouldDoNothing_WhenEmailUnknown()
     {
         await _sut.SendResetPasswordEmail("unknown@example.com");

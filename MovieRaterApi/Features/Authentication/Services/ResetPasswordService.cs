@@ -73,9 +73,20 @@ public class PasswordResetService : IPasswordResetService
             .Replace("{{Email}}", user.Email)
             .Replace("{{ExpiresIn}}", FormatLifetime(TokenLifetime));
 
-        await _emailSender.SendAsync(user.Email, "Reset your Movie Rater password", body);
+        try
+        {
+            await _emailSender.SendAsync(user.Email, "Reset your Movie Rater password", body);
 
-        _logger.LogInformation("Password reset email sent to user {UserId}", user.Id);
+            _logger.LogInformation("Password reset email sent to user {UserId}", user.Id);
+        }
+        catch (EmailDeliveryException ex)
+        {
+            _logger.LogError(
+                ex,
+                "Failed to deliver password reset email to user {UserId}",
+                user.Id
+            );
+        }
     }
 
     public async Task ResetPassword(ResetPasswordRequest request)

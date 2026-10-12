@@ -52,6 +52,7 @@ public class ExceptionHandlingMiddleware
             ForbiddenException => (HttpStatusCode.Forbidden, "Forbidden"),
             NotFoundException => (HttpStatusCode.NotFound, "Not Found"),
             ConflictException => (HttpStatusCode.Conflict, "Conflict"),
+            EmailDeliveryException => (HttpStatusCode.BadGateway, "Email Delivery Error"),
             TmdbException tmdbEx => ((HttpStatusCode)tmdbEx.StatusCode, "TMDB API Error"),
             _ => (HttpStatusCode.InternalServerError, "Internal Server Error"),
         };
