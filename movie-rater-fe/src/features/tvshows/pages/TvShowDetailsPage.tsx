@@ -58,8 +58,8 @@ export function TvShowDetailsPage() {
   const isInWatchlist = show.isInWatchlist || watchlistIds.has(show.id)
 
   return (
-    <div className="min-h-dvh bg-background">
-      <div className="mx-auto max-w-7xl px-4 py-6">
+    <div>
+      <div className="p-6">
         <Link
           to="/tv"
           className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors"

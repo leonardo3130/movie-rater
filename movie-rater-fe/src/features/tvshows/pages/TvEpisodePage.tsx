@@ -61,8 +61,8 @@ export function TvEpisodePage() {
   const isInWatchlist = episode.isInWatchlist || watchlistIds.has(episode.id)
 
   return (
-    <div className="min-h-dvh bg-background">
-      <div className="mx-auto max-w-4xl px-4 py-6 space-y-6">
+    <div>
+      <div className="p-6 space-y-6">
         <div className="flex items-center gap-4 text-sm text-muted-foreground">
           <Link
             to={`/tv/${episode.seriesTmdbId}`}

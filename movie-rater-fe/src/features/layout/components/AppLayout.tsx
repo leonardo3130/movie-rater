@@ -54,7 +54,9 @@ export function AppLayout() {
       <SidebarInset>
         <TopBar />
         <main className="flex-1 overflow-auto">
-          <Outlet />
+          <div className="mx-auto w-full max-w-7xl">
+            <Outlet />
+          </div>
         </main>
       </SidebarInset>
     </SidebarProvider>

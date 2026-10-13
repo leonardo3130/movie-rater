@@ -49,3 +49,6 @@ services:
 volumes:
   pgdata:
   api-logs:
+
+networks:
+  movie-rater:

@@ -53,7 +53,7 @@ export function WatchSessionDetailPage() {
   const myRating = session.ratings.find((r) => r.userId === user?.id)
 
   return (
-    <div className="p-6 max-w-3xl mx-auto space-y-6">
+    <div className="p-6 space-y-6">
       <Link
         to="/watch-history"
         className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors"
