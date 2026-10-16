@@ -14,6 +14,7 @@ import { loginSchema, type LoginFormValues } from '../schemas/login.schema'
 import { login as loginApi, forgotPassword as forgotPasswordApi } from '../../../api/endpoints/auth'
 import { useAuthStore } from '../../../stores/auth-store'
 import { useI18n } from '@src/i18n/use-i18n'
+import { getApiErrorMessage } from '@src/api/errors'
 
 export function LoginPage() {
   const navigate = useNavigate()
@@ -46,8 +47,8 @@ export function LoginPage() {
     onSuccess: () => {
       toast.success(t('auth.login.resetLinkSent'))
     },
-    onError: () => {
-      toast.error(t('auth.login.resetLinkFailed'))
+    onError: (error: unknown) => {
+      toast.error(getApiErrorMessage(error, t('auth.login.resetLinkFailed')))
     },
   })
 

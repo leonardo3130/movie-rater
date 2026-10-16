@@ -470,6 +470,7 @@ export const it: Messages = {
       groupRenamed: 'Nome del gruppo cambiato in {name} con successo',
       renameFailed: 'Errore durante il cambio del nome del gruppo',
       groupDeleted: 'Gruppo eliminato con successo',
+      deleteFailed: 'Impossibile eliminare il gruppo',
     },
   },
   userMovie: {

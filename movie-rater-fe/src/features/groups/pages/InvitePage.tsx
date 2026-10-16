@@ -21,11 +21,11 @@ import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { inviteSchema, type InviteFormValues } from '../schemas/invite.schema'
 import { inviteInGroup } from '@/src/api/endpoints/group'
-import type { ApiError } from '@src/types/auth'
 import { useGroups } from '../hooks/use-groups'
 import { CreateGroupDialog } from '../components/CreateGroupDialog'
 import { UsernameSuggestInput } from '../components/UsernameSuggestInput'
 import { useI18n } from '@src/i18n/use-i18n'
+import { getApiErrorMessage } from '@src/api/errors'
 
 interface InviteResult {
   inviteToken: string
@@ -60,11 +60,7 @@ export function InvitePage() {
       reset()
     },
     onError: (error: unknown) => {
-      const apiError = error as { response?: { data?: ApiError } }
-      const message =
-        apiError?.response?.data?.detail ??
-        apiError?.response?.data?.title ??
-        t('groups.invite.failed')
+      const message = getApiErrorMessage(error, t('groups.invite.failed'))
       toast.error(message)
     },
   })

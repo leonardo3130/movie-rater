@@ -14,6 +14,7 @@ import { PasswordStrengthMeter } from '../components/PasswordStrengthMeter'
 import { resetPasswordSchema, type ResetPasswordFormValues } from '../schemas/reset-password.schema'
 import { resetPassword as resetPasswordApi } from '../../../api/endpoints/auth'
 import { useI18n } from '@src/i18n/use-i18n'
+import { getApiErrorMessage } from '@src/api/errors'
 
 export function ResetPasswordPage() {
   const navigate = useNavigate()
@@ -41,8 +42,8 @@ export function ResetPasswordPage() {
       toast.success(t('auth.resetPassword.success'))
       navigate('/login', { replace: true })
     },
-    onError: () => {
-      toast.error(t('auth.resetPassword.failed'))
+    onError: (error: unknown) => {
+      toast.error(getApiErrorMessage(error, t('auth.resetPassword.failed')))
     },
   })
 

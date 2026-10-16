@@ -2,6 +2,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { createWatchSession } from '../../../api/endpoints/watch-sessions'
 import { toast } from 'sonner'
 import { t } from '@src/stores/locale-store'
+import { getApiErrorMessage } from '@src/api/errors'
 
 export function useCreateWatchSession() {
   const queryClient = useQueryClient()
@@ -11,8 +12,8 @@ export function useCreateWatchSession() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['watch-sessions'] })
     },
-    onError: () => {
-      toast.error(t('movies.toast.createSessionFailed'))
+    onError: (error: unknown) => {
+      toast.error(getApiErrorMessage(error, t('movies.toast.createSessionFailed')))
     },
   })
 }

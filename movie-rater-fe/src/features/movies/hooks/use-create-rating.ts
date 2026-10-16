@@ -2,6 +2,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { createRating } from '../../../api/endpoints/ratings'
 import { toast } from 'sonner'
 import { t } from '@src/stores/locale-store'
+import { getApiErrorMessage } from '@src/api/errors'
 
 export function useCreateRating() {
   const queryClient = useQueryClient()
@@ -14,8 +15,8 @@ export function useCreateRating() {
       queryClient.invalidateQueries({ queryKey: ['watch-sessions'] })
       toast.success(t('movies.toast.ratingSubmitted'))
     },
-    onError: () => {
-      toast.error(t('movies.toast.submitRatingFailed'))
+    onError: (error: unknown) => {
+      toast.error(getApiErrorMessage(error, t('movies.toast.submitRatingFailed')))
     },
   })
 }

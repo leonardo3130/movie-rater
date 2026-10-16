@@ -467,6 +467,7 @@ export const en = {
       groupRenamed: 'Group name changed to {name} successfully',
       renameFailed: 'Error while changing group name',
       groupDeleted: 'Group deleted successfully',
+      deleteFailed: 'Failed to delete group',
     },
   },
   userMovie: {

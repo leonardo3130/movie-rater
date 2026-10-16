@@ -3,6 +3,7 @@ import { updateWatchSession } from '../../../api/endpoints/watch-sessions'
 import { toast } from 'sonner'
 import type { UpdateWatchSessionRequestDto } from '@src/types/watch-session'
 import { t } from '@src/stores/locale-store'
+import { getApiErrorMessage } from '@src/api/errors'
 
 export function useUpdateWatchSession() {
   const queryClient = useQueryClient()
@@ -16,8 +17,8 @@ export function useUpdateWatchSession() {
       queryClient.invalidateQueries({ queryKey: ['dashboard'] })
       toast.success(t('movies.toast.sessionUpdated'))
     },
-    onError: () => {
-      toast.error(t('movies.toast.updateSessionFailed'))
+    onError: (error: unknown) => {
+      toast.error(getApiErrorMessage(error, t('movies.toast.updateSessionFailed')))
     },
   })
 }

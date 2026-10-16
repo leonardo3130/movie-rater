@@ -2,6 +2,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { updateRating } from '../../../api/endpoints/ratings'
 import { toast } from 'sonner'
 import { t } from '@src/stores/locale-store'
+import { getApiErrorMessage } from '@src/api/errors'
 
 export function useUpdateRating() {
   const queryClient = useQueryClient()
@@ -14,8 +15,8 @@ export function useUpdateRating() {
       queryClient.invalidateQueries({ queryKey: ['watch-sessions'] })
       toast.success(t('movies.toast.ratingUpdated'))
     },
-    onError: () => {
-      toast.error(t('movies.toast.updateRatingFailed'))
+    onError: (error: unknown) => {
+      toast.error(getApiErrorMessage(error, t('movies.toast.updateRatingFailed')))
     },
   })
 }

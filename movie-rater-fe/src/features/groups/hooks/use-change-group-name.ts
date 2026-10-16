@@ -7,6 +7,7 @@ import type { CreateGroupRequest } from "@/src/types/groups";
 import { toast } from "sonner";
 import { useGroupsStore } from "@/src/stores/groups-store";
 import { t } from "@src/stores/locale-store";
+import { getApiErrorMessage } from '@src/api/errors'
 
 export function useCreateGroup() {
   const updateGroupName = useGroupsStore(s => s.changeName);
@@ -17,8 +18,8 @@ export function useCreateGroup() {
       updateGroupName(variables.gid, data);
       toast.success(t('groups.toast.groupRenamed', { name: data.name }));
     },
-    onError: () => {
-      toast.error(t('groups.toast.renameFailed'))
+    onError: (error: unknown) => {
+      toast.error(getApiErrorMessage(error, t('groups.toast.renameFailed')))
     }
   });
 }
