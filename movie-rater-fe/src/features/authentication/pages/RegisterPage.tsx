@@ -15,6 +15,7 @@ import { registerSchema, type RegisterFormValues } from '../schemas/register.sch
 import { register as registerApi } from '../../../api/endpoints/auth'
 import { useAuthStore } from '../../../stores/auth-store'
 import { useI18n } from '@src/i18n/use-i18n'
+import { getApiErrorMessage } from '@src/api/errors'
 
 export function RegisterPage() {
   const navigate = useNavigate()
@@ -41,14 +42,7 @@ export function RegisterPage() {
       navigate('/dashboard', { replace: true })
     },
     onError: (error: unknown) => {
-      const err = error as { response?: { data?: { errors?: Record<string, string[]> } } }
-      const serverErrors = err?.response?.data?.errors
-      if (serverErrors) {
-        const messages = Object.values(serverErrors).flat().join('. ')
-        toast.error(messages || t('auth.register.registrationFailed'))
-      } else {
-        toast.error(t('auth.register.registrationFailedGeneric'))
-      }
+      toast.error(getApiErrorMessage(error, t('auth.register.registrationFailedGeneric')))
     },
   })
 

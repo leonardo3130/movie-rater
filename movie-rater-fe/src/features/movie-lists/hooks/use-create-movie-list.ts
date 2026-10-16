@@ -3,6 +3,7 @@ import { createMovieList } from '../../../api/endpoints/movie-lists'
 import type { CreateMovieListRequest } from '@src/types/movie-list'
 import { toast } from 'sonner'
 import { t } from '@src/stores/locale-store'
+import { getApiErrorMessage } from '@src/api/errors'
 
 export function useCreateMovieList() {
   const queryClient = useQueryClient()
@@ -13,8 +14,8 @@ export function useCreateMovieList() {
       queryClient.invalidateQueries({ queryKey: ['movie-lists'] })
       toast.success(t('lists.toast.created', { name: data.name }))
     },
-    onError: () => {
-      toast.error(t('lists.toast.createFailed'))
+    onError: (error: unknown) => {
+      toast.error(getApiErrorMessage(error, t('lists.toast.createFailed')))
     },
   })
 }

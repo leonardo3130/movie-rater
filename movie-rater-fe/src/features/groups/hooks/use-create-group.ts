@@ -6,6 +6,7 @@ import type { CreateGroupRequest } from "@/src/types/groups";
 import { toast } from "sonner";
 import { useGroupsStore } from "@/src/stores/groups-store";
 import { t } from "@src/stores/locale-store";
+import { getApiErrorMessage } from '@src/api/errors'
 
 export function useCreateGroup() {
   const addGroupToStore = useGroupsStore(s => s.createGroup);
@@ -16,8 +17,8 @@ export function useCreateGroup() {
       addGroupToStore(data);
       toast.success(t('groups.toast.groupCreated', { name: data.name }));
     },
-    onError: () => {
-      toast.error(t('groups.toast.createFailed'))
+    onError: (error: unknown) => {
+      toast.error(getApiErrorMessage(error, t('groups.toast.createFailed')))
     }
   });
 }

@@ -7,9 +7,9 @@ import { toast } from 'sonner'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { acceptInvitation } from '../../../api/endpoints/group.ts'
-import type { ApiError } from '@src/types/auth'
 import { useGroupsStore } from '@/src/stores/groups-store.ts'
 import { t } from '@src/stores/locale-store'
+import { getApiErrorMessage } from '@src/api/errors'
 
 type AcceptState =
   'loading' | 'success' | 'error'
@@ -35,11 +35,7 @@ export function AcceptInvitePage() {
     },
     onError: (error: unknown) => {
       setState('error')
-      const apiError = error as { response?: { data?: ApiError } }
-      const message =
-        apiError?.response?.data?.detail ??
-        apiError?.response?.data?.title ??
-        t('groups.accept.failedDefault')
+      const message = getApiErrorMessage(error, t('groups.accept.failedDefault'))
       setErrorMessage(message)
       toast.error(message)
     },

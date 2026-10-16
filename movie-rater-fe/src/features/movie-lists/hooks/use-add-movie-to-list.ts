@@ -2,6 +2,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { addMovieToList } from '../../../api/endpoints/movie-lists'
 import { getMovieDetails } from '../../../api/endpoints/movies'
 import type { ApiError } from '@src/types/auth'
+import { getApiErrorMessage } from '@src/api/errors'
 import { toast } from 'sonner'
 import { t } from '@src/stores/locale-store'
 
@@ -35,7 +36,7 @@ export function useAddMovieToList() {
       if (status === 409) {
         toast.error(t('lists.toast.alreadyInList'))
       } else {
-        toast.error(t('lists.toast.addFailed'))
+        toast.error(getApiErrorMessage(error, t('lists.toast.addFailed')))
       }
     },
   })
