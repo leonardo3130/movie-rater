@@ -8,6 +8,15 @@ export const it: Messages = {
       'Segna i film che guardate insieme. Vota, recensisci e scopri il vostro percorso cinematografico condiviso.',
     by: 'Di Leonardo Po',
   },
+  pwa: {
+    install: "Installa l'app",
+    iosTitle: 'Installa Movie Rater',
+    iosDescription: "Aggiungi Movie Rater alla schermata Home per aprirlo come un'app.",
+    iosStepShare: 'Tocca il pulsante Condividi in Safari',
+    iosStepAdd: 'Scegli "Aggiungi alla schermata Home", poi tocca Aggiungi',
+    updateAvailable: 'È disponibile una nuova versione di Movie Rater.',
+    reload: 'Ricarica',
+  },
   nav: {
     dashboard: 'Dashboard',
     movies: 'Film',

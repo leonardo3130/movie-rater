@@ -119,6 +119,25 @@ Then apply them:
 docker compose run --rm api dotnet ef database update
 ```
 
+## Installing the web app (PWA)
+
+The frontend is a Progressive Web App, so it can be installed from the browser and launched like a native app.
+Installation requires the site to be served over HTTPS (or `localhost`).
+
+- **Android (Chrome, Edge, Samsung Internet):** use the **Install app** button in the sidebar, or the browser menu → *Install app* / *Add to Home screen*.
+- **iOS / iPadOS (Safari):** tap **Share** → **Add to Home Screen**. The **Install app** button in the sidebar shows these steps.
+- **Desktop (Chrome, Edge):** use the **Install app** button in the sidebar, or the install icon in the address bar.
+
+How it works:
+
+- `vite-plugin-pwa` generates `manifest.webmanifest` and a Workbox service worker (`sw.js`) at build time.
+  The service worker is only built for production (`pnpm build` / the Docker image), not in `pnpm dev`.
+- The app shell (JS, CSS, fonts, icons) is precached. TMDB posters are cached on first view. `/api` requests always go to the network.
+- When a new version is deployed, a toast offers to reload instead of reloading on its own, so unsaved forms are not lost.
+- nginx serves `sw.js` and the manifest with `Cache-Control: no-cache`, so browsers pick up new deploys.
+- App icons in `movie-rater-fe/public` are rendered from the SVG sources in `movie-rater-fe/pwa-assets`
+  (`icon.svg` for the regular icons and the favicon, `icon-maskable.svg` for the maskable and Apple touch icons).
+
 ## Tech stack
 
 | Layer      | Technology            |

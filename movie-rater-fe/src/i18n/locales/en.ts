@@ -6,6 +6,15 @@ export const en = {
       'Track the movies you watch together. Rate, review, and discover your shared cinematic journey.',
     by: 'By Leonardo Po',
   },
+  pwa: {
+    install: 'Install app',
+    iosTitle: 'Install Movie Rater',
+    iosDescription: 'Add Movie Rater to your Home Screen to open it like an app.',
+    iosStepShare: 'Tap the Share button in Safari',
+    iosStepAdd: 'Choose "Add to Home Screen", then tap Add',
+    updateAvailable: 'A new version of Movie Rater is available.',
+    reload: 'Reload',
+  },
   nav: {
     dashboard: 'Dashboard',
     movies: 'Movies',
