@@ -7,9 +7,12 @@ import { toast } from 'sonner'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { acceptInvitation } from '../../../api/endpoints/group.ts'
+import { logout as logoutApi } from '../../../api/endpoints/auth'
 import { useGroupsStore } from '@/src/stores/groups-store.ts'
 import { t } from '@src/stores/locale-store'
 import { getApiErrorMessage } from '@src/api/errors'
+import { useAuthStore } from '@src/stores/auth-store'
+import { buildLoginUrl } from '@src/routes/redirect'
 
 type AcceptState =
   'loading' | 'success' | 'error'
@@ -19,8 +22,10 @@ export function AcceptInvitePage() {
   const navigate = useNavigate()
   const [state, setState] = useState<AcceptState>('loading')
   const [errorMessage, setErrorMessage] = useState('')
+  const [isWrongAccount, setIsWrongAccount] = useState(false)
   const queryClient = useQueryClient();
   const setCurrentGroup = useGroupsStore(s => s.setCurrentGroup);
+  const clearAuth = useAuthStore(s => s.clear)
 
   const token = searchParams.get('token')
 
@@ -35,6 +40,7 @@ export function AcceptInvitePage() {
     },
     onError: (error: unknown) => {
       setState('error')
+      setIsWrongAccount((error as { response?: { status?: number } } | null)?.response?.status === 403)
       const message = getApiErrorMessage(error, t('groups.accept.failedDefault'))
       setErrorMessage(message)
       toast.error(message)
@@ -55,6 +61,18 @@ export function AcceptInvitePage() {
 
     mutation.mutate({ inviteToken: token })
   }, [token, mutation])
+
+  const logoutMutation = useMutation({
+    mutationFn: logoutApi,
+    onSettled: async () => {
+      // Navigate before clearing auth so ProtectedRoute doesn't redirect first.
+      await navigate(buildLoginUrl(`/invite/accept?token=${encodeURIComponent(token ?? '')}`), { replace: true, flushSync: true })
+      clearAuth()
+      queryClient.invalidateQueries()
+    },
+  })
+
+  const switchAccount = () => logoutMutation.mutate()
 
   return (
     <div className="mx-auto max-w-md px-4 pt-8 sm:pt-16">
@@ -93,9 +111,15 @@ export function AcceptInvitePage() {
               <Button variant="outline" onClick={() => navigate('/dashboard')}>
                 {t('groups.accept.goToDashboard')}
               </Button>
-              <Button onClick={() => navigate('/invite')}>
-                {t('groups.accept.createNewInvitation')}
-              </Button>
+              {isWrongAccount ? (
+                <Button onClick={switchAccount} disabled={logoutMutation.isPending}>
+                  {t('groups.accept.switchAccount')}
+                </Button>
+              ) : (
+                <Button onClick={() => navigate('/invite')}>
+                  {t('groups.accept.createNewInvitation')}
+                </Button>
+              )}
             </div>
           )}
         </CardContent>
