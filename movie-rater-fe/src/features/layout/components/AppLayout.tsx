@@ -94,10 +94,12 @@ function AppSidebar() {
 
   const logoutMutation = useMutation({
     mutationFn: logoutApi,
-    onSettled: () => {
+    onSettled: async () => {
+      // Leave the protected tree before clearing auth, otherwise ProtectedRoute
+      // redirects first and appends the current page as `redirect`.
+      await navigate('/login', { replace: true, flushSync: true })
       clear()
       queryClient.invalidateQueries();
-      navigate('/login', { replace: true })
     },
   })
 

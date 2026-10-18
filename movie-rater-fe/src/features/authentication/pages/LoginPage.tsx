@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { Link, useNavigate } from 'react-router'
+import { Link, useNavigate, useSearchParams } from 'react-router'
 import { useMutation } from '@tanstack/react-query'
 import { Eye, EyeOff, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
@@ -15,9 +15,11 @@ import { login as loginApi, forgotPassword as forgotPasswordApi } from '../../..
 import { useAuthStore } from '../../../stores/auth-store'
 import { useI18n } from '@src/i18n/use-i18n'
 import { getApiErrorMessage } from '@src/api/errors'
+import { getSafeRedirect } from '@src/routes/redirect'
 
 export function LoginPage() {
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
   const setAuth = useAuthStore((s) => s.setAuth)
   const { t } = useI18n()
   const [showPassword, setShowPassword] = useState(false)
@@ -35,7 +37,7 @@ export function LoginPage() {
     mutationFn: loginApi,
     onSuccess: (data) => {
       setAuth(data.user, data.accessToken)
-      navigate('/dashboard', { replace: true })
+      navigate(getSafeRedirect(searchParams), { replace: true })
     },
     onError: () => {
       toast.error(t('auth.login.invalidCredentials'))
@@ -134,7 +136,7 @@ export function LoginPage() {
       <p className="text-center text-sm text-muted-foreground">
         {t('auth.login.noAccount')}{' '}
         <Link
-          to="/register"
+          to={{ pathname: '/register', search: searchParams.has('redirect') ? `?redirect=${encodeURIComponent(getSafeRedirect(searchParams))}` : '' }}
           className="font-medium text-primary underline-offset-4 hover:underline"
         >
           {t('auth.login.createOne')}

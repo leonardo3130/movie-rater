@@ -452,6 +452,7 @@ export const it: Messages = {
       noToken: 'Nessun token di invito fornito.',
       goToDashboard: 'Vai alla Dashboard',
       createNewInvitation: 'Crea un nuovo invito',
+      switchAccount: 'Cambia account',
       failedDefault: 'Impossibile accettare l’invito',
     },
     createDialog: {

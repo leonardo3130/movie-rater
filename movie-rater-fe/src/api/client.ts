@@ -1,10 +1,10 @@
 import axios, { type AxiosError, type InternalAxiosRequestConfig } from 'axios'
 import { getAccessToken, setAccessToken } from './token'
 import type { AuthResponse } from '@src/types/auth'
+import { buildLoginUrl } from '@src/routes/redirect'
 
 const REFRESH_PATH = '/api/auth/refresh'
 const ACCESS_TOKEN_KEY = 'mr_access_token'
-const LOGIN_PATH = '/login'
 
 let refreshPromise: Promise<string | null> | null = null
 
@@ -113,7 +113,7 @@ interface ApiErrorBody {
 function clearAuthAndRedirect() {
   localStorage.removeItem(ACCESS_TOKEN_KEY)
   setAccessToken(null)
-  window.location.href = LOGIN_PATH
+  window.location.href = buildLoginUrl(window.location.pathname + window.location.search)
 }
 
 export default client

@@ -449,6 +449,7 @@ export const en = {
       noToken: 'No invitation token provided.',
       goToDashboard: 'Go to Dashboard',
       createNewInvitation: 'Create new invitation',
+      switchAccount: 'Switch account',
       failedDefault: 'Failed to accept invitation',
     },
     createDialog: {
