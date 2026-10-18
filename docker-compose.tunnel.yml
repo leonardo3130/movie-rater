@@ -1,4 +1,17 @@
 services:
+  frontend:
+    build:
+      context: ./movie-rater-fe
+      dockerfile: Dockerfile
+    container_name: movie-rater-frontend
+    ports:
+      - "5173:5173"
+    depends_on:
+      - api
+    networks:
+      - movie-rater
+    restart: unless-stopped
+
   cloudflared:
     image: cloudflare/cloudflared:latest
     container_name: movie-rater-cloudflared
@@ -7,6 +20,7 @@ services:
       TUNNEL_TOKEN: ${CLOUDFLARE_TUNNEL_TOKEN}
     depends_on:
       - api
+      - frontend
     networks:
       - movie-rater
     extra_hosts:
