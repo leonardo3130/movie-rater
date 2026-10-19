@@ -5,6 +5,7 @@ import { Toaster } from '@/components/ui/sonner'
 import { ThemeProvider } from 'next-themes'
 import { TooltipProvider } from '@/components/ui/tooltip'
 import { I18nProvider } from '@src/i18n'
+import { PwaUpdatePrompt } from '@src/features/pwa/components/PwaUpdatePrompt'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -24,6 +25,7 @@ function App() {
             <RouterProvider router={router} />
           </TooltipProvider>
           <Toaster position="top-center" richColors closeButton />
+          <PwaUpdatePrompt />
         </QueryClientProvider>
       </ThemeProvider>
     </I18nProvider>

@@ -35,6 +35,7 @@ import { cn } from '@/lib/utils'
 import { useI18n } from '@src/i18n/use-i18n'
 import type { MessageKey } from '@src/i18n'
 import { LanguageSwitcher } from './LanguageSwitcher'
+import { InstallAppButton } from '@src/features/pwa/components/InstallAppButton'
 
 const NAV_ITEMS: { icon: LucideIcon; labelKey: MessageKey; path: string }[] = [
   { icon: LayoutDashboard, labelKey: 'nav.dashboard', path: '/dashboard' },
@@ -178,6 +179,7 @@ function AppSidebar() {
 
       {/* Footer with user profile */}
       <SidebarFooter className="p-2">
+        <InstallAppButton />
         <div className="mb-1 h-px bg-sidebar-border group-data-[collapsible=icon]:mx-auto group-data-[collapsible=icon]:w-8" />
         <div className="group/user relative flex items-center gap-2.5 rounded-lg p-2 group-data-[collapsible=icon]:justify-center">
           <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-primary to-primary/60 text-sm font-semibold text-primary-foreground shadow-sm">
