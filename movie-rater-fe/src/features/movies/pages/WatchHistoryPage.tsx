@@ -78,11 +78,11 @@ export function WatchHistoryPage() {
 
   return (
     <div className="p-6 space-y-8">
-      <div className="flex items-center gap-3">
+      <div className="flex items-start gap-3 sm:items-center">
         <div className="relative flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/10">
           <Clock className="size-5 text-primary" />
         </div>
-        <div className="flex justify-between w-full">
+        <div className="flex min-w-0 flex-1 flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h1 className="text-2xl font-bold">{t('movies.watchSession.heading')}</h1>
             <p className="text-sm text-muted-foreground">
@@ -90,7 +90,7 @@ export function WatchHistoryPage() {
             </p>
           </div>
 
-          <div className='space-y-2'>
+          <div className='min-w-0 space-y-2'>
             <Label htmlFor="groupId">
               <UsersRound className="size-3.5 text-muted-foreground" />
               {t('common.group')}
@@ -98,7 +98,7 @@ export function WatchHistoryPage() {
             <Select value={groupId} onValueChange={(value) => {
               setGroupId(value)
             }} >
-              <SelectTrigger className="w-full max-w-48">
+              <SelectTrigger className="w-full sm:max-w-48">
                 {/*displyed value*/}
                 <SelectValue placeholder={t('common.selectGroup')} >
                   {selectedGroup?.name}
