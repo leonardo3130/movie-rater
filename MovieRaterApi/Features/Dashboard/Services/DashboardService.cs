@@ -41,7 +41,7 @@ public class DashboardService : IDashboardService
         var allRatings = sessions.SelectMany(s => s.Ratings).ToList();
         var averageRating =
             allRatings.Count > 0
-                ? Math.Round(allRatings.Average(r => r.RatingValue), allRatings.Count)
+                ? Math.Round(allRatings.Average(r => r.RatingValue), 2)
                 : 0;
 
         var favoriteGenres = await GetFavoriteGenresAsync(userId, groupId);

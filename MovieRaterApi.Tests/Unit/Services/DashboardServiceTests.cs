@@ -118,6 +118,26 @@ public class DashboardServiceTests
     }
 
     [Fact]
+    public async Task GetDashboardAsync_RoundsAverageRatingToTwoDecimals_WithManyRatings()
+    {
+        var ids = SeedGroupWithUsers(2, "member");
+        var groupId = ids[0];
+        var userId = ids[1];
+        var partnerId = ids[2];
+        for (var i = 0; i < 9; i++)
+        {
+            var movieId = SeedMovie(100 + i, $"M{i}");
+            var sessionId = SeedSession(groupId, movieId, userId, DateTime.UtcNow);
+            SeedRating(sessionId, userId, 7);
+            SeedRating(sessionId, partnerId, i == 0 ? 8 : 7);
+        }
+
+        var result = await _sut.GetDashboardAsync(userId, groupId);
+
+        result.AverageRating.Should().Be(7.06);
+    }
+
+    [Fact]
     public async Task GetDashboardAsync_ReturnsHighestAndLowestRatedMovie()
     {
         //var (groupId, userId, partnerId) = SeedCoupleWithUsers();

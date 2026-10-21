@@ -11,6 +11,7 @@ export function useCreateWatchSession() {
     mutationFn: createWatchSession,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['watch-sessions'] })
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] })
     },
     onError: (error: unknown) => {
       toast.error(getApiErrorMessage(error, t('movies.toast.createSessionFailed')))
