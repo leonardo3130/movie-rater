@@ -11,6 +11,7 @@ export function useDeleteWatchSession() {
     mutationFn: deleteWatchSession,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['watch-sessions'] })
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] })
       toast.success(t('movies.toast.sessionDeleted'))
     },
     onError: (error: unknown) => {

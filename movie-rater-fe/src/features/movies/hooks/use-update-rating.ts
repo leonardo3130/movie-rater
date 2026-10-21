@@ -13,6 +13,7 @@ export function useUpdateRating() {
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: ['watch-sessions', variables.watchSessionId] })
       queryClient.invalidateQueries({ queryKey: ['watch-sessions'] })
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] })
       toast.success(t('movies.toast.ratingUpdated'))
     },
     onError: (error: unknown) => {
