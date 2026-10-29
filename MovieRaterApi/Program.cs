@@ -166,6 +166,7 @@ builder.Services.AddScoped<IGroupService, GroupService>();
 builder.Services.AddScoped<IInvitationService, InvitationService>();
 builder.Services.AddScoped<IMovieListService, MovieListService>();
 builder.Services.AddScoped<IUserSuggestionService, UserSuggestionService>();
+builder.Services.AddScoped<IAdminStatsService, AdminStatsService>();
 builder.Services.AddMemoryCache();
 
 builder.Services.AddScoped<ICurrentUser>(sp =>
