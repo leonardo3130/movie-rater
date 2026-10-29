@@ -26,6 +26,7 @@ import {
   Clapperboard,
   Clock,
   Library,
+  ShieldCheck,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { useAuthStore } from '../../../stores/auth-store'
@@ -36,6 +37,7 @@ import { useI18n } from '@src/i18n/use-i18n'
 import type { MessageKey } from '@src/i18n'
 import { LanguageSwitcher } from './LanguageSwitcher'
 import { InstallAppButton } from '@src/features/pwa/components/InstallAppButton'
+import { useAdminAccess } from '@src/features/admin/hooks/use-admin'
 
 const NAV_ITEMS: { icon: LucideIcon; labelKey: MessageKey; path: string }[] = [
   { icon: LayoutDashboard, labelKey: 'nav.dashboard', path: '/dashboard' },
@@ -47,6 +49,8 @@ const NAV_ITEMS: { icon: LucideIcon; labelKey: MessageKey; path: string }[] = [
   { icon: Bookmark, labelKey: 'nav.watchlist', path: '/watchlist' },
   { icon: UserPlus, labelKey: 'nav.invitePartner', path: '/invite' },
 ]
+
+const ADMIN_NAV_ITEM = { icon: ShieldCheck, labelKey: 'nav.admin', path: '/admin' } as const
 
 export function AppLayout() {
   return (
@@ -92,6 +96,8 @@ function AppSidebar() {
   const clear = useAuthStore((s) => s.clear)
   const queryClient = useQueryClient();
   const { t } = useI18n()
+  const adminAccess = useAdminAccess()
+  const navItems = adminAccess.data?.isAdmin ? [...NAV_ITEMS, ADMIN_NAV_ITEM] : NAV_ITEMS
 
   const logoutMutation = useMutation({
     mutationFn: logoutApi,
@@ -137,7 +143,7 @@ function AppSidebar() {
         <SidebarGroup>
           <SidebarGroupContent>
             <SidebarMenu>
-              {NAV_ITEMS.map((item) => {
+              {navItems.map((item) => {
                 const active = isActive(item.path)
                 const label = t(item.labelKey)
                 return (
