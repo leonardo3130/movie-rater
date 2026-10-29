@@ -3,11 +3,16 @@ using System.Threading.RateLimiting;
 using FluentValidation;
 using FluentValidation.AspNetCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using MovieRaterApi.Data;
+using MovieRaterApi.Features.Admin.Authorization;
+using MovieRaterApi.Features.Admin.Interfaces;
+using MovieRaterApi.Features.Admin.Options;
+using MovieRaterApi.Features.Admin.Services;
 using MovieRaterApi.Features.Authentication.Infrastructure;
 using MovieRaterApi.Features.Authentication.Interfaces;
 using MovieRaterApi.Features.Authentication.Options;
@@ -90,7 +95,17 @@ builder
         };
     });
 
-builder.Services.AddAuthorization();
+builder.Services.Configure<AdminOptions>(builder.Configuration.GetSection(AdminOptions.SectionName));
+builder.Services.AddSingleton<IAdminAccessService, AdminAccessService>();
+builder.Services.AddSingleton<IAuthorizationHandler, AdminAuthorizationHandler>();
+
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy(
+        AdminPolicies.AdminOnly,
+        policy => policy.RequireAuthenticatedUser().AddRequirements(new AdminRequirement())
+    );
+});
 
 builder.Services.Configure<PasswordResetRateLimitOptions>(
     builder.Configuration.GetSection(PasswordResetRateLimitOptions.SectionName)
