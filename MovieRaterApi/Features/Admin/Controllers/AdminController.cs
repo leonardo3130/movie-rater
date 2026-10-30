@@ -32,7 +32,10 @@ public class AdminController : ControllerBase
     public IActionResult GetAccess()
     {
         return Ok(
-            new AdminAccessResponseDto { IsAdmin = _adminAccessService.IsAdmin(_currentUser.UserId) }
+            new AdminAccessResponseDto
+            {
+                IsAdmin = _adminAccessService.IsAdmin(_currentUser.UserId),
+            }
         );
     }
 

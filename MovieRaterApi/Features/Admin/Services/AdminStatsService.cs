@@ -39,7 +39,10 @@ public class AdminStatsService : IAdminStatsService
             query.Refresh
         );
 
-        if (!query.Refresh && _cache.TryGetValue(OverviewCacheKey, out AdminOverviewResponseDto? cached))
+        if (
+            !query.Refresh
+            && _cache.TryGetValue(OverviewCacheKey, out AdminOverviewResponseDto? cached)
+        )
             return cached!;
 
         var overview = await ComputeOverviewAsync();
@@ -79,7 +82,7 @@ public class AdminStatsService : IAdminStatsService
                 Id = g.Id,
                 Name = g.Name,
                 CreatedAt = g.CreatedAt,
-                Members = g.UserGroups.Select(ug => ug.User.Username).ToList(),
+                Members = g.UserGroups.Select(ug => ug.User.Username).OrderBy(u => u).ToList(),
                 WatchSessionCount = g.WatchSessions.Count(),
                 RatingCount = g.WatchSessions.SelectMany(ws => ws.Ratings).Count(),
                 LastWatchSessionAt = g.WatchSessions.Max(ws => (DateTime?)ws.CreatedAt),
@@ -96,9 +99,7 @@ public class AdminStatsService : IAdminStatsService
         );
 
         // Ordered in memory: Postgres puts NULLs first on DESC, and the group count is small.
-        return groups
-            .OrderByDescending(g => g.LastWatchSessionAt ?? g.CreatedAt)
-            .ToList();
+        return groups.OrderByDescending(g => g.LastWatchSessionAt ?? g.CreatedAt).ToList();
     }
 
     public async Task<AdminInvitationListResponseDto> GetInvitationsAsync(
@@ -144,7 +145,10 @@ public class AdminStatsService : IAdminStatsService
             {
                 i.Id,
                 i.GroupId,
-                GroupName = _db.Groups.Where(g => g.Id == i.GroupId).Select(g => g.Name).FirstOrDefault(),
+                GroupName = _db
+                    .Groups.Where(g => g.Id == i.GroupId)
+                    .Select(g => g.Name)
+                    .FirstOrDefault(),
                 i.InviterUserId,
                 InviterUsername = i.InviterUser.Username,
                 i.InviteeEmail,
@@ -192,7 +196,6 @@ public class AdminStatsService : IAdminStatsService
                         r.Status,
                         effectiveStatus,
                         groupExists: r.GroupName is not null,
-                        inviteeRegistered: r.InviteeUsername is not null,
                         inviteeIsMember: isPending && r.InviteeIsMember,
                         hasDuplicatePending: isPending && r.OtherPendingForSameInvitee
                     ),
@@ -216,14 +219,12 @@ public class AdminStatsService : IAdminStatsService
         InvitationStatus status,
         DateTime expiresAt,
         DateTime now
-    ) =>
-        status == InvitationStatus.Pending && expiresAt <= now ? InvitationStatus.Expired : status;
+    ) => status == InvitationStatus.Pending && expiresAt <= now ? InvitationStatus.Expired : status;
 
     public static List<string> GetInvitationIssues(
         InvitationStatus status,
         InvitationStatus effectiveStatus,
         bool groupExists,
-        bool inviteeRegistered,
         bool inviteeIsMember,
         bool hasDuplicatePending
     )
@@ -239,8 +240,6 @@ public class AdminStatsService : IAdminStatsService
         // Only actionable while the invitation can still be accepted.
         if (effectiveStatus == InvitationStatus.Pending)
         {
-            if (!inviteeRegistered)
-                issues.Add(AdminInvitationIssues.InviteeNotRegistered);
             if (inviteeIsMember)
                 issues.Add(AdminInvitationIssues.InviteeAlreadyMember);
             if (hasDuplicatePending)
@@ -381,8 +380,7 @@ public class AdminStatsService : IAdminStatsService
 
     private async Task<AdminActivityResponseDto> ComputeActivityAsync(int days)
     {
-        var today = DateTime.UtcNow.Date;
-        var since = DateTime.SpecifyKind(today.AddDays(-(days - 1)), DateTimeKind.Utc);
+        var since = DateTime.UtcNow.Date.AddDays(-(days - 1));
 
         // Bucketing by day happens in Postgres (date_trunc); only <= `days` rows come back.
         var signups = await _db
@@ -430,7 +428,11 @@ public class AdminStatsService : IAdminStatsService
     }
 
     private Task<int> CountActiveUsersSinceAsync(DateTime since) =>
-        _db.RefreshTokens.Where(t => t.CreatedAt >= since).Select(t => t.UserId).Distinct().CountAsync();
+        _db
+            .RefreshTokens.Where(t => t.CreatedAt >= since)
+            .Select(t => t.UserId)
+            .Distinct()
+            .CountAsync();
 
     private static double Percent(int part, int total) =>
         total == 0 ? 0 : Math.Round(part * 100.0 / total, 1);

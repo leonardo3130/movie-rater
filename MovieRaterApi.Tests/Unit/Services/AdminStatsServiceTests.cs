@@ -99,8 +99,22 @@ public class AdminStatsServiceTests
     {
         SeedMovie(1);
         SeedMovie(2);
-        _db.TvSeries.Add(new TvSeries { Id = Guid.NewGuid(), TmdbId = 10, Title = "Show" });
-        _db.TvEpisodes.Add(new TvEpisode { Id = Guid.NewGuid(), TmdbId = 11, Title = "Ep" });
+        _db.TvSeries.Add(
+            new TvSeries
+            {
+                Id = Guid.NewGuid(),
+                TmdbId = 10,
+                Title = "Show",
+            }
+        );
+        _db.TvEpisodes.Add(
+            new TvEpisode
+            {
+                Id = Guid.NewGuid(),
+                TmdbId = 11,
+                Title = "Ep",
+            }
+        );
         await _db.SaveChangesAsync();
 
         var result = await _sut.GetOverviewAsync(_adminId, new AdminOverviewQueryDto());
@@ -162,10 +176,34 @@ public class AdminStatsServiceTests
     {
         var inviter = SeedUser("inviter");
         var group = SeedGroup("Group");
-        SeedInvitation(group, inviter, "a@example.com", InvitationStatus.Pending, DateTime.UtcNow.AddDays(3));
-        SeedInvitation(group, inviter, "b@example.com", InvitationStatus.Pending, DateTime.UtcNow.AddDays(-1));
-        SeedInvitation(group, inviter, "c@example.com", InvitationStatus.Accepted, DateTime.UtcNow.AddDays(3));
-        SeedInvitation(group, inviter, "d@example.com", InvitationStatus.Expired, DateTime.UtcNow.AddDays(-5));
+        SeedInvitation(
+            group,
+            inviter,
+            "a@example.com",
+            InvitationStatus.Pending,
+            DateTime.UtcNow.AddDays(3)
+        );
+        SeedInvitation(
+            group,
+            inviter,
+            "b@example.com",
+            InvitationStatus.Pending,
+            DateTime.UtcNow.AddDays(-1)
+        );
+        SeedInvitation(
+            group,
+            inviter,
+            "c@example.com",
+            InvitationStatus.Accepted,
+            DateTime.UtcNow.AddDays(3)
+        );
+        SeedInvitation(
+            group,
+            inviter,
+            "d@example.com",
+            InvitationStatus.Expired,
+            DateTime.UtcNow.AddDays(-5)
+        );
 
         var result = await _sut.GetOverviewAsync(_adminId, new AdminOverviewQueryDto());
 
@@ -249,8 +287,20 @@ public class AdminStatsServiceTests
         var session = SeedSession(active, SeedMovie(1), u1);
         SeedRating(session, u1, 7);
         SeedRating(session, u2, 9);
-        SeedInvitation(dormant, u1, "x@example.com", InvitationStatus.Pending, DateTime.UtcNow.AddDays(2));
-        SeedInvitation(dormant, u1, "y@example.com", InvitationStatus.Pending, DateTime.UtcNow.AddDays(-2));
+        SeedInvitation(
+            dormant,
+            u1,
+            "x@example.com",
+            InvitationStatus.Pending,
+            DateTime.UtcNow.AddDays(2)
+        );
+        SeedInvitation(
+            dormant,
+            u1,
+            "y@example.com",
+            InvitationStatus.Pending,
+            DateTime.UtcNow.AddDays(-2)
+        );
 
         var result = await _sut.GetGroupsAsync(_adminId);
 
@@ -287,8 +337,22 @@ public class AdminStatsServiceTests
         var inviter = SeedUser("inviter");
         var invitee = SeedUser("invitee", email: "invitee@example.com");
         var group = SeedGroup("Movie night");
-        var older = SeedInvitation(group, inviter, "invitee@example.com", InvitationStatus.Accepted, DateTime.UtcNow.AddDays(3), createdAt: DateTime.UtcNow.AddDays(-2), acceptedBy: invitee);
-        var newer = SeedInvitation(group, inviter, "someone@example.com", InvitationStatus.Revoked, DateTime.UtcNow.AddDays(3));
+        var older = SeedInvitation(
+            group,
+            inviter,
+            "invitee@example.com",
+            InvitationStatus.Accepted,
+            DateTime.UtcNow.AddDays(3),
+            createdAt: DateTime.UtcNow.AddDays(-2),
+            acceptedBy: invitee
+        );
+        var newer = SeedInvitation(
+            group,
+            inviter,
+            "someone@example.com",
+            InvitationStatus.Revoked,
+            DateTime.UtcNow.AddDays(3)
+        );
 
         var result = await _sut.GetInvitationsAsync(_adminId, new AdminInvitationQueryDto());
 
@@ -307,9 +371,27 @@ public class AdminStatsServiceTests
     {
         var inviter = SeedUser("inviter");
         var group = SeedGroup("Group");
-        var live = SeedInvitation(group, inviter, "a@example.com", InvitationStatus.Pending, DateTime.UtcNow.AddDays(3));
-        var stale = SeedInvitation(group, inviter, "b@example.com", InvitationStatus.Pending, DateTime.UtcNow.AddDays(-1));
-        var expired = SeedInvitation(group, inviter, "c@example.com", InvitationStatus.Expired, DateTime.UtcNow.AddDays(-1));
+        var live = SeedInvitation(
+            group,
+            inviter,
+            "a@example.com",
+            InvitationStatus.Pending,
+            DateTime.UtcNow.AddDays(3)
+        );
+        var stale = SeedInvitation(
+            group,
+            inviter,
+            "b@example.com",
+            InvitationStatus.Pending,
+            DateTime.UtcNow.AddDays(-1)
+        );
+        var expired = SeedInvitation(
+            group,
+            inviter,
+            "c@example.com",
+            InvitationStatus.Expired,
+            DateTime.UtcNow.AddDays(-1)
+        );
 
         var pending = await _sut.GetInvitationsAsync(
             _adminId,
@@ -335,12 +417,33 @@ public class AdminStatsServiceTests
         SeedUser("giulia", email: "giulia@example.com");
         var friends = SeedGroup("Friends");
         var family = SeedGroup("Family");
-        var toGiulia = SeedInvitation(friends, inviter, "giulia@example.com", InvitationStatus.Pending, DateTime.UtcNow.AddDays(3));
-        var toFamily = SeedInvitation(family, inviter, "other@example.com", InvitationStatus.Pending, DateTime.UtcNow.AddDays(3));
+        var toGiulia = SeedInvitation(
+            friends,
+            inviter,
+            "giulia@example.com",
+            InvitationStatus.Pending,
+            DateTime.UtcNow.AddDays(3)
+        );
+        var toFamily = SeedInvitation(
+            family,
+            inviter,
+            "other@example.com",
+            InvitationStatus.Pending,
+            DateTime.UtcNow.AddDays(3)
+        );
 
-        var byInviteeUsername = await _sut.GetInvitationsAsync(_adminId, new AdminInvitationQueryDto { Search = "GIUL" });
-        var byGroup = await _sut.GetInvitationsAsync(_adminId, new AdminInvitationQueryDto { Search = "family" });
-        var byInviter = await _sut.GetInvitationsAsync(_adminId, new AdminInvitationQueryDto { Search = "marco" });
+        var byInviteeUsername = await _sut.GetInvitationsAsync(
+            _adminId,
+            new AdminInvitationQueryDto { Search = "GIUL" }
+        );
+        var byGroup = await _sut.GetInvitationsAsync(
+            _adminId,
+            new AdminInvitationQueryDto { Search = "family" }
+        );
+        var byInviter = await _sut.GetInvitationsAsync(
+            _adminId,
+            new AdminInvitationQueryDto { Search = "marco" }
+        );
 
         byInviteeUsername.Items.Select(i => i.Id).Should().BeEquivalentTo([toGiulia]);
         byGroup.Items.Select(i => i.Id).Should().BeEquivalentTo([toFamily]);
@@ -353,9 +456,18 @@ public class AdminStatsServiceTests
         var inviter = SeedUser("inviter");
         var group = SeedGroup("Group");
         for (var i = 0; i < 5; i++)
-            SeedInvitation(group, inviter, $"u{i}@example.com", InvitationStatus.Revoked, DateTime.UtcNow);
+            SeedInvitation(
+                group,
+                inviter,
+                $"u{i}@example.com",
+                InvitationStatus.Revoked,
+                DateTime.UtcNow
+            );
 
-        var result = await _sut.GetInvitationsAsync(_adminId, new AdminInvitationQueryDto { Limit = 2 });
+        var result = await _sut.GetInvitationsAsync(
+            _adminId,
+            new AdminInvitationQueryDto { Limit = 2 }
+        );
 
         result.TotalCount.Should().Be(5);
         result.Items.Should().HaveCount(2);
@@ -370,20 +482,45 @@ public class AdminStatsServiceTests
         var group = SeedGroup("Group");
         SeedMembership(group, member);
 
-        var alreadyMember = SeedInvitation(group, inviter, "member@example.com", InvitationStatus.Pending, DateTime.UtcNow.AddDays(3));
-        var unregistered = SeedInvitation(group, inviter, "changed@example.com", InvitationStatus.Pending, DateTime.UtcNow.AddDays(3));
-        var duplicateA = SeedInvitation(group, inviter, "dup@example.com", InvitationStatus.Pending, DateTime.UtcNow.AddDays(3));
-        SeedInvitation(group, otherInviter, "dup@example.com", InvitationStatus.Pending, DateTime.UtcNow.AddDays(3));
-        var orphan = SeedInvitation(Guid.NewGuid(), inviter, "member@example.com", InvitationStatus.Revoked, DateTime.UtcNow);
+        var alreadyMember = SeedInvitation(
+            group,
+            inviter,
+            "member@example.com",
+            InvitationStatus.Pending,
+            DateTime.UtcNow.AddDays(3)
+        );
+        var duplicateA = SeedInvitation(
+            group,
+            inviter,
+            "dup@example.com",
+            InvitationStatus.Pending,
+            DateTime.UtcNow.AddDays(3)
+        );
+        SeedInvitation(
+            group,
+            otherInviter,
+            "dup@example.com",
+            InvitationStatus.Pending,
+            DateTime.UtcNow.AddDays(3)
+        );
+        var orphan = SeedInvitation(
+            Guid.NewGuid(),
+            inviter,
+            "member@example.com",
+            InvitationStatus.Revoked,
+            DateTime.UtcNow
+        );
 
         var result = await _sut.GetInvitationsAsync(_adminId, new AdminInvitationQueryDto());
 
-        result.Items.Single(i => i.Id == alreadyMember).Issues
-            .Should().Contain(AdminInvitationIssues.InviteeAlreadyMember);
-        result.Items.Single(i => i.Id == unregistered).Issues
-            .Should().Contain(AdminInvitationIssues.InviteeNotRegistered);
-        result.Items.Single(i => i.Id == duplicateA).Issues
-            .Should().Contain(AdminInvitationIssues.DuplicatePending);
+        result
+            .Items.Single(i => i.Id == alreadyMember)
+            .Issues.Should()
+            .Contain(AdminInvitationIssues.InviteeAlreadyMember);
+        result
+            .Items.Single(i => i.Id == duplicateA)
+            .Issues.Should()
+            .Contain(AdminInvitationIssues.DuplicatePending);
         var orphanDto = result.Items.Single(i => i.Id == orphan);
         orphanDto.GroupName.Should().BeNull();
         orphanDto.Issues.Should().BeEquivalentTo([AdminInvitationIssues.GroupMissing]);
@@ -417,7 +554,6 @@ public class AdminStatsServiceTests
             InvitationStatus.Accepted,
             InvitationStatus.Accepted,
             groupExists: true,
-            inviteeRegistered: false,
             inviteeIsMember: true,
             hasDuplicatePending: true
         );

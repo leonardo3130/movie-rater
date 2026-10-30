@@ -146,8 +146,7 @@ Notes:
 - "Active users" counts distinct users who logged in or refreshed a token in the window, since every token refresh stores a row.
 - Invitations have an `effectiveStatus`: a `Pending` invitation past its `expiresAt` is reported as `Expired`.
   Each row also lists `issues` that explain why an invite might not work:
-  `ExpiredButPending`, `GroupMissing`, `InviteeNotRegistered` (no user has the invited email any more),
-  `InviteeAlreadyMember` and `DuplicatePending`.
+  `ExpiredButPending`, `GroupMissing` (the group was deleted), `InviteeAlreadyMember` and `DuplicatePending`.
 
 ## Installing the web app (PWA)
 

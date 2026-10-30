@@ -1,6 +1,6 @@
 using FluentAssertions;
-using Moq;
 using Microsoft.Extensions.Options;
+using Moq;
 using MovieRaterApi.Features.Admin.Options;
 using MovieRaterApi.Features.Admin.Services;
 

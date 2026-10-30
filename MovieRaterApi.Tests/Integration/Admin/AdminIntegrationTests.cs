@@ -157,6 +157,15 @@ public class AdminIntegrationTests : IAsyncLifetime
         return (await response.Content.ReadFromJsonAsync<InvitationResponseDto>())!;
     }
 
+    private async Task AcceptInvite(InvitationResponseDto invitation)
+    {
+        var response = await _client.PostAsJsonAsync(
+            "/api/groups/invite/accept",
+            new AcceptInvitationRequestDto { InviteToken = invitation.InviteToken }
+        );
+        response.EnsureSuccessStatusCode();
+    }
+
     [Fact]
     public async Task Access_ReturnsFalse_ForRegularUser_AndTrue_ForAdmin()
     {
@@ -330,29 +339,16 @@ public class AdminIntegrationTests : IAsyncLifetime
         Authenticate(alice);
         var group = await CreateGroup("Movie night");
         var fromAlice = await Invite(group.Id, "carol");
-        var accept = await _client.PostAsJsonAsync(
-            "/api/groups/invite",
-            new InvitationRequestDto { GroupId = group.Id, InviteeUsername = "bobby" }
-        );
-        accept.EnsureSuccessStatusCode();
-        var toBobby = (await accept.Content.ReadFromJsonAsync<InvitationResponseDto>())!;
+        var toBobby = await Invite(group.Id, "bobby");
 
         Authenticate(bobby);
-        var accepted = await _client.PostAsJsonAsync(
-            "/api/groups/invite/accept",
-            new AcceptInvitationRequestDto { InviteToken = toBobby.InviteToken }
-        );
-        accepted.EnsureSuccessStatusCode();
+        await AcceptInvite(toBobby);
 
-        // Bobby (now a member) invites carol too, then carol accepts Bobby's invite:
+        // Bobby, now a member, invites carol too and carol accepts his invite:
         // Alice's invitation to carol stays Pending although carol is already in the group.
         var fromBobby = await Invite(group.Id, "carol");
         Authenticate(carol);
-        var carolAccepts = await _client.PostAsJsonAsync(
-            "/api/groups/invite/accept",
-            new AcceptInvitationRequestDto { InviteToken = fromBobby.InviteToken }
-        );
-        carolAccepts.EnsureSuccessStatusCode();
+        await AcceptInvite(fromBobby);
 
         Authenticate(await LoginAsAdmin());
         var result = await _client.GetFromJsonAsync<AdminInvitationListResponseDto>(

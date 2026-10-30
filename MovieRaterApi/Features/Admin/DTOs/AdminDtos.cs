@@ -132,7 +132,6 @@ public static class AdminInvitationIssues
 {
     public const string ExpiredButPending = "ExpiredButPending";
     public const string GroupMissing = "GroupMissing";
-    public const string InviteeNotRegistered = "InviteeNotRegistered";
     public const string InviteeAlreadyMember = "InviteeAlreadyMember";
     public const string DuplicatePending = "DuplicatePending";
 }
