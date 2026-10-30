@@ -18,6 +18,8 @@ import { WatchSessionDetailPage } from '../features/movies/pages/WatchSessionDet
 import { DashboardPage } from '../features/dashboard/pages/DashboardPage'
 import { ListsPage } from '../features/movie-lists/pages/ListsPage'
 import { MovieListDetailPage } from '../features/movie-lists/pages/MovieListDetailPage'
+import { AdminRoute } from './AdminRoute'
+import { LazyAdminPage } from './LazyAdminPage'
 
 export const router = createBrowserRouter([
   {
@@ -97,6 +99,15 @@ export const router = createBrowserRouter([
           {
             path: '/invite/accept',
             element: <AcceptInvitePage />,
+          },
+          {
+            element: <AdminRoute />,
+            children: [
+              {
+                path: '/admin',
+                element: <LazyAdminPage />,
+              },
+            ],
           },
         ],
       },

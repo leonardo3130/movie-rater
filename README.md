@@ -119,6 +119,35 @@ Then apply them:
 docker compose run --rm api dotnet ef database update
 ```
 
+## Admin panel
+
+A read-only admin panel is available at `/admin` for the user IDs listed in the `Admin:UserIds` configuration.
+Everyone else gets `403` from the admin endpoints and never sees the sidebar entry.
+
+To grant yourself access, put your user ID (the `id` returned by `GET /api/auth/me`) in `.env`:
+
+```bash
+ADMIN_USER_ID=00000000-0000-0000-0000-000000000000
+```
+
+`docker compose` passes it to the API as `Admin__UserIds__0`. Add more admins with `Admin__UserIds__1`, `Admin__UserIds__2`, …
+
+| Endpoint                     | Description                                                                                                         |
+| ---------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| `GET /api/admin/access`      | `{ isAdmin }` for the current user. Open to every signed-in user.                                                   |
+| `GET /api/admin/overview`    | Users, active users (24h / 7d / 30d), groups, cached media, watch sessions, ratings, invitation totals.             |
+| `GET /api/admin/activity`    | Daily signups, active users, watch sessions and ratings. `?days=7..365` (default 30).                               |
+| `GET /api/admin/groups`      | Every group with members, session and rating counts, last activity and pending invitations.                         |
+| `GET /api/admin/invitations` | Invitations, newest first. `?status=Pending\|Accepted\|Expired\|Revoked`, `?search=` (email, username, group), `?limit=1..500`. |
+
+Notes:
+
+- `overview` and `activity` are cached in memory for 5 minutes. Pass `?refresh=true` to recompute them.
+- "Active users" counts distinct users who logged in or refreshed a token in the window, since every token refresh stores a row.
+- Invitations have an `effectiveStatus`: a `Pending` invitation past its `expiresAt` is reported as `Expired`.
+  Each row also lists `issues` that explain why an invite might not work:
+  `ExpiredButPending`, `GroupMissing` (the group was deleted), `InviteeAlreadyMember` and `DuplicatePending`.
+
 ## Installing the web app (PWA)
 
 The frontend is a Progressive Web App, so it can be installed from the browser and launched like a native app.

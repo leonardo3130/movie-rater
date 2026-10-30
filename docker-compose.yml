@@ -17,6 +17,7 @@ services:
       - EmailSettings__Username=${EMAIL_USERNAME}
       - EmailSettings__Password=${EMAIL_PASSWORD}
       - EmailSettings__FrontendBaseUrl=${FRONTEND_BASE_URL:-http://localhost:5173}
+      - Admin__UserIds__0=${ADMIN_USER_ID:-}
       - Jwt__SigningKey=${JWT_SIGNING_KEY:-this-is-not-a-real-key-replace-in-production-with-at-least-32-chars}
     depends_on:
       db:
