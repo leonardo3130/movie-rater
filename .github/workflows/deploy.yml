@@ -1,0 +1,31 @@
+name: Deploy
+
+on:
+  workflow_run:
+    workflows: [".NET"]
+    types: [completed]
+    branches: ["main"]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    if: github.event_name == 'workflow_dispatch' || (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push')
+    runs-on: [self-hosted, pi]
+
+    steps:
+      # deploy.sh builds from the long-lived checkout (it holds the .env with the tunnel token),
+      # not from the runner's throwaway workspace.
+      - name: Update checkout
+        working-directory: /home/leonardo/movie-rater
+        run: |
+          git fetch origin main
+          git checkout main
+          git merge --ff-only origin/main
+
+      - name: Deploy
+        working-directory: /home/leonardo/movie-rater
+        run: ./deploy.sh
