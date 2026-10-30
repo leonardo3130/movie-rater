@@ -2,7 +2,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useI18n } from '@src/i18n/use-i18n'
-import { useAdminGroups } from '../hooks/use-admin'
+import { useAdminGroups } from '../hooks/use-admin-groups'
 
 export function AdminGroupsTable() {
   const groups = useAdminGroups()

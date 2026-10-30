@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { AlertTriangle, Search } from 'lucide-react'
+import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -12,13 +13,15 @@ import {
 } from '@/components/ui/select'
 import { cn } from '@/lib/utils'
 import { useI18n } from '@src/i18n/use-i18n'
-import type { MessageKey } from '@src/i18n'
 import { useDebouncedValue } from '@src/hooks/use-debounced-value'
 import type { AdminInvitationDto, InvitationStatus } from '@src/types/admin'
-import { useAdminInvitations } from '../hooks/use-admin'
+import { useAdminInvitations } from '../hooks/use-admin-invitations'
 
 const STATUSES: InvitationStatus[] = ['Pending', 'Accepted', 'Expired', 'Revoked']
 const ALL = 'all'
+const PAGE_SIZE = 100
+// Matches the API's maximum `limit`.
+const MAX_LIMIT = 500
 
 const STATUS_STYLES: Record<InvitationStatus, string> = {
   Pending: 'bg-amber-500/15 text-amber-500',
@@ -31,7 +34,7 @@ function StatusBadge({ status }: { status: InvitationStatus }) {
   const { t } = useI18n()
   return (
     <span className={cn('inline-flex rounded-full px-2 py-0.5 text-xs font-medium', STATUS_STYLES[status])}>
-      {t(`admin.invitations.status_${status}` as MessageKey)}
+      {t(`admin.invitations.statuses.${status}`)}
     </span>
   )
 }
@@ -39,6 +42,8 @@ function StatusBadge({ status }: { status: InvitationStatus }) {
 function InvitationRow({ invitation }: { invitation: AdminInvitationDto }) {
   const { t, formatDate } = useI18n()
   const date = (value: string) => formatDate(value, { dateStyle: 'medium' })
+  const acceptedBySomeoneElse =
+    invitation.acceptedByUsername && invitation.acceptedByUsername !== invitation.inviteeUsername
 
   return (
     <li className="space-y-2 px-4 py-3">
@@ -49,27 +54,30 @@ function InvitationRow({ invitation }: { invitation: AdminInvitationDto }) {
             <span className="italic text-muted-foreground">{t('admin.invitations.deletedGroup')}</span>
           )}
         </span>
-        <span className="ml-auto text-xs tabular-nums text-muted-foreground">
-          {t('admin.invitations.created')} {date(invitation.createdAt)} · {t('admin.invitations.expires')}{' '}
-          {date(invitation.expiresAt)}
+        <span className="text-xs tabular-nums text-muted-foreground sm:ml-auto">
+          {t('admin.invitations.sent', { date: date(invitation.createdAt) })}
+          {invitation.effectiveStatus === 'Pending' &&
+            ` · ${t('admin.invitations.expires', { date: date(invitation.expiresAt) })}`}
+          {invitation.effectiveStatus === 'Expired' &&
+            ` · ${t('admin.invitations.expired', { date: date(invitation.expiresAt) })}`}
         </span>
       </div>
 
       <div className="grid gap-1 text-sm sm:grid-cols-2">
-        <p className="min-w-0 truncate">
+        <p className="min-w-0 break-words">
           <span className="text-muted-foreground">{t('admin.invitations.from')} </span>
           {invitation.inviterUsername}
         </p>
-        <p className="min-w-0 truncate">
+        <p className="min-w-0 break-words">
           <span className="text-muted-foreground">{t('admin.invitations.to')} </span>
           {invitation.inviteeUsername ?? (
-            <span className="text-muted-foreground">({t('admin.invitations.notRegistered')})</span>
+            <span className="text-muted-foreground">({t('admin.invitations.noAccount')})</span>
           )}{' '}
-          <span className="text-muted-foreground">&lt;{invitation.inviteeEmail}&gt;</span>
-          {invitation.acceptedByUsername && (
+          <span className="text-muted-foreground">({invitation.inviteeEmail})</span>
+          {acceptedBySomeoneElse && (
             <span className="text-muted-foreground">
-              {' '}
-              · {t('admin.invitations.acceptedBy', { username: invitation.acceptedByUsername })}
+              {' · '}
+              {t('admin.invitations.acceptedBy', { username: invitation.acceptedByUsername! })}
             </span>
           )}
         </p>
@@ -80,7 +88,7 @@ function InvitationRow({ invitation }: { invitation: AdminInvitationDto }) {
           {invitation.issues.map((issue) => (
             <li key={issue} className="flex items-start gap-1.5 text-xs text-amber-500">
               <AlertTriangle className="mt-px size-3.5 shrink-0" />
-              <span>{t(`admin.invitations.issues.${issue}` as MessageKey)}</span>
+              <span>{t(`admin.invitations.issues.${issue}`)}</span>
             </li>
           ))}
         </ul>
@@ -93,12 +101,18 @@ export function AdminInvitationsPanel() {
   const { t } = useI18n()
   const [status, setStatus] = useState<InvitationStatus | typeof ALL>(ALL)
   const [search, setSearch] = useState('')
+  const [limit, setLimit] = useState(PAGE_SIZE)
   const debouncedSearch = useDebouncedValue(search.trim())
 
   const invitations = useAdminInvitations({
     status: status === ALL ? undefined : status,
     search: debouncedSearch || undefined,
+    limit,
   })
+
+  const shown = invitations.data?.items.length ?? 0
+  const total = invitations.data?.totalCount ?? 0
+  const canShowMore = shown < total && limit < MAX_LIMIT
 
   return (
     <div className="space-y-3">
@@ -107,25 +121,35 @@ export function AdminInvitationsPanel() {
           <Search className="pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) => {
+              setSearch(e.target.value)
+              setLimit(PAGE_SIZE)
+            }}
             placeholder={t('admin.invitations.searchPlaceholder')}
+            aria-label={t('admin.invitations.searchPlaceholder')}
             maxLength={255}
             className="pl-8"
           />
         </div>
-        <Select value={status} onValueChange={(value) => setStatus(value as InvitationStatus | typeof ALL)}>
+        <Select
+          value={status}
+          onValueChange={(value) => {
+            setStatus(value as InvitationStatus | typeof ALL)
+            setLimit(PAGE_SIZE)
+          }}
+        >
           <SelectTrigger className="w-full sm:w-44">
             <SelectValue>
               {status === ALL
                 ? t('admin.invitations.allStatuses')
-                : t(`admin.invitations.status_${status}` as MessageKey)}
+                : t(`admin.invitations.statuses.${status}`)}
             </SelectValue>
           </SelectTrigger>
           <SelectContent>
             <SelectItem value={ALL}>{t('admin.invitations.allStatuses')}</SelectItem>
             {STATUSES.map((s) => (
               <SelectItem key={s} value={s}>
-                {t(`admin.invitations.status_${s}` as MessageKey)}
+                {t(`admin.invitations.statuses.${s}`)}
               </SelectItem>
             ))}
           </SelectContent>
@@ -136,12 +160,17 @@ export function AdminInvitationsPanel() {
         <Skeleton className="h-40 rounded-xl" />
       ) : invitations.isError ? (
         <p className="text-sm text-destructive">{t('admin.loadFailed')}</p>
-      ) : invitations.data.items.length === 0 ? (
+      ) : shown === 0 ? (
         <p className="py-6 text-center text-sm text-muted-foreground">{t('admin.invitations.empty')}</p>
       ) : (
         <>
-          <Card className={cn('border-border/50 bg-card/50 py-0', invitations.isFetching && 'opacity-70')}>
-            <CardContent className="p-0">
+          <Card
+            className={cn(
+              'border-border/50 bg-card/50 py-0 transition-opacity',
+              invitations.isPlaceholderData && 'opacity-60',
+            )}
+          >
+            <CardContent className="px-0">
               <ul className="divide-y divide-border/30">
                 {invitations.data.items.map((invitation) => (
                   <InvitationRow key={invitation.id} invitation={invitation} />
@@ -149,12 +178,21 @@ export function AdminInvitationsPanel() {
               </ul>
             </CardContent>
           </Card>
-          <p className="text-xs text-muted-foreground">
-            {t('admin.invitations.showing', {
-              shown: invitations.data.items.length,
-              total: invitations.data.totalCount,
-            })}
-          </p>
+          <div className="flex items-center justify-between gap-2">
+            <p className="text-xs text-muted-foreground">
+              {t('admin.invitations.showing', { shown, total })}
+            </p>
+            {canShowMore && (
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={invitations.isFetching}
+                onClick={() => setLimit((l) => Math.min(l + PAGE_SIZE, MAX_LIMIT))}
+              >
+                {t('admin.invitations.showMore')}
+              </Button>
+            )}
+          </div>
         </>
       )}
     </div>

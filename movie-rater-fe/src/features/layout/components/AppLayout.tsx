@@ -37,9 +37,15 @@ import { useI18n } from '@src/i18n/use-i18n'
 import type { MessageKey } from '@src/i18n'
 import { LanguageSwitcher } from './LanguageSwitcher'
 import { InstallAppButton } from '@src/features/pwa/components/InstallAppButton'
-import { useAdminAccess } from '@src/features/admin/hooks/use-admin'
+import { useAdminAccess } from '@src/features/admin/hooks/use-admin-access'
 
-const NAV_ITEMS: { icon: LucideIcon; labelKey: MessageKey; path: string }[] = [
+interface NavItem {
+  icon: LucideIcon
+  labelKey: MessageKey
+  path: string
+}
+
+const NAV_ITEMS: NavItem[] = [
   { icon: LayoutDashboard, labelKey: 'nav.dashboard', path: '/dashboard' },
   { icon: Film, labelKey: 'nav.movies', path: '/movies' },
   { icon: Tv, labelKey: 'nav.tvShows', path: '/tv' },
@@ -50,7 +56,7 @@ const NAV_ITEMS: { icon: LucideIcon; labelKey: MessageKey; path: string }[] = [
   { icon: UserPlus, labelKey: 'nav.invitePartner', path: '/invite' },
 ]
 
-const ADMIN_NAV_ITEM = { icon: ShieldCheck, labelKey: 'nav.admin', path: '/admin' } as const
+const ADMIN_NAV_ITEM: NavItem = { icon: ShieldCheck, labelKey: 'nav.admin', path: '/admin' }
 
 export function AppLayout() {
   return (

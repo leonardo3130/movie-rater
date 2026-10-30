@@ -3,7 +3,6 @@ export type InvitationStatus = 'Pending' | 'Accepted' | 'Expired' | 'Revoked'
 export type InvitationIssue =
   | 'ExpiredButPending'
   | 'GroupMissing'
-  | 'InviteeNotRegistered'
   | 'InviteeAlreadyMember'
   | 'DuplicatePending'
 

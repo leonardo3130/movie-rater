@@ -14,7 +14,7 @@ export function AdminStatTile({
 }) {
   return (
     <Card className="border-border/50 bg-card/50">
-      <CardContent className="flex items-start justify-between gap-3 p-4">
+      <CardContent className="flex items-start justify-between gap-3">
         <div className="min-w-0 space-y-1">
           <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
             {label}
