@@ -1,3 +1,4 @@
+using System.Net;
 using System.Reflection;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
@@ -67,11 +68,13 @@ public class PasswordResetService : IPasswordResetService
 
         var template = await LoadTemplateAsync();
 
+        // Usernames are user-controlled; encode every value so nobody can inject markup
+        // (e.g. phishing links) into an email sent from our address.
         var body = template
-            .Replace("{{Username}}", user.Username)
-            .Replace("{{ResetUrl}}", resetUrl)
-            .Replace("{{Email}}", user.Email)
-            .Replace("{{ExpiresIn}}", FormatLifetime(TokenLifetime));
+            .Replace("{{Username}}", WebUtility.HtmlEncode(user.Username))
+            .Replace("{{ResetUrl}}", WebUtility.HtmlEncode(resetUrl))
+            .Replace("{{Email}}", WebUtility.HtmlEncode(user.Email))
+            .Replace("{{ExpiresIn}}", WebUtility.HtmlEncode(FormatLifetime(TokenLifetime)));
 
         try
         {
@@ -111,10 +114,18 @@ public class PasswordResetService : IPasswordResetService
         }
 
         user.PasswordHash = _passwordHasher.Hash(request.Password);
+        user.UpdatedAt = DateTime.UtcNow;
 
-        _db.PasswordResetTokens.Remove(resetToken);
+        // Consume every outstanding reset link, not just the one used.
+        var userResetTokens = await _db
+            .PasswordResetTokens.Where(prt => prt.UserId == user.Id)
+            .ToListAsync();
+        _db.PasswordResetTokens.RemoveRange(userResetTokens);
 
         await _db.SaveChangesAsync();
+
+        // A reset is often a response to a compromised account: sign out every session.
+        await _tokenService.RevokeTokensFromUser(user.Id);
 
         _logger.LogInformation("Password reset completed for user {UserId}", user.Id);
     }

@@ -265,4 +265,34 @@ public class TokenServiceTests
 
         token.ReplacedByTokenHash.Should().Be(replacedByHash);
     }
+
+    [Fact]
+    public async Task RevokeTokensFromUser_ShouldRevokeOnlyThatUsersActiveTokens()
+    {
+        var userId = Guid.NewGuid();
+        var otherUserId = Guid.NewGuid();
+        var alreadyRevokedAt = DateTime.UtcNow.AddDays(-2);
+
+        _db.RefreshTokens.AddRange(
+            new RefreshToken { Id = Guid.NewGuid(), UserId = userId, TokenHash = "a", ExpiresAt = DateTime.UtcNow.AddDays(1) },
+            new RefreshToken { Id = Guid.NewGuid(), UserId = userId, TokenHash = "b", ExpiresAt = DateTime.UtcNow.AddDays(1) },
+            new RefreshToken
+            {
+                Id = Guid.NewGuid(),
+                UserId = userId,
+                TokenHash = "c",
+                ExpiresAt = DateTime.UtcNow.AddDays(1),
+                RevokedAt = alreadyRevokedAt,
+            },
+            new RefreshToken { Id = Guid.NewGuid(), UserId = otherUserId, TokenHash = "d", ExpiresAt = DateTime.UtcNow.AddDays(1) }
+        );
+        await _db.SaveChangesAsync();
+
+        var revoked = await _sut.RevokeTokensFromUser(userId);
+
+        revoked.Should().Be(2);
+        _db.RefreshTokens.Where(rt => rt.UserId == userId).Should().OnlyContain(rt => rt.RevokedAt != null);
+        _db.RefreshTokens.Single(rt => rt.TokenHash == "c").RevokedAt.Should().Be(alreadyRevokedAt);
+        _db.RefreshTokens.Single(rt => rt.TokenHash == "d").RevokedAt.Should().BeNull();
+    }
 }

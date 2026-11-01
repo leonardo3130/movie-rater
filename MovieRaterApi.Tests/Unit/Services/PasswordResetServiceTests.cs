@@ -200,6 +200,53 @@ public class PasswordResetServiceTests : IDisposable
     }
 
     [Fact]
+    public async Task ResetPassword_ShouldInvalidateOtherResetLinks_AndRevokeAllSessions()
+    {
+        var user = SeedUser();
+        var otherUser = SeedUser("other@example.com", "other");
+        SeedToken(user.Id, "hashed-token");
+        SeedToken(user.Id, "older-unused-token");
+        SeedToken(otherUser.Id, "other-users-token");
+
+        _tokenServiceMock.Setup(t => t.HashToken("raw-token")).Returns("hashed-token");
+        _passwordHasherMock.Setup(p => p.Hash(It.IsAny<string>())).Returns("new-hash");
+
+        await _sut.ResetPassword(new ResetPasswordRequest { Token = "raw-token", Password = "NewPass1!" });
+
+        _db.PasswordResetTokens.Should().ContainSingle(t => t.TokenHash == "other-users-token");
+        _tokenServiceMock.Verify(t => t.RevokeTokensFromUser(user.Id), Times.Once);
+        _tokenServiceMock.Verify(t => t.RevokeTokensFromUser(otherUser.Id), Times.Never);
+    }
+
+    [Fact]
+    public async Task SendResetPasswordEmail_ShouldHtmlEncodeUserControlledValues()
+    {
+        var user = SeedUser("victim@example.com", "<a href=\"https://evil.example\">Click</a>");
+        _tokenServiceMock
+            .Setup(t => t.GeneratePasswordResetToken())
+            .Returns(("raw-token", "hashed-token"));
+
+        string? capturedBody = null;
+        _emailSenderMock
+            .Setup(e => e.SendAsync(
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<CancellationToken>()
+            ))
+            .Callback<string, string, string, CancellationToken>(
+                (to, subject, body, ct) => capturedBody = body
+            )
+            .Returns(Task.CompletedTask);
+
+        await _sut.SendResetPasswordEmail(user.Email);
+
+        capturedBody.Should().NotBeNull();
+        capturedBody!.Should().NotContain("<a href=\"https://evil.example\">");
+        capturedBody.Should().Contain("&lt;a href=&quot;https://evil.example&quot;&gt;Click&lt;/a&gt;");
+    }
+
+    [Fact]
     public async Task ResetPassword_ShouldThrow_WhenTokenInvalid()
     {
         SeedUser();

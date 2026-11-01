@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+
 namespace MovieRaterApi.Features.Authentication.DTOs;
 
 public class RegisterRequestDto
@@ -21,6 +23,10 @@ public class RefreshRequestDto
 public class AuthResponseDto
 {
     public string AccessToken { get; set; } = string.Empty;
+
+    // Delivered only through the HttpOnly refresh cookie; never serialized into the body,
+    // where any script running on the page could read it.
+    [JsonIgnore]
     public string RefreshToken { get; set; } = string.Empty;
     public UserResponseDto User { get; set; } = null!;
 }
