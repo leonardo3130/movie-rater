@@ -18,6 +18,8 @@ services:
       - EmailSettings__Password=${EMAIL_PASSWORD}
       - EmailSettings__FrontendBaseUrl=${FRONTEND_BASE_URL:-http://localhost:5173}
       - Admin__UserIds__0=${ADMIN_USER_ID:-}
+      # The fallback is a public development key; the API refuses to start with it outside
+      # Development. docker-compose.tunnel.yml (production) requires JWT_SIGNING_KEY.
       - Jwt__SigningKey=${JWT_SIGNING_KEY:-this-is-not-a-real-key-replace-in-production-with-at-least-32-chars}
     depends_on:
       db:
@@ -35,8 +37,10 @@ services:
       POSTGRES_DB: movierater
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
+    # Loopback only: the database must not be reachable from the network. The API reaches
+    # it over the compose network, and deploy.sh runs migrations from the host.
     ports:
-      - "5432:5432"
+      - "127.0.0.1:5432:5432"
     networks:
       - movie-rater
     volumes:
