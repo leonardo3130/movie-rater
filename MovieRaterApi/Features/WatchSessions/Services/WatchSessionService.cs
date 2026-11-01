@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using MovieRaterApi.Data;
 using MovieRaterApi.Data.Entities;
 using MovieRaterApi.Features.Authentication.Infrastructure;
+using MovieRaterApi.Features.Shared.Authorization;
 using MovieRaterApi.Features.WatchSessions.DTOs;
 using MovieRaterApi.Features.WatchSessions.Interfaces;
 using MovieRaterApi.Infrastructure.Exceptions;
@@ -37,6 +38,16 @@ public class WatchSessionService : IWatchSessionService
 
         if (media.MediaType is not MediaType.Movie and not MediaType.TvEpisode)
             throw new BadRequestException("Watch sessions can only be created for movies or episodes.");
+
+        if (groupId is not null && !await _db.IsGroupMemberAsync(groupId.Value, userId))
+        {
+            _logger.LogWarning(
+                "User {UserId} tried to create a watch session in group {GroupId} without being a member",
+                userId,
+                groupId
+            );
+            throw new ForbiddenException("You are not part of the group");
+        }
 
         var session = new WatchSession
         {
@@ -145,8 +156,10 @@ public class WatchSessionService : IWatchSessionService
 
     public async Task<WatchSessionResponseDto> GetByIdAsync(Guid id)
     {
+        // Sessions the user cannot see are reported as missing so ids cannot be probed.
         var session = await _db
-            .WatchSessions.Include(ws => ws.Media)
+            .WatchSessions.VisibleTo(_currentUser.UserId)
+            .Include(ws => ws.Media)
             .Include(ws => ws.CreatedByUser)
             .Include(ws => ws.Ratings)
                 .ThenInclude(r => r.User)
@@ -326,6 +339,9 @@ public class WatchSessionService : IWatchSessionService
 
     public async Task<HeatmapResponseDto> GetHeatmapAsync(int days, Guid userId, Guid? groupId)
     {
+        if (groupId is not null && !await _db.IsGroupMemberAsync(groupId.Value, userId))
+            throw new ForbiddenException("You are not part of the group");
+
         var cutoffDate = DateTime.UtcNow.Date.AddDays(-days);
 
         var countsQuery = _db.WatchSessions.Where(ws => ws.WatchedAt >= cutoffDate);

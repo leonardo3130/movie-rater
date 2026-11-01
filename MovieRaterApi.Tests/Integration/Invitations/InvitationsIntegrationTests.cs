@@ -151,6 +151,62 @@ public class InvitationsIntegrationTests : IAsyncLifetime
     }
 
     [Fact]
+    public async Task InvitePartner_ShouldReturn404_WhenInviterIsNotGroupMember()
+    {
+        var owner = await RegisterUser("owner", "owner@example.com", "Password123!");
+        var attacker = await RegisterUser("attacker", "attacker@example.com", "Password123!");
+        await RegisterUser("accomplice", "accomplice@example.com", "Password123!");
+        var groupId = await CreateGroupAs(owner.AccessToken, "Private group");
+
+        _client.DefaultRequestHeaders.Authorization =
+            new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", attacker.AccessToken);
+        var response = await _client.PostAsJsonAsync(
+            "/api/groups/invite",
+            new InvitationRequestDto { InviteeUsername = "accomplice", GroupId = groupId }
+        );
+
+        response.StatusCode.Should().Be(HttpStatusCode.NotFound);
+    }
+
+    [Fact]
+    public async Task RenameAndDeleteGroup_ShouldReturn404_ForNonMembers_AndLeaveGroupIntact()
+    {
+        var owner = await RegisterUser("groupowner", "groupowner@example.com", "Password123!");
+        var attacker = await RegisterUser("intruder", "intruder@example.com", "Password123!");
+        var groupId = await CreateGroupAs(owner.AccessToken, "Movie nights");
+
+        _client.DefaultRequestHeaders.Authorization =
+            new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", attacker.AccessToken);
+
+        var renameResponse = await _client.PatchAsJsonAsync(
+            $"/api/groups/{groupId}/change-name",
+            new CreateGroupRequest { GroupName = "Hijacked" }
+        );
+        renameResponse.StatusCode.Should().Be(HttpStatusCode.NotFound);
+
+        var deleteResponse = await _client.DeleteAsync($"/api/groups/{groupId}");
+        deleteResponse.StatusCode.Should().Be(HttpStatusCode.NotFound);
+
+        _client.DefaultRequestHeaders.Authorization =
+            new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", owner.AccessToken);
+        var group = await _client.GetFromJsonAsync<GroupDto>($"/api/groups/{groupId}");
+        group!.Name.Should().Be("Movie nights");
+    }
+
+    private async Task<Guid> CreateGroupAs(string accessToken, string name)
+    {
+        _client.DefaultRequestHeaders.Authorization =
+            new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", accessToken);
+        var response = await _client.PostAsJsonAsync(
+            "/api/groups/",
+            new CreateGroupRequest { GroupName = name }
+        );
+        response.EnsureSuccessStatusCode();
+        var group = await response.Content.ReadFromJsonAsync<GroupDto>();
+        return group!.Id;
+    }
+
+    [Fact]
     public async Task SuggestUsernames_ShouldReturnMatchingUsernames_ExcludingCurrentUser()
     {
         await RegisterUser("alexandra", "alexandra@example.com", "Password123!");
@@ -196,7 +252,11 @@ public class InvitationsIntegrationTests : IAsyncLifetime
         _client.DefaultRequestHeaders.Authorization =
             new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", user1.AccessToken);
 
-        var request = new InvitationRequestDto { InviteeUsername = "nonexistent" };
+        var request = new InvitationRequestDto
+        {
+            InviteeUsername = "nonexistent",
+            GroupId = Guid.NewGuid(),
+        };
         var response = await _client.PostAsJsonAsync("/api/groups/invite", request);
 
         response.StatusCode.Should().Be(HttpStatusCode.NotFound);

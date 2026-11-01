@@ -280,6 +280,81 @@ public class WatchSessionsIntegrationTests : IAsyncLifetime
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
     }
 
+    [Fact]
+    public async Task Outsider_ShouldNotReachAnotherGroupsSessionsRatingsOrStats()
+    {
+        var (memberToken, _) = await SeedUserAndGroupAsync("wsowner", "wsowner@test.com");
+        var movieId = await SeedMovieAsync(1100, "Heat");
+        UseToken(memberToken);
+
+        var groups = await _client.GetFromJsonAsync<List<GroupDto>>("/api/groups");
+        var groupId = groups!.Single().Id;
+
+        var createResponse = await _client.PostAsJsonAsync(
+            "/api/watch-sessions",
+            new CreateWatchSessionRequestDto
+            {
+                MediaId = movieId,
+                GroupId = groupId,
+                WatchedAt = DateTime.UtcNow.AddDays(-1),
+                Notes = "Private notes",
+            }
+        );
+        createResponse.StatusCode.Should().Be(HttpStatusCode.Created);
+        var session = (await createResponse.Content.ReadFromJsonAsync<WatchSessionResponseDto>())!;
+
+        var outsiderRegister = await _client.PostAsJsonAsync(
+            "/api/auth/register",
+            new RegisterRequestDto
+            {
+                Username = "wsoutsider",
+                Email = "wsoutsider@test.com",
+                Password = "Password123!",
+            }
+        );
+        outsiderRegister.EnsureSuccessStatusCode();
+        var outsider = (await outsiderRegister.Content.ReadFromJsonAsync<AuthResponseDto>())!;
+        UseToken(outsider.AccessToken);
+
+        (await _client.GetAsync($"/api/watch-sessions/{session.Id}"))
+            .StatusCode.Should()
+            .Be(HttpStatusCode.NotFound);
+        (await _client.GetAsync($"/api/watch-sessions/{session.Id}/ratings"))
+            .StatusCode.Should()
+            .Be(HttpStatusCode.NotFound);
+        (
+            await _client.PostAsJsonAsync(
+                $"/api/watch-sessions/{session.Id}/ratings",
+                new { ratingValue = 1, review = "spam" }
+            )
+        )
+            .StatusCode.Should()
+            .Be(HttpStatusCode.Forbidden);
+        (
+            await _client.PostAsJsonAsync(
+                "/api/watch-sessions",
+                new CreateWatchSessionRequestDto
+                {
+                    MediaId = movieId,
+                    GroupId = groupId,
+                    WatchedAt = DateTime.UtcNow,
+                }
+            )
+        )
+            .StatusCode.Should()
+            .Be(HttpStatusCode.Forbidden);
+        (await _client.GetAsync($"/api/dashboard/{groupId}"))
+            .StatusCode.Should()
+            .Be(HttpStatusCode.Forbidden);
+        (await _client.GetAsync($"/api/watch-sessions/heatmap?days=30&groupId={groupId}"))
+            .StatusCode.Should()
+            .Be(HttpStatusCode.Forbidden);
+    }
+
+    private void UseToken(string token) =>
+        _client.DefaultRequestHeaders.Authorization =
+            new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+
     private async Task<(string token, Guid userId)> SeedUserAndGroupAsync(
         string username,
         string email

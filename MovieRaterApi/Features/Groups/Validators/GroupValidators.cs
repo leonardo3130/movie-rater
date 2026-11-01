@@ -7,6 +7,7 @@ public class InvitePartnerRequestValidator : AbstractValidator<InvitationRequest
 {
     public InvitePartnerRequestValidator()
     {
+        RuleFor(x => x.GroupId).NotEmpty();
         RuleFor(x => x.InviteeUsername).NotEmpty().MaximumLength(100);
     }
 }
@@ -15,7 +16,7 @@ public class AcceptInvitationRequestValidator : AbstractValidator<AcceptInvitati
 {
     public AcceptInvitationRequestValidator()
     {
-        RuleFor(x => x.InviteToken).NotEmpty();
+        RuleFor(x => x.InviteToken).NotEmpty().MaximumLength(200);
     }
 }
 

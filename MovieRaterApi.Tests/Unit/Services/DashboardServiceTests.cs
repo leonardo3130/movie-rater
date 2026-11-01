@@ -4,6 +4,7 @@ using Moq;
 using MovieRaterApi.Data;
 using MovieRaterApi.Data.Entities;
 using MovieRaterApi.Features.Dashboard.Services;
+using MovieRaterApi.Infrastructure.Exceptions;
 
 namespace MovieRaterApi.Tests.Unit.Services;
 
@@ -50,6 +51,19 @@ public class DashboardServiceTests
         result.RewatchCount.Should().Be(0);
         result.CurrentStreak.Should().Be(0);
         result.LongestStreak.Should().Be(0);
+    }
+
+    [Fact]
+    public async Task GetDashboardAsync_ThrowsForbidden_WhenUserIsNotInGroup()
+    {
+        var ids = SeedGroupWithUsers(2, "member");
+        var outsiderId = Guid.NewGuid();
+        SeedUser(outsiderId, "outsider");
+
+        await FluentActions
+            .Awaiting(() => _sut.GetDashboardAsync(outsiderId, ids[0]))
+            .Should()
+            .ThrowAsync<ForbiddenException>();
     }
 
     [Fact]
