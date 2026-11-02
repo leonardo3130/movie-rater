@@ -4,6 +4,7 @@ using FluentValidation;
 using FluentValidation.AspNetCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
@@ -40,6 +41,7 @@ using MovieRaterApi.Features.WatchSessions.Services;
 using MovieRaterApi.Infrastructure.Email;
 using MovieRaterApi.Infrastructure.Email.Options;
 using MovieRaterApi.Infrastructure.Middleware;
+using MovieRaterApi.Infrastructure.Networking;
 using MovieRaterApi.Infrastructure.RateLimiting;
 using MovieRaterApi.Infrastructure.Tmdb;
 using MovieRaterApi.Infrastructure.Tmdb.Handlers;
@@ -51,6 +53,9 @@ Log.Logger = new LoggerConfiguration().WriteTo.Console().CreateLogger();
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Don't advertise the server software in every response.
+builder.WebHost.ConfigureKestrel(options => options.AddServerHeader = false);
+
 builder.Host.UseSerilog(
     (context, services, configuration) =>
         configuration
@@ -61,7 +66,18 @@ builder.Host.UseSerilog(
             .WriteTo.File("logs/movie-rater-.log", rollingInterval: RollingInterval.Day)
 );
 
-builder.Services.Configure<JwtOptions>(builder.Configuration.GetSection(JwtOptions.SectionName));
+builder
+    .Services.AddOptions<JwtOptions>()
+    .Bind(builder.Configuration.GetSection(JwtOptions.SectionName))
+    .ValidateOnStart();
+builder.Services.AddSingleton<IValidateOptions<JwtOptions>, JwtOptionsValidator>();
+
+var trustedProxies =
+    builder.Configuration.GetSection(TrustedProxyOptions.SectionName).Get<TrustedProxyOptions>()
+    ?? new TrustedProxyOptions();
+builder.Services.Configure<ForwardedHeadersOptions>(options =>
+    TrustedProxyOptions.Apply(options, trustedProxies)
+);
 
 builder.Services.Configure<EmailConfiguration>(
     builder.Configuration.GetSection(EmailConfiguration.SectionName)
@@ -86,6 +102,7 @@ builder
             ValidateAudience = true,
             ValidateLifetime = true,
             ValidateIssuerSigningKey = true,
+            ValidAlgorithms = [SecurityAlgorithms.HmacSha256],
             ValidIssuer = jwtOptions.Issuer,
             ValidAudience = jwtOptions.Audience,
             IssuerSigningKey = new SymmetricSecurityKey(
@@ -137,14 +154,20 @@ builder.Services.AddRateLimiter(options =>
         );
     };
 
-    options.AddFixedWindowLimiter(
+    // Partitioned per client IP: a single shared bucket would let one client lock
+    // everybody else out of login and registration.
+    options.AddPolicy(
         "auth",
-        config =>
-        {
-            config.PermitLimit = 10;
-            config.Window = TimeSpan.FromMinutes(1);
-            config.QueueLimit = 0;
-        }
+        context =>
+            RateLimitPartition.GetFixedWindowLimiter(
+                context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+                _ => new FixedWindowRateLimiterOptions
+                {
+                    PermitLimit = 10,
+                    Window = TimeSpan.FromMinutes(1),
+                    QueueLimit = 0,
+                }
+            )
     );
 });
 
@@ -194,6 +217,7 @@ builder
         }
     )
     .AddHttpMessageHandler<TmdbRateLimitHandler>();
+var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? [];
 builder.Services.AddCors(options =>
 {
     options.AddPolicy(
@@ -201,7 +225,7 @@ builder.Services.AddCors(options =>
         policy =>
         {
             policy
-                .WithOrigins("http://localhost:5173", "https://movie-rater.leopo.dev")
+                .WithOrigins(allowedOrigins)
                 .AllowAnyHeader()
                 .AllowAnyMethod()
                 .AllowCredentials();
@@ -212,6 +236,10 @@ builder.Services.AddControllers();
 builder.Services.AddOpenApi();
 
 var app = builder.Build();
+
+// Must run first so rate limiting and request logging see the real client IP.
+app.UseForwardedHeaders();
+app.UseMiddleware<SecurityHeadersMiddleware>();
 
 app.UseCors("Frontend");
 if (app.Environment.IsDevelopment())

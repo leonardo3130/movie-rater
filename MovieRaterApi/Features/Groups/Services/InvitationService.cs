@@ -5,6 +5,7 @@ using MovieRaterApi.Data;
 using MovieRaterApi.Data.Entities;
 using MovieRaterApi.Features.Groups.DTOs;
 using MovieRaterApi.Features.Groups.Interfaces;
+using MovieRaterApi.Features.Shared.Authorization;
 using MovieRaterApi.Infrastructure.Exceptions;
 
 namespace MovieRaterApi.Features.Groups.Services;
@@ -42,6 +43,18 @@ public class InvitationService : IInvitationService
         if (invitee.Id == inviterUserId)
         {
             throw new BadRequestException("You cannot invite yourself.");
+        }
+
+        // Only members may invite; otherwise anyone who learned a group id could invite a
+        // second account of their own and read the group's data.
+        if (!await _db.IsGroupMemberAsync(request.GroupId, inviterUserId))
+        {
+            _logger.LogWarning(
+                "User {UserId} tried to invite into group {GroupId} without being a member",
+                inviterUserId,
+                request.GroupId
+            );
+            throw new NotFoundException("Group not found.");
         }
 
         var existingGroups = await _db.UserGroups.AnyAsync(ug =>
@@ -139,7 +152,20 @@ public class InvitationService : IInvitationService
 
         if (invitation.InviteeEmail != acceptedByUser.Email)
         {
+            _logger.LogWarning(
+                "User {UserId} tried to accept invitation {InvitationId} addressed to someone else",
+                acceptedByUserId,
+                invitation.Id
+            );
             throw new ForbiddenException("This invitation was not sent to you.");
+        }
+
+        if (await _db.IsGroupMemberAsync(invitation.GroupId, acceptedByUserId))
+        {
+            invitation.Status = InvitationStatus.Accepted;
+            invitation.AcceptedByUserId = acceptedByUserId;
+            await _db.SaveChangesAsync();
+            throw new ConflictException("You are already a member of this group.");
         }
 
         var userGroup = new UserGroup

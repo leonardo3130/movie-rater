@@ -1,5 +1,4 @@
 import type { UserResponse } from "./auth";
-import type { WatchSessionResponseDto } from "./watch-session";
 
 export interface CreateGroupRequest {
   groupName: string;
@@ -10,7 +9,6 @@ export interface GroupDto {
   name: string;
   createdAt: string; // DateTime
   users: UserResponse[];
-  watchSessions: WatchSessionResponseDto[];
 }
 
 export interface InvitationResponseDto {

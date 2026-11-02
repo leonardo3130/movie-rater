@@ -3,6 +3,7 @@ using MovieRaterApi.Data;
 using MovieRaterApi.Data.Entities;
 using MovieRaterApi.Features.Ratings.DTOs;
 using MovieRaterApi.Features.Ratings.Interfaces;
+using MovieRaterApi.Features.Shared.Authorization;
 using MovieRaterApi.Infrastructure.Exceptions;
 
 namespace MovieRaterApi.Features.Ratings.Services;
@@ -27,14 +28,31 @@ public class RatingService : IRatingService
         var session = await _db
             .WatchSessions.Include(ws => ws.Group)
                 .ThenInclude(g => g!.UserGroups)
-            .Include(ws => ws.Media)
             .FirstOrDefaultAsync(ws => ws.Id == watchSessionId);
 
         if (session is null)
             throw new NotFoundException("Watch session not found.");
 
-        if (session.Group != null && !session.Group.UserGroups.Any(ug => ug.UserId == userId))
+        // Group sessions can be rated by members; personal sessions only by their creator.
+        if (session.Group is not null && !session.Group.UserGroups.Any(ug => ug.UserId == userId))
+        {
+            _logger.LogWarning(
+                "User {UserId} tried to rate watch session {SessionId} outside their groups",
+                userId,
+                watchSessionId
+            );
             throw new ForbiddenException("You are not part of the group for this watch session.");
+        }
+
+        if (session.Group is null && session.CreatedByUserId != userId)
+        {
+            _logger.LogWarning(
+                "User {UserId} tried to rate personal watch session {SessionId} of another user",
+                userId,
+                watchSessionId
+            );
+            throw new ForbiddenException("You can only rate your own personal watch sessions.");
+        }
 
         var existingRating = await _db.Ratings.FirstOrDefaultAsync(r =>
             r.WatchSessionId == watchSessionId && r.UserId == userId
@@ -120,11 +138,13 @@ public class RatingService : IRatingService
         };
     }
 
-    public async Task<SessionRatingsResponseDto> GetBySessionAsync(Guid watchSessionId)
+    public async Task<SessionRatingsResponseDto> GetBySessionAsync(Guid watchSessionId, Guid userId)
     {
-        var session = await _db.WatchSessions.FirstOrDefaultAsync(ws => ws.Id == watchSessionId);
+        var sessionVisible = await _db
+            .WatchSessions.VisibleTo(userId)
+            .AnyAsync(ws => ws.Id == watchSessionId);
 
-        if (session is null)
+        if (!sessionVisible)
             throw new NotFoundException("Watch session not found.");
 
         var ratings = await _db

@@ -46,7 +46,6 @@ public class GroupService : IGroupService
             CreatedAt = group.CreatedAt,
 
             Users = users,
-            WatchSessions = group.WatchSessions,
         };
     }
 
@@ -75,39 +74,61 @@ public class GroupService : IGroupService
 
     public async Task<GroupDto> ChangeGroupName(Guid groupId, string newName)
     {
+        var currentUserId = _currentUser.UserId;
         var group = await _db
             .Groups.Include(g => g.UserGroups)
                 .ThenInclude(ug => ug.User)
-            .FirstOrDefaultAsync(g => g.Id == groupId);
+            .FirstOrDefaultAsync(g =>
+                g.Id == groupId && g.UserGroups.Any(ug => ug.UserId == currentUserId)
+            );
 
+        // Non-members get the same answer as a missing group, so group ids cannot be probed.
         if (group is null)
         {
-            _logger.LogWarning("Group with Id {GroupId} was not found", groupId);
+            _logger.LogWarning(
+                "Group {GroupId} not found or user {UserId} is not a member",
+                groupId,
+                currentUserId
+            );
             throw new NotFoundException("Group not found");
         }
 
         group.Name = newName;
 
-        _logger.LogInformation("Group With {GroupId} name updated to {newName}", groupId, newName);
         await _db.SaveChangesAsync();
+        _logger.LogInformation(
+            "Group {GroupId} renamed to {NewName} by user {UserId}",
+            groupId,
+            newName,
+            currentUserId
+        );
 
         return MapGroup(group);
     }
 
     public async Task DeleteGroup(Guid groupId)
     {
-        var group = await _db.Groups.Where(g => g.Id == groupId).FirstOrDefaultAsync();
+        var currentUserId = _currentUser.UserId;
+        var group = await _db
+            .Groups.Where(g =>
+                g.Id == groupId && g.UserGroups.Any(ug => ug.UserId == currentUserId)
+            )
+            .FirstOrDefaultAsync();
 
         if (group is null)
         {
-            _logger.LogWarning("Group with Id {GroupId} was not found", groupId);
+            _logger.LogWarning(
+                "Group {GroupId} not found or user {UserId} is not a member",
+                groupId,
+                currentUserId
+            );
             throw new NotFoundException("Group not found");
         }
 
-        _logger.LogInformation("Group With {GroupId} deleted successfully", groupId);
-
         _db.Remove(group);
         await _db.SaveChangesAsync();
+
+        _logger.LogInformation("Group {GroupId} deleted by user {UserId}", groupId, currentUserId);
     }
 
     public async Task<ICollection<GroupDto>> GetGroups()

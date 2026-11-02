@@ -51,6 +51,7 @@ public class InvitationServiceTests
                 Email = "user2@example.com",
             }
         );
+        SeedGroupWithMember(groupId, inviterId);
         await _db.SaveChangesAsync();
 
         var request = new InvitationRequestDto
@@ -181,10 +182,49 @@ public class InvitationServiceTests
     }
 
     [Fact]
+    public async Task InviteAsync_ShouldThrowNotFound_WhenInviterIsNotGroupMember()
+    {
+        var inviterId = Guid.NewGuid();
+        var groupId = Guid.NewGuid();
+        _db.Users.AddRange(
+            new User
+            {
+                Id = inviterId,
+                Username = "attacker",
+                Email = "attacker@example.com",
+            },
+            new User
+            {
+                Id = Guid.NewGuid(),
+                Username = "accomplice",
+                Email = "accomplice@example.com",
+            }
+        );
+        SeedGroupWithMember(groupId, Guid.NewGuid());
+        await _db.SaveChangesAsync();
+
+        var request = new InvitationRequestDto
+        {
+            GroupId = groupId,
+            InviteeUsername = "accomplice",
+        };
+
+        await FluentActions
+            .Awaiting(() => _sut.InviteAsync(inviterId, request))
+            .Should()
+            .ThrowAsync<NotFoundException>()
+            .WithMessage("Group not found.");
+
+        _db.Set<Invitation>().Should().BeEmpty();
+    }
+
+    [Fact]
     public async Task InviteAsync_ShouldThrow_WhenPendingInvitationExists()
     {
         var inviterId = Guid.NewGuid();
         var inviteeId = Guid.NewGuid();
+        var groupId = Guid.NewGuid();
+        SeedGroupWithMember(groupId, inviterId);
         _db.Users.AddRange(
             new User
             {
@@ -203,6 +243,7 @@ public class InvitationServiceTests
             .Add(
                 new Invitation
                 {
+                    GroupId = groupId,
                     InviterUserId = inviterId,
                     InviteeEmail = "user2@example.com",
                     Status = InvitationStatus.Pending,
@@ -210,7 +251,7 @@ public class InvitationServiceTests
             );
         await _db.SaveChangesAsync();
 
-        var request = new InvitationRequestDto { InviteeUsername = "user2" };
+        var request = new InvitationRequestDto { InviteeUsername = "user2", GroupId = groupId };
 
         await FluentActions
             .Awaiting(() => _sut.InviteAsync(inviterId, request))
@@ -277,6 +318,83 @@ public class InvitationServiceTests
         invitation.AcceptedByUserId.Should().Be(acceptorId);
         _db.UserGroups.Should().Contain(ug => ug.UserId == acceptorId);
         _db.UserGroups.Should().Contain(ug => ug.UserId == inviterId);
+    }
+
+    [Fact]
+    public async Task AcceptInvitationAsync_ShouldThrowConflict_WhenAlreadyMember()
+    {
+        var inviterId = Guid.NewGuid();
+        var acceptorId = Guid.NewGuid();
+        var groupId = Guid.NewGuid();
+        _db.Users.AddRange(
+            new User
+            {
+                Id = inviterId,
+                Username = "user1",
+                Email = "user1@example.com",
+            },
+            new User
+            {
+                Id = acceptorId,
+                Username = "user2",
+                Email = "user2@example.com",
+            }
+        );
+        SeedGroupWithMember(groupId, inviterId);
+        _db.UserGroups.Add(
+            new UserGroup
+            {
+                Id = Guid.NewGuid(),
+                GroupId = groupId,
+                UserId = acceptorId,
+            }
+        );
+        var rawToken = "dup-raw-token";
+        var invitation = new Invitation
+        {
+            Id = Guid.NewGuid(),
+            InviterUserId = inviterId,
+            InviteeEmail = "user2@example.com",
+            InviteTokenHash = HashToken(rawToken),
+            Status = InvitationStatus.Pending,
+            ExpiresAt = DateTime.UtcNow.AddDays(1),
+            GroupId = groupId,
+        };
+        _db.Set<Invitation>().Add(invitation);
+        await _db.SaveChangesAsync();
+
+        await FluentActions
+            .Awaiting(() =>
+                _sut.AcceptInvitationAsync(
+                    acceptorId,
+                    new AcceptInvitationRequestDto { InviteToken = rawToken }
+                )
+            )
+            .Should()
+            .ThrowAsync<ConflictException>();
+
+        _db.UserGroups.Count(ug => ug.UserId == acceptorId && ug.GroupId == groupId).Should().Be(1);
+        invitation.Status.Should().Be(InvitationStatus.Accepted);
+    }
+
+    private void SeedGroupWithMember(Guid groupId, Guid memberId)
+    {
+        _db.Groups.Add(
+            new Group
+            {
+                Id = groupId,
+                Name = "G",
+                CreatedAt = DateTime.UtcNow,
+            }
+        );
+        _db.UserGroups.Add(
+            new UserGroup
+            {
+                Id = Guid.NewGuid(),
+                GroupId = groupId,
+                UserId = memberId,
+            }
+        );
     }
 
     [Fact]

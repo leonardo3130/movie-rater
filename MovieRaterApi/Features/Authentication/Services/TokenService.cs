@@ -92,33 +92,26 @@ public class TokenService : ITokenService
         }
     }
 
-    public async Task RevokeTokenFamilyAsync(string tokenHash)
+    public async Task<int> RevokeTokensFromUser(Guid userId)
     {
-        var tokens = await _db.Set<RefreshToken>()
-            .Where(rt => rt.TokenHash == tokenHash || rt.ReplacedByTokenHash == tokenHash)
+        var activeTokens = await _db
+            .RefreshTokens.Where(rt => rt.UserId == userId && rt.RevokedAt == null)
             .ToListAsync();
 
-        foreach (var token in tokens)
+        var now = DateTime.UtcNow;
+        foreach (var token in activeTokens)
         {
-            token.RevokedAt = DateTime.UtcNow;
+            token.RevokedAt = now;
         }
 
         await _db.SaveChangesAsync();
 
-        _logger.LogWarning("Revoked refresh token family for hash {TokenHash}", tokenHash);
-    }
+        _logger.LogInformation(
+            "Revoked {TokenCount} active refresh tokens for user {UserId}",
+            activeTokens.Count,
+            userId
+        );
 
-    public async Task RevokeTokensFromUser(Guid userId)
-    {
-        List<RefreshToken> userTokens = await _db
-            .RefreshTokens.Where(rt => rt.UserId == userId && rt.RevokedAt != null)
-            .ToListAsync();
-
-        foreach (var token in userTokens)
-        {
-            token.RevokedAt = DateTime.UtcNow;
-        }
-
-        await _db.SaveChangesAsync();
+        return activeTokens.Count;
     }
 }

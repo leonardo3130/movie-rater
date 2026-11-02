@@ -159,6 +159,9 @@ public class AuthServiceTests
             .Should()
             .ThrowAsync<UnauthorizedAccessException>()
             .WithMessage("Invalid credentials.");
+
+        // Unknown emails still pay the hashing cost, so timing does not reveal registered emails.
+        _passwordHasherMock.Verify(h => h.SimulateVerify("password"), Times.Once);
     }
 
     [Fact]
@@ -295,7 +298,63 @@ public class AuthServiceTests
             .ThrowAsync<UnauthorizedAccessException>()
             .WithMessage("Refresh token has been revoked.");
 
-        _tokenServiceMock.Verify(t => t.RevokeTokenFamilyAsync("hashed-revoked-token"), Times.Once);
+        _tokenServiceMock.Verify(t => t.RevokeTokensFromUser(userId), Times.Once);
+    }
+
+    [Fact]
+    public async Task RefreshAsync_ShouldRevokeAllSessions_WhenRotatedTokenIsReusedAfterGracePeriod()
+    {
+        var userId = Guid.NewGuid();
+        _db.Users.Add(new User { Id = userId, Username = "u", Email = "u@example.com" });
+        _db.Set<RefreshToken>()
+            .Add(
+                new RefreshToken
+                {
+                    Id = Guid.NewGuid(),
+                    UserId = userId,
+                    TokenHash = "rotated-hash",
+                    ReplacedByTokenHash = "current-hash",
+                    ExpiresAt = DateTime.UtcNow.AddDays(1),
+                    RevokedAt = DateTime.UtcNow - AuthService.RotationGracePeriod - TimeSpan.FromSeconds(5),
+                }
+            );
+        await _db.SaveChangesAsync();
+        _tokenServiceMock.Setup(t => t.HashToken("copied-token")).Returns("rotated-hash");
+
+        await FluentActions
+            .Awaiting(() => _sut.RefreshAsync("copied-token"))
+            .Should()
+            .ThrowAsync<UnauthorizedAccessException>();
+
+        _tokenServiceMock.Verify(t => t.RevokeTokensFromUser(userId), Times.Once);
+    }
+
+    [Fact]
+    public async Task RefreshAsync_ShouldNotRevokeSessions_WhenTokenWasJustRotatedByConcurrentRequest()
+    {
+        var userId = Guid.NewGuid();
+        _db.Users.Add(new User { Id = userId, Username = "u", Email = "u@example.com" });
+        _db.Set<RefreshToken>()
+            .Add(
+                new RefreshToken
+                {
+                    Id = Guid.NewGuid(),
+                    UserId = userId,
+                    TokenHash = "rotated-hash",
+                    ReplacedByTokenHash = "current-hash",
+                    ExpiresAt = DateTime.UtcNow.AddDays(1),
+                    RevokedAt = DateTime.UtcNow.AddSeconds(-2),
+                }
+            );
+        await _db.SaveChangesAsync();
+        _tokenServiceMock.Setup(t => t.HashToken("other-tab-token")).Returns("rotated-hash");
+
+        await FluentActions
+            .Awaiting(() => _sut.RefreshAsync("other-tab-token"))
+            .Should()
+            .ThrowAsync<UnauthorizedAccessException>();
+
+        _tokenServiceMock.Verify(t => t.RevokeTokensFromUser(It.IsAny<Guid>()), Times.Never);
     }
 
     [Fact]

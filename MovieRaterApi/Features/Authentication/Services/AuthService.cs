@@ -9,6 +9,11 @@ namespace MovieRaterApi.Features.Authentication.Services;
 
 public class AuthService : IAuthService
 {
+    // Two tabs refreshing at the same moment both present the same token; the slower one
+    // finds it already rotated. Within this window that is treated as a benign race rather
+    // than token theft.
+    internal static readonly TimeSpan RotationGracePeriod = TimeSpan.FromSeconds(30);
+
     private readonly ApplicationDbContext _db;
     private readonly IPasswordHasher _passwordHasher;
     private readonly ITokenService _tokenService;
@@ -86,6 +91,11 @@ public class AuthService : IAuthService
     {
         var user = await _db.Users.FirstOrDefaultAsync(u => u.Email == request.Email);
 
+        if (user is null)
+        {
+            _passwordHasher.SimulateVerify(request.Password);
+        }
+
         if (user is null || !_passwordHasher.Verify(request.Password, user.PasswordHash))
         {
             _logger.LogWarning("Invalid login attempt for {Email}", request.Email);
@@ -142,11 +152,21 @@ public class AuthService : IAuthService
 
         if (storedToken.RevokedAt.HasValue)
         {
-            _logger.LogWarning(
-                "Refresh token reuse detected for user {UserId}",
-                storedToken.UserId
-            );
-            await _tokenService.RevokeTokenFamilyAsync(tokenHash);
+            var isConcurrentRotation =
+                storedToken.ReplacedByTokenHash is not null
+                && storedToken.RevokedAt.Value > DateTime.UtcNow - RotationGracePeriod;
+
+            if (!isConcurrentRotation)
+            {
+                // A rotated-out token coming back means it was copied: whoever holds the
+                // current token in the chain may be an attacker, so end every session.
+                _logger.LogWarning(
+                    "Refresh token reuse detected for user {UserId}; revoking all sessions",
+                    storedToken.UserId
+                );
+                await _tokenService.RevokeTokensFromUser(storedToken.UserId);
+            }
+
             throw new UnauthorizedAccessException("Refresh token has been revoked.");
         }
 

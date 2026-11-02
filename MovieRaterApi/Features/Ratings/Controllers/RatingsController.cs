@@ -43,7 +43,7 @@ public class RatingsController : ControllerBase
     [HttpGet]
     public async Task<IActionResult> GetBySession(Guid watchSessionId)
     {
-        var result = await _ratingService.GetBySessionAsync(watchSessionId);
+        var result = await _ratingService.GetBySessionAsync(watchSessionId, _currentUser.UserId);
         return Ok(result);
     }
 }

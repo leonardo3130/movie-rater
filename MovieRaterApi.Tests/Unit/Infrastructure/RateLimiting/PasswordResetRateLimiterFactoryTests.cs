@@ -14,7 +14,9 @@ public class PasswordResetRateLimiterFactoryTests
 
         if (jsonBody is not null)
         {
-            context.Request.Body = new MemoryStream(Encoding.UTF8.GetBytes(jsonBody));
+            var bytes = Encoding.UTF8.GetBytes(jsonBody);
+            context.Request.Body = new MemoryStream(bytes);
+            context.Request.ContentLength = bytes.Length;
         }
 
         return context;
@@ -74,6 +76,28 @@ public class PasswordResetRateLimiterFactoryTests
     public void ReadEmailFromBody_ShouldReturnUnknown_WhenBodyIsMalformed()
     {
         var context = CreateContext("/api/auth/forgot-password", "not-json");
+
+        PasswordResetRateLimiterFactory.ReadEmailFromBody(context).Should().Be("unknown");
+    }
+
+    [Fact]
+    public void ReadEmailFromBody_ShouldReturnUnknown_WithoutReadingBody_WhenBodyIsTooLarge()
+    {
+        var padding = new string(' ', PasswordResetRateLimiterFactory.MaxBodyBytesToInspect);
+        var context = CreateContext(
+            "/api/auth/forgot-password",
+            "{\"email\":\"user@example.com\"}" + padding
+        );
+
+        PasswordResetRateLimiterFactory.ReadEmailFromBody(context).Should().Be("unknown");
+        context.Request.Body.Position.Should().Be(0);
+    }
+
+    [Fact]
+    public void ReadEmailFromBody_ShouldReturnUnknown_WhenContentLengthIsMissing()
+    {
+        var context = CreateContext("/api/auth/forgot-password", "{\"email\":\"user@example.com\"}");
+        context.Request.ContentLength = null;
 
         PasswordResetRateLimiterFactory.ReadEmailFromBody(context).Should().Be("unknown");
     }

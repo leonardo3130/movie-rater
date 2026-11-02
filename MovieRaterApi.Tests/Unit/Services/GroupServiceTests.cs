@@ -108,9 +108,43 @@ public class GroupServiceTests
     }
 
     [Fact]
-    public async Task DeleteGroup_ShouldDeleteGroup_WhenGroupFound()
+    public async Task DeleteGroup_ShouldDeleteGroup_WhenUserIsMember()
+    {
+        var groupId = SeedGroup(withCurrentUserAsMember: true);
+
+        await _sut.DeleteGroup(groupId);
+
+        var group = await _db.Groups.FindAsync(groupId);
+
+        group.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task DeleteGroup_ShouldThrowNotFound_AndKeepGroup_WhenUserIsNotMember()
+    {
+        var groupId = SeedGroup(withCurrentUserAsMember: false);
+
+        var act = async () => await _sut.DeleteGroup(groupId);
+
+        await act.Should().ThrowAsync<NotFoundException>().WithMessage("Group not found");
+        (await _db.Groups.FindAsync(groupId)).Should().NotBeNull();
+    }
+
+    [Fact]
+    public async Task ChangeGroupName_ShouldThrowNotFound_AndKeepName_WhenUserIsNotMember()
+    {
+        var groupId = SeedGroup(withCurrentUserAsMember: false);
+
+        var act = async () => await _sut.ChangeGroupName(groupId, "hijacked");
+
+        await act.Should().ThrowAsync<NotFoundException>().WithMessage("Group not found");
+        (await _db.Groups.FindAsync(groupId))!.Name.Should().Be("group");
+    }
+
+    private Guid SeedGroup(bool withCurrentUserAsMember)
     {
         var groupId = Guid.NewGuid();
+        var memberId = Guid.NewGuid();
 
         _db.Groups.Add(
             new Group
@@ -120,14 +154,45 @@ public class GroupServiceTests
                 CreatedAt = DateTime.UtcNow,
             }
         );
+        _db.Users.Add(
+            new User
+            {
+                Id = memberId,
+                Username = "member",
+                Email = "member@test.com",
+            }
+        );
+        _db.UserGroups.Add(
+            new UserGroup
+            {
+                Id = Guid.NewGuid(),
+                GroupId = groupId,
+                UserId = memberId,
+            }
+        );
 
-        await _db.SaveChangesAsync();
+        if (withCurrentUserAsMember)
+        {
+            _db.Users.Add(
+                new User
+                {
+                    Id = _currentUserMock.Object.UserId,
+                    Username = "user",
+                    Email = "user@test.com",
+                }
+            );
+            _db.UserGroups.Add(
+                new UserGroup
+                {
+                    Id = Guid.NewGuid(),
+                    GroupId = groupId,
+                    UserId = _currentUserMock.Object.UserId,
+                }
+            );
+        }
 
-        await _sut.DeleteGroup(groupId);
-
-        var group = await _db.Groups.FindAsync(groupId);
-
-        group.Should().BeNull();
+        _db.SaveChanges();
+        return groupId;
     }
 
     [Fact]

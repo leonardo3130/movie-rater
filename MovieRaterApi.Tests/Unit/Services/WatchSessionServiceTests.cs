@@ -299,6 +299,7 @@ public class WatchSessionServiceTests
         SeedWatchSession(sessionId, groupId, movieId, userId, DateTime.UtcNow);
         SeedRating(sessionId, userId, 8, "Great");
         SeedRating(sessionId, partnerId, 7, "Good");
+        _currentUserMock.Setup(u => u.UserId).Returns(ids[2]);
 
         var result = await _sut.GetByIdAsync(sessionId);
 
@@ -318,6 +319,93 @@ public class WatchSessionServiceTests
             .Should()
             .ThrowAsync<NotFoundException>()
             .WithMessage("Watch session not found.");
+    }
+
+    [Fact]
+    public async Task GetByIdAsync_ThrowsNotFound_WhenUserIsNotInSessionGroup()
+    {
+        var movieId = Guid.NewGuid();
+        var sessionId = Guid.NewGuid();
+        var ids = SeedGroupWithUsers(2, "member");
+        SeedMovie(movieId, 1, "Inception");
+        SeedWatchSession(sessionId, ids[0], movieId, ids[1], DateTime.UtcNow);
+        var outsiderId = Guid.NewGuid();
+        SeedUser(outsiderId, "outsider");
+        _currentUserMock.Setup(u => u.UserId).Returns(outsiderId);
+
+        await FluentActions
+            .Awaiting(() => _sut.GetByIdAsync(sessionId))
+            .Should()
+            .ThrowAsync<NotFoundException>()
+            .WithMessage("Watch session not found.");
+    }
+
+    [Fact]
+    public async Task GetByIdAsync_PersonalSession_IsVisibleOnlyToCreator()
+    {
+        var movieId = Guid.NewGuid();
+        var sessionId = Guid.NewGuid();
+        var creatorId = Guid.NewGuid();
+        var otherId = Guid.NewGuid();
+        SeedUser(creatorId, "creator");
+        SeedUser(otherId, "other");
+        SeedMovie(movieId, 1, "Inception");
+        _db.WatchSessions.Add(
+            new WatchSession
+            {
+                Id = sessionId,
+                GroupId = null,
+                MediaId = movieId,
+                WatchedAt = DateTime.UtcNow,
+                CreatedByUserId = creatorId,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow,
+            }
+        );
+        _db.SaveChanges();
+
+        _currentUserMock.Setup(u => u.UserId).Returns(creatorId);
+        (await _sut.GetByIdAsync(sessionId)).Id.Should().Be(sessionId);
+
+        _currentUserMock.Setup(u => u.UserId).Returns(otherId);
+        await FluentActions
+            .Awaiting(() => _sut.GetByIdAsync(sessionId))
+            .Should()
+            .ThrowAsync<NotFoundException>();
+    }
+
+    [Fact]
+    public async Task CreateAsync_ThrowsForbidden_WhenUserIsNotInTargetGroup()
+    {
+        var movieId = Guid.NewGuid();
+        var ids = SeedGroupWithUsers(1, "member");
+        var outsiderId = Guid.NewGuid();
+        SeedUser(outsiderId, "outsider");
+        SeedMovie(movieId, 1, "Inception");
+
+        var request = new CreateWatchSessionRequestDto
+        {
+            MediaId = movieId,
+            WatchedAt = DateTime.UtcNow,
+        };
+
+        await FluentActions
+            .Awaiting(() => _sut.CreateAsync(request, outsiderId, ids[0]))
+            .Should()
+            .ThrowAsync<ForbiddenException>();
+
+        _db.WatchSessions.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task GetHeatmapAsync_ThrowsForbidden_WhenUserIsNotInGroup()
+    {
+        var ids = SeedGroupWithUsers(1, "member");
+
+        await FluentActions
+            .Awaiting(() => _sut.GetHeatmapAsync(30, Guid.NewGuid(), ids[0]))
+            .Should()
+            .ThrowAsync<ForbiddenException>();
     }
 
     [Fact]

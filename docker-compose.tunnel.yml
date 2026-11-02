@@ -1,4 +1,11 @@
 services:
+  # Production overrides for the API defined in docker-compose.yml.
+  api:
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - "Jwt__SigningKey=${JWT_SIGNING_KEY:?JWT_SIGNING_KEY must be set in .env, generate one with openssl rand -base64 48}"
+    restart: unless-stopped
+
   frontend:
     build:
       context: ./movie-rater-fe

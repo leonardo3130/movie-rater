@@ -19,7 +19,7 @@ This starts two services:
 | Service | Container name    | Ports              |
 | ------- | ----------------- | ------------------ |
 | **API** | `movie-rater-api` | `5056:8080` (HTTP) |
-| **DB**  | `movie-rater-db`  | `5432:5432`        |
+| **DB**  | `movie-rater-db`  | `127.0.0.1:5432:5432` (loopback only) |
 
 The API is available at `http://localhost:5056`.
 
@@ -118,6 +118,45 @@ Then apply them:
 ```bash
 docker compose run --rm api dotnet ef database update
 ```
+
+## Production configuration and security
+
+Production runs with `docker compose -f docker-compose.yml -f docker-compose.tunnel.yml` (see `deploy.sh`).
+The tunnel overlay sets `ASPNETCORE_ENVIRONMENT=Production` and **requires** these values in `.env`:
+
+| Variable                  | Purpose                                                                                     |
+| ------------------------- | ------------------------------------------------------------------------------------------- |
+| `JWT_SIGNING_KEY`         | HMAC key that signs access tokens. Generate one with `openssl rand -base64 48`.             |
+| `CLOUDFLARE_TUNNEL_TOKEN` | Cloudflare tunnel credentials.                                                              |
+
+The API refuses to start outside Development when `Jwt:SigningKey` is missing, shorter than 32 bytes, or
+equal to the public development placeholder in `appsettings.Development.json`. Rotating the key signs every
+user out of their current access token; refresh tokens keep working, so sessions renew transparently.
+
+Other security-relevant settings (`appsettings.json`):
+
+| Setting                         | Default                            | Purpose                                                                                     |
+| ------------------------------- | ---------------------------------- | ------------------------------------------------------------------------------------------- |
+| `Cors:AllowedOrigins`           | `https://movie-rater.leopo.dev`    | Origins allowed to call the API with credentials. Development adds `http://localhost:5173`. |
+| `TrustedProxies:KnownNetworks`  | `172.16.0.0/12` (Docker bridges)   | Proxies whose `X-Forwarded-For` is trusted. Rate limits key on the resulting client IP.     |
+
+Authentication and authorization rules:
+
+- The refresh token is only ever sent as the HttpOnly, `Secure`, `SameSite=Lax`, host-only `mr_refresh` cookie; it
+  never appears in a response body. Refresh tokens rotate on every use. Presenting an already-rotated token more
+  than 30 seconds after its rotation is treated as theft and revokes every session of that user. Within 30 seconds
+  it is treated as two tabs refreshing at once and only rejected.
+- Resetting a password revokes all refresh tokens and all outstanding reset links of that user.
+- `register`, `login` and `reset-password` are limited to 10 requests per minute per client IP.
+  `forgot-password` has its own per-IP, per-email and global limits (`RateLimiting` section).
+- Groups, and everything inside them (watch sessions, ratings, dashboard, heatmap), are only reachable by
+  group members. Personal watch sessions are only reachable by their creator. Fetching, renaming or deleting a
+  group, a watch session or its ratings that you cannot see answers `404`, so ids cannot be probed; acting on a
+  group you do not belong to (create or rate a session, dashboard, heatmap) answers `403`.
+
+The frontend nginx adds a strict Content-Security-Policy and other security headers
+(`movie-rater-fe/nginx/security-headers.conf`) and takes the client IP from Cloudflare's `CF-Connecting-IP`
+only when the request comes from the Docker network.
 
 ## Admin panel
 

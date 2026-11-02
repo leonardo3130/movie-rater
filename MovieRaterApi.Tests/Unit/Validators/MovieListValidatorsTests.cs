@@ -70,6 +70,21 @@ public class CreateMovieListRequestValidatorTests
 
         result.ShouldNotHaveAnyValidationErrors();
     }
+
+    [Fact]
+    public void ShouldHaveError_WhenSharedWithTooManyGroups()
+    {
+        var result = _sut.TestValidate(
+            new CreateMovieListRequestDto
+            {
+                Name = "List",
+                IsPrivate = false,
+                GroupIds = Enumerable.Range(0, 51).Select(_ => Guid.NewGuid()).ToList(),
+            }
+        );
+
+        result.ShouldHaveValidationErrorFor("GroupIds");
+    }
 }
 
 public class UpdateMovieListRequestValidatorTests

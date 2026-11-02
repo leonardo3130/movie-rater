@@ -135,11 +135,91 @@ public class RatingServiceTests
         SeedRating(sessionId, userId, 8);
         SeedRating(sessionId, partnerId, 7);
 
-        var result = await _sut.GetBySessionAsync(sessionId);
+        var result = await _sut.GetBySessionAsync(sessionId, partnerId);
 
         result.Ratings.Should().HaveCount(2);
         result.Ratings.Should().Contain(r => r.Username == "member 0" && r.RatingValue == 8);
         result.Ratings.Should().Contain(r => r.Username == "member 1" && r.RatingValue == 7);
+    }
+
+    [Fact]
+    public async Task CreateAsync_Throws_WhenUserIsNotInSessionGroup()
+    {
+        var movieId = Guid.NewGuid();
+        var sessionId = Guid.NewGuid();
+        SeedMovie(movieId, 1, "Inception");
+        var ids = SeedGroupWithUsers(1, "member");
+        var outsiderId = Guid.NewGuid();
+        SeedUser(outsiderId, "outsider");
+        SeedWatchSession(sessionId, ids[0], movieId, ids[1]);
+
+        await FluentActions
+            .Awaiting(() =>
+                _sut.CreateAsync(sessionId, new CreateRatingRequestDto { RatingValue = 1 }, outsiderId)
+            )
+            .Should()
+            .ThrowAsync<ForbiddenException>();
+
+        _db.Ratings.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task CreateAsync_Throws_WhenRatingSomeoneElsesPersonalSession()
+    {
+        var movieId = Guid.NewGuid();
+        var sessionId = Guid.NewGuid();
+        SeedMovie(movieId, 1, "Inception");
+        var ownerId = Guid.NewGuid();
+        var otherId = Guid.NewGuid();
+        SeedUser(ownerId, "owner");
+        SeedUser(otherId, "other");
+        SeedWatchSession(sessionId, null, movieId, ownerId);
+
+        await FluentActions
+            .Awaiting(() =>
+                _sut.CreateAsync(sessionId, new CreateRatingRequestDto { RatingValue = 1 }, otherId)
+            )
+            .Should()
+            .ThrowAsync<ForbiddenException>();
+
+        _db.Ratings.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task CreateAsync_AllowsCreator_ToRateOwnPersonalSession()
+    {
+        var movieId = Guid.NewGuid();
+        var sessionId = Guid.NewGuid();
+        SeedMovie(movieId, 1, "Inception");
+        var ownerId = Guid.NewGuid();
+        SeedUser(ownerId, "owner");
+        SeedWatchSession(sessionId, null, movieId, ownerId);
+
+        var result = await _sut.CreateAsync(
+            sessionId,
+            new CreateRatingRequestDto { RatingValue = 7 },
+            ownerId
+        );
+
+        result.RatingValue.Should().Be(7);
+    }
+
+    [Fact]
+    public async Task GetBySessionAsync_ThrowsNotFound_WhenUserCannotSeeSession()
+    {
+        var movieId = Guid.NewGuid();
+        var sessionId = Guid.NewGuid();
+        SeedMovie(movieId, 1, "Inception");
+        var ids = SeedGroupWithUsers(1, "member");
+        var outsiderId = Guid.NewGuid();
+        SeedUser(outsiderId, "outsider");
+        SeedWatchSession(sessionId, ids[0], movieId, ids[1]);
+        SeedRating(sessionId, ids[1], 9);
+
+        await FluentActions
+            .Awaiting(() => _sut.GetBySessionAsync(sessionId, outsiderId))
+            .Should()
+            .ThrowAsync<NotFoundException>();
     }
 
     private void SeedUserGroup(Guid groupId, Guid userId)
@@ -208,7 +288,7 @@ public class RatingServiceTests
         _db.SaveChanges();
     }
 
-    private void SeedWatchSession(Guid sessionId, Guid groupId, Guid movieId, Guid createdByUserId)
+    private void SeedWatchSession(Guid sessionId, Guid? groupId, Guid movieId, Guid createdByUserId)
     {
         _db.WatchSessions.Add(
             new WatchSession

@@ -10,6 +10,5 @@ public interface ITokenService
     string HashToken(string rawToken);
     Task<bool> IsRefreshTokenValidAsync(string tokenHash);
     Task RevokeRefreshTokenAsync(string tokenHash, string? replacedByTokenHash = null);
-    Task RevokeTokenFamilyAsync(string tokenHash);
-    Task RevokeTokensFromUser(Guid userId);
+    Task<int> RevokeTokensFromUser(Guid userId);
 }

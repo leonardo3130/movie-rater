@@ -15,6 +15,10 @@ public static class PasswordResetRateLimiterFactory
     private const string GlobalKey = "global";
     private const string UnknownKey = "unknown";
 
+    // A forgot-password body is a single email address; anything larger is not buffered
+    // for partitioning, so oversized requests cannot tie up threads and memory.
+    internal const int MaxBodyBytesToInspect = 1024;
+
     public static PartitionedRateLimiter<HttpContext> Create(PasswordResetRateLimitOptions options)
     {
         return PartitionedRateLimiter.CreateChained(
@@ -68,6 +72,12 @@ public static class PasswordResetRateLimiterFactory
 
     public static string ReadEmailFromBody(HttpContext context)
     {
+        var contentLength = context.Request.ContentLength;
+        if (contentLength is null or > MaxBodyBytesToInspect)
+        {
+            return UnknownKey;
+        }
+
         try
         {
             context.Request.EnableBuffering();

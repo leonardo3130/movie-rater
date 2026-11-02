@@ -14,5 +14,5 @@ public interface IRatingService
         UpdateRatingRequestDto request,
         Guid userId
     );
-    Task<SessionRatingsResponseDto> GetBySessionAsync(Guid watchSessionId);
+    Task<SessionRatingsResponseDto> GetBySessionAsync(Guid watchSessionId, Guid userId);
 }

@@ -3,6 +3,8 @@ using MovieRaterApi.Data;
 using MovieRaterApi.Data.Entities;
 using MovieRaterApi.Features.Dashboard.DTOs;
 using MovieRaterApi.Features.Dashboard.Interfaces;
+using MovieRaterApi.Features.Shared.Authorization;
+using MovieRaterApi.Infrastructure.Exceptions;
 
 namespace MovieRaterApi.Features.Dashboard.Services;
 
@@ -19,6 +21,16 @@ public class DashboardService : IDashboardService
 
     public async Task<DashboardResponseDto> GetDashboardAsync(Guid userId, Guid? groupId)
     {
+        if (groupId is not null && !await _db.IsGroupMemberAsync(groupId.Value, userId))
+        {
+            _logger.LogWarning(
+                "User {UserId} requested the dashboard of group {GroupId} without being a member",
+                userId,
+                groupId
+            );
+            throw new ForbiddenException("You are not part of the group");
+        }
+
         var now = DateTime.UtcNow;
         var startOfMonth = new DateTime(now.Year, now.Month, 1, 0, 0, 0, DateTimeKind.Utc);
         var startOfYear = new DateTime(now.Year, 1, 1, 0, 0, 0, DateTimeKind.Utc);

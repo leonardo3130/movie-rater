@@ -127,10 +127,20 @@ public class AuthIntegrationTests : IAsyncLifetime
     [Fact]
     public async Task Register_ShouldCreateUserAndReturnTokens()
     {
-        var result = await RegisterUser("newuser", "newuser@example.com", "Password123!");
+        var response = await _client.PostAsJsonAsync(
+            "/api/auth/register",
+            new RegisterRequestDto
+            {
+                Username = "newuser",
+                Email = "newuser@example.com",
+                Password = "Password123!",
+            }
+        );
+        response.EnsureSuccessStatusCode();
+        await AssertRefreshTokenOnlyInHttpOnlyCookie(response);
 
+        var result = (await response.Content.ReadFromJsonAsync<AuthResponseDto>())!;
         result.AccessToken.Should().NotBeNullOrWhiteSpace();
-        result.RefreshToken.Should().NotBeNullOrWhiteSpace();
         result.User.Username.Should().Be("newuser");
         result.User.Email.Should().Be("newuser@example.com");
     }
@@ -180,11 +190,11 @@ public class AuthIntegrationTests : IAsyncLifetime
 
         var response = await _client.PostAsJsonAsync("/api/auth/login", request);
         response.EnsureSuccessStatusCode();
+        await AssertRefreshTokenOnlyInHttpOnlyCookie(response);
 
         var result = await response.Content.ReadFromJsonAsync<AuthResponseDto>();
         result.Should().NotBeNull();
         result!.AccessToken.Should().NotBeNullOrWhiteSpace();
-        result.RefreshToken.Should().NotBeNullOrWhiteSpace();
         result.User.Username.Should().Be("loginuser");
     }
 
@@ -263,11 +273,11 @@ public class AuthIntegrationTests : IAsyncLifetime
 
         var refreshResponse = await _client.PostAsync("/api/auth/refresh", null);
         refreshResponse.EnsureSuccessStatusCode();
+        await AssertRefreshTokenOnlyInHttpOnlyCookie(refreshResponse);
 
         var result = await refreshResponse.Content.ReadFromJsonAsync<AuthResponseDto>();
         result.Should().NotBeNull();
         result!.AccessToken.Should().NotBeNullOrWhiteSpace();
-        result.RefreshToken.Should().NotBeNullOrWhiteSpace();
         result.User.Username.Should().Be("refreshuser");
     }
 
@@ -287,6 +297,143 @@ public class AuthIntegrationTests : IAsyncLifetime
 
         var logoutResponse = await _client.PostAsync("/api/auth/logout", null);
         logoutResponse.StatusCode.Should().Be(HttpStatusCode.NoContent);
+    }
+
+    [Fact]
+    public async Task Logout_ShouldClearCookie_AndInvalidateRefreshToken()
+    {
+        var registerResponse = await _client.PostAsJsonAsync(
+            "/api/auth/register",
+            new RegisterRequestDto
+            {
+                Username = "logoutcookie",
+                Email = "logoutcookie@example.com",
+                Password = "Password123!",
+            }
+        );
+        registerResponse.EnsureSuccessStatusCode();
+        var refreshCookie = GetRefreshCookieValue(registerResponse);
+        var auth = (await registerResponse.Content.ReadFromJsonAsync<AuthResponseDto>())!;
+        _client.DefaultRequestHeaders.Authorization =
+            new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", auth.AccessToken);
+
+        var logoutResponse = await _client.PostAsync("/api/auth/logout", null);
+
+        logoutResponse.StatusCode.Should().Be(HttpStatusCode.NoContent);
+        var deletion = logoutResponse.Headers.GetValues("Set-Cookie").Single(c => c.StartsWith("mr_refresh="));
+        deletion.Should().StartWith("mr_refresh=;");
+        deletion.Should().Contain("expires=Thu, 01 Jan 1970");
+
+        (await RefreshWithCookieAsync(refreshCookie)).StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+    }
+
+    [Fact]
+    public async Task Refresh_ShouldRevokeAllSessions_WhenRotatedTokenIsReplayedLater()
+    {
+        var registerResponse = await _client.PostAsJsonAsync(
+            "/api/auth/register",
+            new RegisterRequestDto
+            {
+                Username = "replayuser",
+                Email = "replayuser@example.com",
+                Password = "Password123!",
+            }
+        );
+        registerResponse.EnsureSuccessStatusCode();
+        var stolenCookie = GetRefreshCookieValue(registerResponse);
+
+        // The legitimate client rotates the token...
+        var rotateResponse = await RefreshWithCookieAsync(stolenCookie);
+        rotateResponse.EnsureSuccessStatusCode();
+        var currentCookie = GetRefreshCookieValue(rotateResponse);
+
+        // ...and some time later the copied, rotated-out token is replayed.
+        using (var scope = _factory.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+            var user = await db.Users.SingleAsync(u => u.Username == "replayuser");
+            var rotated = await db
+                .RefreshTokens.Where(rt => rt.UserId == user.Id && rt.ReplacedByTokenHash != null)
+                .SingleAsync();
+            rotated.RevokedAt = DateTime.UtcNow.AddMinutes(-5);
+            await db.SaveChangesAsync();
+        }
+
+        (await RefreshWithCookieAsync(stolenCookie)).StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+
+        // Reuse detection ends every session, including the one holding the current token.
+        (await RefreshWithCookieAsync(currentCookie)).StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+    }
+
+    [Fact]
+    public async Task Refresh_ShouldNotRevokeSessions_WhenTwoTabsRefreshConcurrently()
+    {
+        var registerResponse = await _client.PostAsJsonAsync(
+            "/api/auth/register",
+            new RegisterRequestDto
+            {
+                Username = "twotabs",
+                Email = "twotabs@example.com",
+                Password = "Password123!",
+            }
+        );
+        registerResponse.EnsureSuccessStatusCode();
+        var sharedCookie = GetRefreshCookieValue(registerResponse);
+
+        var firstTab = await RefreshWithCookieAsync(sharedCookie);
+        firstTab.EnsureSuccessStatusCode();
+        var newCookie = GetRefreshCookieValue(firstTab);
+
+        (await RefreshWithCookieAsync(sharedCookie)).StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+
+        (await RefreshWithCookieAsync(newCookie)).StatusCode.Should().Be(HttpStatusCode.OK);
+    }
+
+    [Fact]
+    public async Task ApiResponses_ShouldCarrySecurityHeaders()
+    {
+        var response = await _client.PostAsJsonAsync(
+            "/api/auth/login",
+            new LoginRequestDto { Email = "nobody@example.com", Password = "whatever" }
+        );
+
+        response.Headers.GetValues("X-Content-Type-Options").Should().ContainSingle("nosniff");
+        response.Headers.GetValues("X-Frame-Options").Should().ContainSingle("DENY");
+        response.Headers.GetValues("Content-Security-Policy").Single().Should().Contain("default-src 'none'");
+        response.Headers.CacheControl!.NoStore.Should().BeTrue();
+    }
+
+    private async Task AssertRefreshTokenOnlyInHttpOnlyCookie(HttpResponseMessage response)
+    {
+        var body = await response.Content.ReadAsStringAsync();
+        body.Should().NotContainEquivalentOf("refreshToken");
+
+        var cookie = response.Headers.GetValues("Set-Cookie").Single(c => c.StartsWith("mr_refresh="));
+        cookie.Should().ContainEquivalentOf("httponly");
+        cookie.Should().ContainEquivalentOf("secure");
+        cookie.Should().ContainEquivalentOf("samesite=lax");
+        cookie.Should().NotContainEquivalentOf("domain=");
+    }
+
+    private static string GetRefreshCookieValue(HttpResponseMessage response)
+    {
+        var cookie = response.Headers.GetValues("Set-Cookie").Single(c => c.StartsWith("mr_refresh="));
+        return cookie["mr_refresh=".Length..cookie.IndexOf(';')];
+    }
+
+    // Uses a cookie-less client so each call presents exactly the given refresh token.
+    private async Task<HttpResponseMessage> RefreshWithCookieAsync(string cookieValue)
+    {
+        using var client = _factory.CreateClient(
+            new WebApplicationFactoryClientOptions
+            {
+                HandleCookies = false,
+                BaseAddress = new Uri("https://localhost"),
+            }
+        );
+        using var request = new HttpRequestMessage(HttpMethod.Post, "/api/auth/refresh");
+        request.Headers.Add("Cookie", $"mr_refresh={cookieValue}");
+        return await client.SendAsync(request);
     }
 
     [Fact]
@@ -400,6 +547,31 @@ public class AuthIntegrationTests : IAsyncLifetime
         var result = await loginResponse.Content.ReadFromJsonAsync<AuthResponseDto>();
         result!.User.Username.Should().Be("resetuser");
         result.User.Id.Should().Be(user.User.Id);
+    }
+
+    [Fact]
+    public async Task ResetPassword_ShouldRevokeExistingSessions()
+    {
+        var registerResponse = await _client.PostAsJsonAsync(
+            "/api/auth/register",
+            new RegisterRequestDto
+            {
+                Username = "compromised",
+                Email = "compromised@example.com",
+                Password = "Password123!",
+            }
+        );
+        registerResponse.EnsureSuccessStatusCode();
+        var attackerCookie = GetRefreshCookieValue(registerResponse);
+
+        var token = await RequestPasswordReset("compromised@example.com");
+        var resetResponse = await _client.PostAsJsonAsync(
+            "/api/auth/reset-password",
+            new ResetPasswordRequest { Token = token, Password = "NewPassword123!" }
+        );
+        resetResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+
+        (await RefreshWithCookieAsync(attackerCookie)).StatusCode.Should().Be(HttpStatusCode.Unauthorized);
     }
 
     [Fact]

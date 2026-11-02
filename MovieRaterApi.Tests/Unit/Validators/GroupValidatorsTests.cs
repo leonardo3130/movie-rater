@@ -30,6 +30,16 @@ public class InvitePartnerRequestValidatorTests
     }
 
     [Fact]
+    public void ShouldHaveError_WhenGroupIdIsEmpty()
+    {
+        var result = _sut.TestValidate(
+            new InvitationRequestDto { InviteeUsername = "partner", GroupId = Guid.Empty }
+        );
+
+        result.ShouldHaveValidationErrorFor(x => x.GroupId);
+    }
+
+    [Fact]
     public void ShouldNotHaveError_WhenValid()
     {
         var result = _sut.TestValidate(

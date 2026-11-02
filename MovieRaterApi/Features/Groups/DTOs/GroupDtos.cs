@@ -1,4 +1,3 @@
-using MovieRaterApi.Data.Entities;
 using MovieRaterApi.Features.Authentication.DTOs;
 
 namespace MovieRaterApi.Features.Groups.DTOs;
@@ -15,7 +14,6 @@ public class GroupDto
     public DateTime CreatedAt { get; set; }
 
     public ICollection<UserResponseDto> Users { get; set; } = new List<UserResponseDto>();
-    public ICollection<WatchSession> WatchSessions { get; set; } = new List<WatchSession>();
 }
 
 public class InvitationResponseDto
